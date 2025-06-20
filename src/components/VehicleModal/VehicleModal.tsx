@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import Modal from '../Modal/Modal';
 import { Form, Field, Label, Input, Actions, Button } from './styles';
+import axios from 'axios';
 
 interface VehicleModalProps {
   isOpen: boolean;
@@ -16,10 +17,17 @@ export default function VehicleModal({ isOpen, onClose, onCreated }: VehicleModa
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    await fetch('http://localhost:3000/api/vehicles', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ licensePlate, brand, model, color })
+    await axios.post('http://localhost:5080/api/vehicles', {
+      licensePlate,
+      brand,
+      model,
+      color
+    }, {
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+        'Authorization': `Bearer ${localStorage.getItem('token')}`
+      }
     });
     onCreated?.();
     onClose();
