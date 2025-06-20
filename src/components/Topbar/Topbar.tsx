@@ -14,7 +14,7 @@ export default function Topbar({ title, page, isSearchable = true, onNew }: Topb
         <Title>{title}</Title>
         {isSearchable && (
           <Actions>
-            <ActionButton>Novo {page} +</ActionButton>
+            <ActionButton onClick={onNew}>Novo {page} +</ActionButton>
             <div style={{ display: 'flex', gap: '10px' }}>
               <Button>Ordenar</Button>
               <Button>Filtrar</Button>
