@@ -1,33 +1,4 @@
-import styled from 'styled-components';
-
-const Table = styled.table`
-  width: 100%;
-  border-collapse: collapse;
-`;
-
-const Th = styled.th`
-  background: #fdba74;
-  padding: 0.75rem;
-  text-align: left;
-`;
-
-const Td = styled.td`
-  padding: 0.75rem;
-  border-bottom: 1px solid #eee;
-`;
-
-const Tr = styled.tr`
-  &:nth-child(even) {
-    background: #f9fafb;
-  }
-`;
-
-const ActionButton = styled.button`
-  margin-right: 0.5rem;
-  background: transparent;
-  border: none;
-  cursor: pointer;
-`;
+import { Table, Th, Tr, Td, ActionButton } from "./styles";
 
 interface Client {
   name: string;

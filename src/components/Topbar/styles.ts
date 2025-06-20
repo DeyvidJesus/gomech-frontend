@@ -1,6 +1,6 @@
 import styled from 'styled-components';
 
-const Container = styled.section`
+export const Container = styled.section`
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -9,18 +9,18 @@ const Container = styled.section`
   margin-bottom: 1.5rem;
 `;
 
-const Title = styled.h1`
+export const Title = styled.h1`
   margin: 0;
   font-size: 1.5rem;
 `;
 
-const Actions = styled.div`
+export const Actions = styled.div`
   display: flex;
   align-items: center;
   gap: 0.5rem;
 `;
 
-const Button = styled.button`
+export const Button = styled.button`
   padding: 0.5rem 1rem;
   background: #ea580c;
   color: #fff;
@@ -29,22 +29,8 @@ const Button = styled.button`
   cursor: pointer;
 `;
 
-const Search = styled.input`
+export const Search = styled.input`
   padding: 0.5rem;
   border: 1px solid #ccc;
   border-radius: 4px;
 `;
-
-export default function Topbar() {
-  return (
-    <Container>
-      <Title>Clientes</Title>
-      <Actions>
-        <Button>Novo cliente +</Button>
-        <Button>Ordenar</Button>
-        <Button>Filtrar</Button>
-        <Search placeholder="Buscar..." />
-      </Actions>
-    </Container>
-  );
-}
