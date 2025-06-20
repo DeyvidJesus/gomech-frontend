@@ -12,14 +12,19 @@ export default function VehicleModal({ isOpen, onClose, onCreated }: VehicleModa
   const [licensePlate, setLicensePlate] = useState('');
   const [brand, setBrand] = useState('');
   const [model, setModel] = useState('');
+  const [manufactureDate, setManufactureDate] = useState('');
   const [color, setColor] = useState('');
+  const [kilometers, setKilometers] = useState('');
+  const [vehicleId, setVehicleId] = useState('');
+  const [observations, setObservations] = useState('');
+  const [clientId, setClientId] = useState('');
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     await fetch('http://localhost:3000/api/vehicles', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ licensePlate, brand, model, color })
+      body: JSON.stringify({ licensePlate, brand, model, manufactureDate, color, kilometers: Number(kilometers), vehicleId, observations, client: { id: Number(clientId) } })
     });
     onCreated?.();
     onClose();
@@ -42,8 +47,28 @@ export default function VehicleModal({ isOpen, onClose, onCreated }: VehicleModa
           <Input value={model} onChange={e => setModel(e.target.value)} required />
         </Field>
         <Field>
+          <Label>Data de Fabrica\u00e7\u00e3o</Label>
+          <Input type="date" value={manufactureDate} onChange={e => setManufactureDate(e.target.value)} />
+        </Field>
+        <Field>
           <Label>Cor</Label>
           <Input value={color} onChange={e => setColor(e.target.value)} />
+        </Field>
+        <Field>
+          <Label>Quilometragem</Label>
+          <Input value={kilometers} onChange={e => setKilometers(e.target.value)} />
+        </Field>
+        <Field>
+          <Label>ID Ve\u00edculo</Label>
+          <Input value={vehicleId} onChange={e => setVehicleId(e.target.value)} />
+        </Field>
+        <Field>
+          <Label>Observa\u00e7\u00f5es</Label>
+          <Input value={observations} onChange={e => setObservations(e.target.value)} />
+        </Field>
+        <Field>
+          <Label>ID do Cliente</Label>
+          <Input value={clientId} onChange={e => setClientId(e.target.value)} />
         </Field>
         <Actions>
           <Button type="submit">Salvar</Button>

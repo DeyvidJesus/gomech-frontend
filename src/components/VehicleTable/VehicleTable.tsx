@@ -1,17 +1,22 @@
+import { useEffect, useState } from 'react';
 import { Table, Th, Tr, Td } from './styles';
 
 interface Vehicle {
+  id: number;
   licensePlate: string;
   brand: string;
   model: string;
   color: string;
 }
 
-const vehicles: Vehicle[] = [
-  { licensePlate: 'BRA2E19', brand: 'Honda', model: 'Civic SI', color: 'Prata' },
-];
-
 export default function VehicleTable() {
+  const [vehicles, setVehicles] = useState<Vehicle[]>([]);
+
+  useEffect(() => {
+    fetch('http://localhost:3000/api/vehicles')
+      .then(res => res.json())
+      .then(setVehicles);
+  }, []);
   return (
     <Table>
       <thead>

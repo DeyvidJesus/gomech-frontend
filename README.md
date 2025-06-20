@@ -11,7 +11,7 @@ npm install
 npm run dev
 ```
 
-Acesse `http://localhost:3000` para visualizar a aplicação.
+Acesse `http://localhost:3000` para visualizar a aplicação. Utilize `/login` para realizar a autenticação.
 
 ## Estrutura
 

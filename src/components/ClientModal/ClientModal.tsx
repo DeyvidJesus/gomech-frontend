@@ -13,13 +13,16 @@ export default function ClientModal({ isOpen, onClose, onCreated }: ClientModalP
   const [document, setDocument] = useState('');
   const [email, setEmail] = useState('');
   const [phone, setPhone] = useState('');
+  const [address, setAddress] = useState('');
+  const [birthDate, setBirthDate] = useState('');
+  const [observations, setObservations] = useState('');
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     await fetch('http://localhost:3000/api/clients', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ name, document, email, phone })
+      body: JSON.stringify({ name, document, email, phone, address, birthDate, observations })
     });
     onCreated?.();
     onClose();
@@ -44,6 +47,18 @@ export default function ClientModal({ isOpen, onClose, onCreated }: ClientModalP
         <Field>
           <Label>Telefone</Label>
           <Input value={phone} onChange={e => setPhone(e.target.value)} />
+        </Field>
+        <Field>
+          <Label>Endere\u00e7o</Label>
+          <Input value={address} onChange={e => setAddress(e.target.value)} />
+        </Field>
+        <Field>
+          <Label>Data de Nascimento</Label>
+          <Input type="date" value={birthDate} onChange={e => setBirthDate(e.target.value)} />
+        </Field>
+        <Field>
+          <Label>Observa\u00e7\u00f5es</Label>
+          <Input value={observations} onChange={e => setObservations(e.target.value)} />
         </Field>
         <Actions>
           <Button type="submit">Salvar</Button>
