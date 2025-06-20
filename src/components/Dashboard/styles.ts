@@ -3,7 +3,8 @@ import styled from 'styled-components';
 export const DashboardContainer = styled.div`
   padding: 2rem;
   background: #f8f9fa;
-  min-height: calc(100vh - 80px);
+  height: 80vh;
+  border-radius: 10px;
 `;
 
 export const WelcomeMessage = styled.div`

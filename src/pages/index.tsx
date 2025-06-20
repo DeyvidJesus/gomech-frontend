@@ -9,7 +9,7 @@ export default function Home() {
     <Container>
       <Sidebar />
       <Main>
-        <Topbar title="Home" page="home" />
+        <Topbar title="Home" page="home" isSearchable={false} />
         <Dashboard />
       </Main>
     </Container>

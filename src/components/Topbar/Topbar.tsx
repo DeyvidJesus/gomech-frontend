@@ -1,15 +1,23 @@
 import { Container, Title, Actions, Button, Search } from './styles';
 
-export default function Topbar({ title, page }: { title: string; page: string }) {
+interface TopbarProps {
+  title: string;
+  page: string;
+  isSearchable?: boolean;
+}
+
+export default function Topbar({ title, page, isSearchable = true }: TopbarProps) {
   return (
     <Container>
       <Title>{title}</Title>
-      <Actions>
-        <Button>Novo {page} +</Button>
-        <Button>Ordenar</Button>
-        <Button>Filtrar</Button>
-        <Search placeholder="Buscar..." />
-      </Actions>
+      {isSearchable && (
+        <Actions>
+          <Button>Novo {page} +</Button>
+          <Button>Ordenar</Button>
+          <Button>Filtrar</Button>
+          <Search placeholder="Buscar..." />
+        </Actions>
+      )}
     </Container>
   );
 }
