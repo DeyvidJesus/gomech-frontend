@@ -3,7 +3,7 @@ import Sidebar from '@/components/Sidebar/Sidebar';
 import Topbar from '@/components/Topbar/Topbar';
 import VehicleTable from '@/components/VehicleTable/VehicleTable';
 import VehicleModal from '@/components/VehicleModal/VehicleModal';
-import { Container, Main } from '../globals';
+import { Container, Main } from '../../styles/globals';
 
 export default function VeiculosPage() {
   const [isModalOpen, setModalOpen] = useState(false);

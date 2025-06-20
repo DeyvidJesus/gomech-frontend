@@ -1,8 +1,8 @@
 import Sidebar from '@/components/Sidebar/Sidebar';
 import Topbar from '@/components/Topbar/Topbar';
 import Dashboard from '@/components/Dashboard/Dashboard';
-import { Main } from './globals';
-import { Container } from './globals';
+import { Main } from '../styles/globals';
+import { Container } from '../styles/globals';
 
 export default function Home() {
   return (

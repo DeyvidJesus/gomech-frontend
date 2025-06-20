@@ -3,7 +3,7 @@ import Sidebar from '@/components/Sidebar/Sidebar';
 import ClientTable from '../../components/ClientTable/ClientTable';
 import Topbar from '../../components/Topbar/Topbar';
 import ClientModal from '@/components/ClientModal/ClientModal';
-import { Container, Main } from '../globals';
+import { Container, Main } from '../../styles/globals';
 
 export default function ClientesPage() {
   const [isModalOpen, setModalOpen] = useState(false);

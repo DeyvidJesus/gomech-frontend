@@ -3,7 +3,7 @@ import Sidebar from '@/components/Sidebar/Sidebar';
 import Topbar from '@/components/Topbar/Topbar';
 import ServiceOrderTable from '@/components/ServiceOrderTable/ServiceOrderTable';
 import ServiceOrderModal from '@/components/ServiceOrderModal/ServiceOrderModal';
-import { Container, Main } from '../globals';
+import { Container, Main } from '../../styles/globals';
 
 export default function OrdersPage() {
   const [isModalOpen, setModalOpen] = useState(false);
