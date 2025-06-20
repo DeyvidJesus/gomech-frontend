@@ -90,32 +90,34 @@ const clients: Client[] = [
 
 export default function ClientTable() {
   return (
-    <Table>
-      <thead>
-        <tr>
-          <Th>Nome</Th>
-          <Th>Documento</Th>
-          <Th>E-mail</Th>
-          <Th>Telefone</Th>
-          <Th>Veículos</Th>
-          <Th></Th>
-        </tr>
-      </thead>
-      <tbody>
-        {clients.map((client, index) => (
-          <Tr key={index}>
-            <Td>{client.name}</Td>
-            <Td>{client.document}</Td>
-            <Td>{client.email}</Td>
-            <Td>{client.phone}</Td>
-            <Td>{client.vehicle}</Td>
-            <Td>
-              <ActionButton title="Editar">✏️</ActionButton>
-              <ActionButton title="Visualizar">🔗</ActionButton>
-            </Td>
-          </Tr>
-        ))}
-      </tbody>
-    </Table>
+    <div style={{ width: '100%', maxHeight: '480px', overflowY: 'auto' }}>
+      <Table>
+        <thead style={{ position: 'sticky', top: 0, background: '#FFB961' }}>
+          <tr>
+            <Th>Nome</Th>
+            <Th>Documento</Th>
+            <Th>E-mail</Th>
+            <Th>Telefone</Th>
+            <Th>Veículos</Th>
+            <Th></Th>
+          </tr>
+        </thead>
+        <tbody>
+          {clients.map((client, index) => (
+            <Tr key={index}>
+              <Td>{client.name}</Td>
+              <Td>{client.document}</Td>
+              <Td>{client.email}</Td>
+              <Td>{client.phone}</Td>
+              <Td>{client.vehicle}</Td>
+              <Td>
+                <ActionButton title="Editar">✏️</ActionButton>
+                <ActionButton title="Visualizar">🔗</ActionButton>
+              </Td>
+            </Tr>
+          ))}
+        </tbody>
+      </Table>
+    </div>
   );
 }
