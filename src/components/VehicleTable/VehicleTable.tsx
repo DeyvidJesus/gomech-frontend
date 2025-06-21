@@ -1,17 +1,32 @@
+import { useEffect, useState } from 'react';
 import { Table, Th, Tr, Td } from './styles';
+import axios from 'axios';
 
 interface Vehicle {
+  id: number;
   licensePlate: string;
   brand: string;
   model: string;
   color: string;
 }
 
-const vehicles: Vehicle[] = [
-  { licensePlate: 'BRA2E19', brand: 'Honda', model: 'Civic SI', color: 'Prata' },
-];
-
 export default function VehicleTable() {
+  const [vehicles, setVehicles] = useState<Vehicle[]>([]);
+
+  useEffect(() => {
+    async function getVehicles() {
+      const response = await axios.get('http://localhost:5080/api/vehicles', {
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        }
+      });
+      setVehicles(response.data);
+    }
+
+    getVehicles();
+  }, []);
   return (
     <Table>
       <thead>

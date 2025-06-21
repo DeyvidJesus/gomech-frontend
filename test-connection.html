@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Teste de Conexão Backend</title>
+</head>
+<body>
+    <h1>Teste de Conexão Backend</h1>
+    <button onclick="testLogin()">Testar Login</button>
+    <button onclick="testHealth()">Testar Health</button>
+    <div id="result"></div>
+
+    <script>
+        async function testHealth() {
+            try {
+                const response = await fetch('http://localhost:5080/api/health', {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    }
+                });
+                document.getElementById('result').innerHTML = `
+                    <h3>Health Check:</h3>
+                    <p>Status: ${response.status}</p>
+                    <p>Response: ${await response.text()}</p>
+                `;
+            } catch (error) {
+                document.getElementById('result').innerHTML = `
+                    <h3>Health Check Error:</h3>
+                    <p>${error.message}</p>
+                `;
+            }
+        }
+
+        async function testLogin() {
+            try {
+                const response = await fetch('http://localhost:5080/api/auth/login', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        email: 'admin@gomech.com',
+                        password: 'admin123'
+                    })
+                });
+                
+                const data = await response.text();
+                document.getElementById('result').innerHTML = `
+                    <h3>Login Test:</h3>
+                    <p>Status: ${response.status}</p>
+                    <p>Response: ${data}</p>
+                `;
+            } catch (error) {
+                document.getElementById('result').innerHTML = `
+                    <h3>Login Error:</h3>
+                    <p>${error.message}</p>
+                `;
+            }
+        }
+    </script>
+</body>
+</html> 

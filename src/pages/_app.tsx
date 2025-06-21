@@ -1,6 +1,7 @@
 import type { AppProps } from 'next/app';
 import Head from 'next/head';
 import { createGlobalStyle } from 'styled-components';
+import { AuthProvider } from '@/context/AuthContext';
 
 const GlobalStyle = createGlobalStyle`
   *, *::before, *::after { box-sizing: border-box; }
@@ -13,7 +14,7 @@ const GlobalStyle = createGlobalStyle`
 
 export default function MyApp({ Component, pageProps }: AppProps) {
   return (
-    <>
+    <AuthProvider>
       <Head>
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
@@ -24,6 +25,6 @@ export default function MyApp({ Component, pageProps }: AppProps) {
       </Head>
       <GlobalStyle />
       <Component {...pageProps} />
-    </>
+    </AuthProvider>
   );
 }
