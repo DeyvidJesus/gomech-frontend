@@ -3,6 +3,7 @@ import { useRole } from "@/context/AuthContext";
 import RoleGuard from "@/components/RoleGuard/RoleGuard";
 import { apiService } from "@/services/api";
 import { Table, Th, Tr, Td, ActionButton } from "./styles";
+import axios from "axios";
 
 interface Vehicle {
   licensePlate: string;
@@ -32,6 +33,16 @@ export default function ClientTable() {
         console.error('Erro ao carregar clientes:', error);
       } finally {
         setLoading(false);
+        const response = await axios.get('http://localhost:5080/api/clients', {
+          headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json',
+          }
+        });
+        setClients(response.data);
+        console.log(response.data);
+      } catch (error) {
+        console.error('Erro ao buscar clientes:', error);
       }
     }
 
@@ -66,6 +77,7 @@ export default function ClientTable() {
       </div>
     );
   }
+  }, [])
 
   return (
     <div style={{ width: '100%', maxHeight: '480px', overflowY: 'auto' }}>

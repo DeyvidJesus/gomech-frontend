@@ -28,7 +28,6 @@ export default function Topbar({ title, page, isSearchable = true, onNew }: Topb
             </div>
           </Actions>
         )}
-        <Search placeholder="Buscar..." />
       </div>
     </Container>
   );
