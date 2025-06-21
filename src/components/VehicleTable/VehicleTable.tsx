@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Table, Th, Tr, Td } from './styles';
+import axios from 'axios';
 
 interface Vehicle {
   id: number;
@@ -13,9 +14,18 @@ export default function VehicleTable() {
   const [vehicles, setVehicles] = useState<Vehicle[]>([]);
 
   useEffect(() => {
-    fetch('http://localhost:3000/api/vehicles')
-      .then(res => res.json())
-      .then(setVehicles);
+    async function getVehicles() {
+      const response = await axios.get('http://localhost:5080/api/vehicles', {
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        }
+      });
+      setVehicles(response.data);
+    }
+
+    getVehicles();
   }, []);
   return (
     <Table>

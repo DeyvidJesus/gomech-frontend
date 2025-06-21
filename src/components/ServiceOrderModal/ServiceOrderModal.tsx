@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import Modal from '../Modal/Modal';
 import { Form, Field, Label, Input, Actions, Button } from './styles';
+import axios from 'axios';
 
 interface ServiceOrderModalProps {
   isOpen: boolean;
@@ -14,10 +15,15 @@ export default function ServiceOrderModal({ isOpen, onClose, onCreated }: Servic
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    await fetch('http://localhost:3000/api/orders', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ description, vehicleId })
+    await axios.post('http://localhost:5080/api/orders', {
+      description,
+      vehicleId
+    }, {
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+        'Authorization': `Bearer ${localStorage.getItem('token')}`
+      }
     });
     onCreated?.();
     onClose();

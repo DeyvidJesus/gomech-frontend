@@ -4,24 +4,36 @@ import { useAuth } from '@/context/AuthContext';
 import AuthRoute from '@/components/AuthRoute/AuthRoute';
 import Link from 'next/link';
 
-export default function LoginPage() {
-  const { login } = useAuth();
+export default function RegisterPage() {
+  const { register } = useAuth();
   const router = useRouter();
+  const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
     setError('');
+
+    if (password !== confirmPassword) {
+      setError('As senhas não coincidem');
+      return;
+    }
+
+    if (password.length < 6) {
+      setError('A senha deve ter pelo menos 6 caracteres');
+      return;
+    }
+
     setLoading(true);
-    
     try {
-      await login(email, password);
+      await register(name, email, password);
       router.push('/');
-    } catch {
-      setError('Credenciais inválidas');
+    } catch (err: any) {
+      setError(err.message || 'Erro ao criar conta');
     } finally {
       setLoading(false);
     }
@@ -38,7 +50,20 @@ export default function LoginPage() {
           width: '400px' 
         }}>
           <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
-            <h2 style={{ textAlign: 'center', marginBottom: '20px', color: '#333' }}>Login</h2>
+            <h2 style={{ textAlign: 'center', marginBottom: '20px', color: '#333' }}>Criar Conta</h2>
+            
+            <input 
+              placeholder="Nome completo" 
+              value={name} 
+              onChange={e => setName(e.target.value)} 
+              required 
+              style={{
+                padding: '12px',
+                border: '1px solid #ddd',
+                borderRadius: '4px',
+                fontSize: '16px'
+              }}
+            />
             
             <input 
               type="email"
@@ -68,6 +93,20 @@ export default function LoginPage() {
               }}
             />
             
+            <input 
+              type="password" 
+              placeholder="Confirmar senha" 
+              value={confirmPassword} 
+              onChange={e => setConfirmPassword(e.target.value)} 
+              required 
+              style={{
+                padding: '12px',
+                border: '1px solid #ddd',
+                borderRadius: '4px',
+                fontSize: '16px'
+              }}
+            />
+            
             {error && <span style={{ color: 'red', fontSize: '14px' }}>{error}</span>}
             
             <button 
@@ -83,14 +122,14 @@ export default function LoginPage() {
                 cursor: loading ? 'not-allowed' : 'pointer'
               }}
             >
-              {loading ? 'Entrando...' : 'Entrar'}
+              {loading ? 'Criando conta...' : 'Criar Conta'}
             </button>
             
             <div style={{ textAlign: 'center', marginTop: '10px' }}>
               <span style={{ color: '#666', fontSize: '14px' }}>
-                Não tem uma conta?{' '}
-                <Link href="/register" style={{ color: '#007bff', textDecoration: 'none' }}>
-                  Criar conta
+                Já tem uma conta?{' '}
+                <Link href="/login" style={{ color: '#007bff', textDecoration: 'none' }}>
+                  Faça login
                 </Link>
               </span>
             </div>
@@ -99,4 +138,4 @@ export default function LoginPage() {
       </div>
     </AuthRoute>
   );
-}
+} 
