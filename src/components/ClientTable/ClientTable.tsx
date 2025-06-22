@@ -1,5 +1,4 @@
 import { useEffect, useState } from "react";
-import { useRole } from "@/context/AuthContext";
 import RoleGuard from "@/components/RoleGuard/RoleGuard";
 import { apiService } from "@/services/api";
 import { Table, Th, Tr, Td, ActionButton } from "./styles";
@@ -20,7 +19,6 @@ interface Client {
 export default function ClientTable() {
   const [clients, setClients] = useState<Client[]>([]);
   const [loading, setLoading] = useState(true);
-  const { canEdit, canDelete, canView } = useRole();
 
   useEffect(() => {
     async function getClients() {

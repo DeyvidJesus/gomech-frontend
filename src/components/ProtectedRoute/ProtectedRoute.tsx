@@ -24,7 +24,7 @@ export default function ProtectedRoute({
     </div>
   )
 }: ProtectedRouteProps) {
-  const { token, user, loading, isAuthenticated } = useAuth();
+  const { user, loading, isAuthenticated } = useAuth();
   const router = useRouter();
 
   useEffect(() => {

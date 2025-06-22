@@ -55,8 +55,8 @@ export const apiService = {
   clients: {
     getAll: () => api.get('/clients'),
     getById: (id: number) => api.get(`/clients/${id}`),
-    create: (data: any) => api.post('/clients', data),
-    update: (id: number, data: any) => api.put(`/clients/${id}`, data),
+    create: (data: Record<string, unknown>) => api.post('/clients', data),
+    update: (id: number, data: Record<string, unknown>) => api.put(`/clients/${id}`, data),
     delete: (id: number) => api.delete(`/clients/${id}`),
   },
   
@@ -64,8 +64,8 @@ export const apiService = {
   vehicles: {
     getAll: () => api.get('/vehicles'),
     getById: (id: number) => api.get(`/vehicles/${id}`),
-    create: (data: any) => api.post('/vehicles', data),
-    update: (id: number, data: any) => api.put(`/vehicles/${id}`, data),
+    create: (data: Record<string, unknown>) => api.post('/vehicles', data),
+    update: (id: number, data: Record<string, unknown>) => api.put(`/vehicles/${id}`, data),
     delete: (id: number) => api.delete(`/vehicles/${id}`),
   },
   
@@ -73,8 +73,8 @@ export const apiService = {
   serviceOrders: {
     getAll: () => api.get('/service-orders'),
     getById: (id: number) => api.get(`/service-orders/${id}`),
-    create: (data: any) => api.post('/service-orders', data),
-    update: (id: number, data: any) => api.put(`/service-orders/${id}`, data),
+    create: (data: Record<string, unknown>) => api.post('/service-orders', data),
+    update: (id: number, data: Record<string, unknown>) => api.put(`/service-orders/${id}`, data),
     delete: (id: number) => api.delete(`/service-orders/${id}`),
   },
   
