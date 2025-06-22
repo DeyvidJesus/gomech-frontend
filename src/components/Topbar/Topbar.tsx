@@ -1,6 +1,6 @@
 import RoleGuard from '@/components/RoleGuard/RoleGuard';
 import { useRole } from '@/context/AuthContext';
-import { Container, Title, Actions, Button, ActionButton } from './styles';
+import { Container, Title, Actions, Button, Search, ActionButton } from './styles';
 
 interface TopbarProps {
   title: string;
@@ -10,6 +10,8 @@ interface TopbarProps {
 }
 
 export default function Topbar({ title, page, isSearchable = true, onNew }: TopbarProps) {
+  const { canCreate } = useRole();
+  
   return (
     <Container>
       <div style={{ display: 'flex', flexDirection: 'column', width: '100%' }}>
@@ -26,6 +28,7 @@ export default function Topbar({ title, page, isSearchable = true, onNew }: Topb
             </div>
           </Actions>
         )}
+        <Search placeholder="Buscar..." />
       </div>
     </Container>
   );
