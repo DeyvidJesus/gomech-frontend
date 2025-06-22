@@ -1,10 +1,9 @@
 import { useAuth, useRole } from '@/context/AuthContext';
-import RoleGuard from '@/components/RoleGuard/RoleGuard';
 import { DashboardContainer, WelcomeMessage, StatsGrid, StatCard, Title, Value } from './styles';
 
 export default function Dashboard() {
   const { user } = useAuth();
-  const { isAdmin, isUser, canCreate, canEdit, canDelete } = useRole();
+  const { canCreate, canEdit, canDelete } = useRole();
 
   return (
     <DashboardContainer>
