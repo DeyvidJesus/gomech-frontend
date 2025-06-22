@@ -3,7 +3,6 @@ import { useRole } from "@/context/AuthContext";
 import RoleGuard from "@/components/RoleGuard/RoleGuard";
 import { apiService } from "@/services/api";
 import { Table, Th, Tr, Td, ActionButton } from "./styles";
-import axios from "axios";
 
 interface Vehicle {
   licensePlate: string;
@@ -67,7 +66,6 @@ export default function ClientTable() {
       </div>
     );
   }
-  }, [])
 
   return (
     <div style={{ width: '100%', maxHeight: '480px', overflowY: 'auto' }}>
