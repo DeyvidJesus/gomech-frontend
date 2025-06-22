@@ -43,7 +43,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         const userData = JSON.parse(storedUser);
         setToken(storedToken);
         setUser(userData);
-      } catch () {
+      } catch (error) {
+        // Se não conseguir fazer parse do usuário, limpar os dados
         localStorage.removeItem('token');
         localStorage.removeItem('user');
       }
@@ -98,7 +99,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       console.log('🎉 Login realizado com sucesso!', userData);
 
-    } catch (error) {
+    } catch (error: any) {
       console.error('🚨 Erro no login:', error);
       throw error;
     }
@@ -150,7 +151,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       console.log('🎉 Registro realizado com sucesso!', userData);
 
-    } catch (error) {
+    } catch (error: any) {
       console.error('🚨 Erro no registro:', error);
       throw error;
     }
