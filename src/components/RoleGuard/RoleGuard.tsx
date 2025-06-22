@@ -20,4 +20,4 @@ export default function RoleGuard({
   );
   
   return hasAccess ? <>{children}</> : <>{fallback}</>;
-} 
+}
