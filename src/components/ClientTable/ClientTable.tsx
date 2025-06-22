@@ -33,16 +33,6 @@ export default function ClientTable() {
         console.error('Erro ao carregar clientes:', error);
       } finally {
         setLoading(false);
-        const response = await axios.get('http://localhost:5080/api/clients', {
-          headers: {
-            'Content-Type': 'application/json',
-            'Accept': 'application/json',
-          }
-        });
-        setClients(response.data);
-        console.log(response.data);
-      } catch (error) {
-        console.error('Erro ao buscar clientes:', error);
       }
     }
 
