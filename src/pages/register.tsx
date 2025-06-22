@@ -32,7 +32,7 @@ export default function RegisterPage() {
     try {
       await register(name, email, password);
       router.push('/');
-    } catch (err: any) {
+    } catch (err) {
       setError(err.message || 'Erro ao criar conta');
     } finally {
       setLoading(false);
