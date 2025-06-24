@@ -56,7 +56,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     try {
       console.log('🔐 Tentando fazer login...', { email });
 
-      const response = await fetch('http://localhost:5080/api/auth/login', {
+      const response = await fetch('clear-ellene-deyvidgondim-8b8a208e.koyeb.app/api/auth/login', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
@@ -111,7 +111,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       const defaultRoleId = 2;
 
-      const response = await fetch('http://localhost:5080/api/auth/register', {
+      const response = await fetch('clear-ellene-deyvidgondim-8b8a208e.koyeb.app/api/auth/register', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ name, email, password, roleId: defaultRoleId })
