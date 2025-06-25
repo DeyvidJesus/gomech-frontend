@@ -20,7 +20,7 @@ export default function ClientModal({ isOpen, onClose, onCreated }: ClientModalP
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    await axios.post('clear-ellene-deyvidgondim-8b8a208e.koyeb.app/api/clients', {
+    await axios.post('https://clear-ellene-deyvidgondim-8b8a208e.koyeb.app/api/clients', {
       name,
       document,
       email,

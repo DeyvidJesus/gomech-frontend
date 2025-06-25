@@ -15,7 +15,7 @@ export default function ServiceOrderModal({ isOpen, onClose, onCreated }: Servic
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    await axios.post('clear-ellene-deyvidgondim-8b8a208e.koyeb.app/api/orders', {
+    await axios.post('https://clear-ellene-deyvidgondim-8b8a208e.koyeb.app/api/orders', {
       description,
       vehicleId
     }, {

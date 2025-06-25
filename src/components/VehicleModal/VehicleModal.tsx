@@ -22,7 +22,7 @@ export default function VehicleModal({ isOpen, onClose, onCreated }: VehicleModa
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    await axios.post('clear-ellene-deyvidgondim-8b8a208e.koyeb.app/api/vehicles', {
+    await axios.post('https://clear-ellene-deyvidgondim-8b8a208e.koyeb.app/api/vehicles', {
       licensePlate,
       brand,
       model,
