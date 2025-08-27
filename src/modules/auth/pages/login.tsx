@@ -1,10 +1,17 @@
 import { useLogin } from "../hooks/useLogin";
 import { useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
+import { useAuth } from "../hooks/useAuth";
 
 export default function LoginPage() {
   const login = useLogin();
   const navigate = useNavigate();
+  const { data } = useAuth();
+
+  if (data?.token) {
+    navigate({ to: "/" });
+    return null;
+  }
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");

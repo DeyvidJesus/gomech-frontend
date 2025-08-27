@@ -8,12 +8,67 @@
   --breakpoint-xl: 1280px;
   --breakpoint-2xl: 1536px;
 
-  /* Cores claras (modo padrão) */
+  /* Cores globais (modo claro) */
   --color-bg: #ffffff;
   --color-text: #111111;
   --color-primary: #2563eb;
 
-  /* Animações personalizadas */
+  --sidebar-bg: #f3810d;
+  --sidebar-text: #ffffff;
+  --sidebar-button-bg: #242424;
+
+  /* Paleta customizada */
+  --color-onyx-100: #0d0d0d;
+  --color-onyx-200: #1b1b1b;
+  --color-onyx-300: #282828;
+  --color-onyx-400: #353535;
+  --color-onyx-500: #424242;
+  --color-onyx-600: #686868;
+  --color-onyx-700: #8e8e8e;
+  --color-onyx-800: #b4b4b4;
+  --color-onyx-900: #d9d9d9;
+
+  --color-orangeWheel-100: #311800;
+  --color-orangeWheel-200: #623100;
+  --color-orangeWheel-300: #934900;
+  --color-orangeWheel-400: #c46200;
+  --color-orangeWheel-500: #f57c00;
+  --color-orangeWheel-600: #ff952b;
+  --color-orangeWheel-700: #ffaf60;
+  --color-orangeWheel-800: #ffca95;
+  --color-orangeWheel-900: #ffe4ca;
+
+  --color-darkOrange-100: #321b00;
+  --color-darkOrange-200: #643700;
+  --color-darkOrange-300: #965200;
+  --color-darkOrange-400: #c86e00;
+  --color-darkOrange-500: #fb8c00;
+  --color-darkOrange-600: #ffa12f;
+  --color-darkOrange-700: #ffb963;
+  --color-darkOrange-800: #ffd097;
+  --color-darkOrange-900: #ffe8cb;
+
+  --color-persimmon-100: #2e1000;
+  --color-persimmon-200: #5c2000;
+  --color-persimmon-300: #8a3000;
+  --color-persimmon-400: #b84000;
+  --color-persimmon-500: #e65100;
+  --color-persimmon-600: #ff6d1f;
+  --color-persimmon-700: #ff9257;
+  --color-persimmon-800: #ffb68f;
+  --color-persimmon-900: #ffdbc7;
+
+  --color-eerieBlack-100: #060606;
+  --color-eerieBlack-200: #0b0b0b;
+  --color-eerieBlack-300: #111111;
+  --color-eerieBlack-400: #161616;
+  --color-eerieBlack-500: #1d1d1d;
+  --color-eerieBlack-600: #494949;
+  --color-eerieBlack-700: #777777;
+  --color-eerieBlack-800: #a4a4a4;
+  --color-eerieBlack-900: #d2d2d2;
+
+  /* Animações */
   --animate-fadeIn: fadeIn 0.3s ease-out;
   --animate-typingDots: typingDots 1.4s infinite both;
 }
@@ -24,7 +79,7 @@
   --color-primary: #3b82f6;
 }
 
-/* Keyframes para animações */
+/* Keyframes */
 @keyframes fadeIn {
   from {
     opacity: 0;

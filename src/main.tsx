@@ -11,10 +11,10 @@ import './styles.css'
 import { loginRoute } from './modules/auth/routes/loginRoute.ts'
 import { rootRoute } from './app/routes/__root.tsx'
 import { registerRoute } from './modules/auth/routes/registerRoute.ts'
+import { dashboardRoute } from './modules/dashboard/routes/dashboardRoute.ts'
 import { AppProviders } from './app/providers.tsx'
 
-const routeTree = rootRoute.addChildren([loginRoute, registerRoute])
-console.log('Route Tree:', routeTree)
+const routeTree = rootRoute.addChildren([loginRoute, registerRoute, dashboardRoute])
 
 const router = createRouter({ routeTree })
 

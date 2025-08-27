@@ -1,16 +1,14 @@
 import Sidebar from "./Sidebar";
-import type { ReactNode } from "react";
+import { Outlet } from "@tanstack/react-router";
 
-interface LayoutProps {
-  children: ReactNode;
-}
-
-export function Layout({ children }: LayoutProps) {
+export function Layout() {
   return (
     <div className="bg-bg text-text min-h-screen flex flex-col">
       <div className="flex flex-1">
         <Sidebar />
-        <main className="flex-1 p-4">{children}</main>
+        <main className="flex-1 p-6">
+          <Outlet />
+        </main>
       </div>
     </div>
   );

@@ -1,10 +1,18 @@
 import { useRegister } from "../hooks/useRegister";
 import { useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
+import { useAuth } from "../hooks/useAuth";
 
 function Register() {
   const register = useRegister();
   const navigate = useNavigate();
+
+  const { data } = useAuth();
+
+  if (data?.token) {
+    navigate({ to: "/" });
+    return null;
+  }
 
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
