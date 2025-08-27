@@ -10,10 +10,11 @@ import reportWebVitals from './reportWebVitals.ts'
 import './styles.css'
 import { loginRoute } from './modules/auth/routes/loginRoute.ts'
 import { rootRoute } from './app/routes/__root.tsx'
+import { registerRoute } from './modules/auth/routes/registerRoute.ts'
 import { AppProviders } from './app/providers.tsx'
-import App from './App.tsx'
 
-const routeTree = rootRoute.addChildren([loginRoute])
+const routeTree = rootRoute.addChildren([loginRoute, registerRoute])
+console.log('Route Tree:', routeTree)
 
 const router = createRouter({ routeTree })
 
@@ -30,7 +31,6 @@ if (rootElement && !rootElement.innerHTML) {
     <StrictMode>
       <AppProviders>
         <RouterProvider router={router} />
-        <App />
       </AppProviders>
     </StrictMode>,
   )
