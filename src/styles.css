@@ -13,10 +13,34 @@
   --color-text: #111111;
   --color-primary: #2563eb;
 
-  /* Dark mode */
-  .dark {
-    --color-bg: #111111;
-    --color-text: #f9fafb;
-    --color-primary: #3b82f6;
+  /* Animações personalizadas */
+  --animate-fadeIn: fadeIn 0.3s ease-out;
+  --animate-typingDots: typingDots 1.4s infinite both;
+}
+
+.dark {
+  --color-bg: #111111;
+  --color-text: #f9fafb;
+  --color-primary: #3b82f6;
+}
+
+/* Keyframes para animações */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: scale(0.9);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes typingDots {
+  0%, 60%, 100% {
+    transform: initial;
+  }
+  30% {
+    transform: translateY(-10px);
   }
 }
