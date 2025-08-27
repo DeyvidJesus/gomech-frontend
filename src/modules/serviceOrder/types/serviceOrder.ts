@@ -1,5 +1,5 @@
-import type { Client } from "@/features/client/types/client";
-import type { Vehicle } from "@/features/vehicle/types/vehicle";
+import type { Client } from "@/modules/client/types/client";
+import type { Vehicle } from "@/modules/vehicle/types/vehicle";
 
 
 export interface ServiceOrder {

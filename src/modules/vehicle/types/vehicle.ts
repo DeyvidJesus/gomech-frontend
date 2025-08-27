@@ -1,4 +1,4 @@
-import type { Client } from "@/features/client/types/client";
+import type { Client } from "@/modules/client/types/client";
 
 export interface Vehicle {
   id: number;
