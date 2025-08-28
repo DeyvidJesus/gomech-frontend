@@ -11,12 +11,21 @@ const chatApi = axios.create({
 
 chatApi.interceptors.request.use(
   (config) => {
-    const sessionDataString = localStorage.getItem("REACT_QUERY_OFFLINE_CACHE");
-    const sessionData: SessionData | null = sessionDataString ? JSON.parse(sessionDataString) : null;
-    const { token } = sessionData?.clientState?.queries?.[0]?.state?.data || {}
+    const token = localStorage.getItem("token");
+
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
+    } else {
+      const sessionDataString = localStorage.getItem("REACT_QUERY_OFFLINE_CACHE");
+      const sessionData: SessionData | null = sessionDataString ? JSON.parse(sessionDataString) : null;
+      const fallbackToken = sessionData?.clientState?.queries?.find(
+        (q: any) => q.queryKey[0] === "auth"
+      )?.state?.data?.token;
+      if (fallbackToken) {
+        config.headers.Authorization = `Bearer ${fallbackToken}`;
+      }
     }
+
     return config;
   },
   (error) => {

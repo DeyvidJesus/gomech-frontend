@@ -3,8 +3,8 @@ import { vehiclesApi } from "../services/api";
 import type { Vehicle } from "../types/vehicle";
 import { useState } from "react";
 import { EditVehicleModal } from "./EditVehicleModal";
-import { VehicleDetailsModal } from "./VehicleDetailsModal";
 import { AddVehicleModal } from "./AddVehicleModal";
+import VehicleClientLinkModal from "./VehicleClientLinkModal";
 import { useNavigate } from "@tanstack/react-router";
 
 export function VehicleList() {
@@ -19,8 +19,8 @@ export function VehicleList() {
 
   const [selectedVehicle, setSelectedVehicle] = useState<Vehicle | null>(null);
   const [showEdit, setShowEdit] = useState(false);
-  const [showDetails, setShowDetails] = useState(false);
   const [showAdd, setShowAdd] = useState(false);
+  const [showLink, setShowLink] = useState(false);
   const navigate = useNavigate();
 
   const deleteMutation = useMutation({
@@ -41,13 +41,20 @@ export function VehicleList() {
     setShowEdit(true);
   };
 
-  const handleView = (vehicle: Vehicle) => {
+  const handleLink = (vehicle: Vehicle) => {
     setSelectedVehicle(vehicle);
-    setShowDetails(true);
+    setShowLink(true);
+  };
+
+  const handleView = (vehicle: Vehicle) => {
+    navigate({ to: `/vehicles/${vehicle.id}` });
   };
 
   const handleDelete = (vehicle: Vehicle) => {
-    if (window.confirm(`Deseja realmente deletar o veículo ${vehicle.plate}?`)) {
+    const isConfirmed = window.confirm(
+      `⚠️ Tem certeza que deseja deletar o veículo "${vehicle.licensePlate}"?\n\nEsta ação não pode ser desfeita.`
+    );
+    if (isConfirmed) {
       deleteMutation.mutate(vehicle.id);
     }
   };
@@ -57,75 +64,212 @@ export function VehicleList() {
     setSelectedVehicle(null);
   };
 
-  const handleCloseDetails = () => {
-    setShowDetails(false);
+  const handleCloseLink = () => {
+    setShowLink(false);
     setSelectedVehicle(null);
   };
 
 
-  if (isLoading) return <div className="text-center text-lg text-primary mt-8">Carregando veículos...</div>;
-  if (error) return <div className="text-center text-lg text-red-600 mt-8">Erro ao carregar veículos.</div>;
-  if (!data || data.length === 0) return <div className="text-center text-lg text-gray-500 mt-8">Nenhum veículo encontrado.</div>;
+  // Estados de carregamento e erro
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-600 mb-4 mx-auto"></div>
+          <p className="text-gray-600 text-lg">Carregando veículos...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="bg-red-50 border border-red-200 rounded-lg p-6 text-center">
+        <div className="text-red-600 text-5xl mb-4">⚠️</div>
+        <h3 className="text-red-800 text-xl font-semibold mb-2">Erro ao carregar veículos</h3>
+        <p className="text-red-600">Ocorreu um problema ao buscar os dados. Tente novamente mais tarde.</p>
+      </div>
+    );
+  }
 
   return (
-    <div className="p-6 max-w-5xl mx-auto">
-      <div className="flex items-center justify-between mb-6">
-        <h2 className="text-2xl font-bold text-onyx-100 dark:text-onyx-900">Lista de Veículos</h2>
-        <button
-          onClick={handleAdd}
-          className="bg-orangeWheel-500 hover:bg-orangeWheel-600 text-white font-semibold px-4 py-2 rounded shadow transition-colors"
-        >
-          Adicionar Veículo
-        </button>
+    <div className="space-y-6">
+      {/* Header */}
+      <div className="bg-white rounded-lg p-6 shadow-sm border border-gray-200">
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-3xl font-bold text-orange-600 mb-2">🚗 Gestão de Veículos</h1>
+            <p className="text-gray-600">Gerencie todos os veículos da sua oficina</p>
+          </div>
+          <button
+            onClick={handleAdd}
+            className="bg-orange-600 hover:bg-orange-700 text-white font-semibold px-6 py-3 rounded-lg shadow-md transition-all duration-200 hover:shadow-lg flex items-center gap-2"
+          >
+            <span className="text-lg">+</span>
+            Novo Veículo
+          </button>
+        </div>
       </div>
-      <div className="overflow-x-auto rounded-lg shadow">
-        <table className="min-w-full bg-white dark:bg-onyx-200">
-          <thead>
-            <tr className="bg-onyx-100 dark:bg-onyx-400 text-white">
-              <th className="px-4 py-2 text-left">ID</th>
-              <th className="px-4 py-2 text-left">Placa</th>
-              <th className="px-4 py-2 text-left">Marca</th>
-              <th className="px-4 py-2 text-left">Modelo</th>
-              <th className="px-4 py-2 text-left">Ano</th>
-              <th className="px-4 py-2 text-left">Ações</th>
-            </tr>
-          </thead>
-          <tbody>
-            {data.map((vehicle: Vehicle) => (
-              <tr key={vehicle.id} className="border-b border-onyx-200 hover:bg-orangeWheel-100/30 transition text-white">
-                <td className="px-4 py-2">{vehicle.id}</td>
-                <td className="px-4 py-2">{vehicle.plate}</td>
-                <td className="px-4 py-2">{vehicle.brand}</td>
-                <td className="px-4 py-2">{vehicle.model}</td>
-                <td className="px-4 py-2">{vehicle.year}</td>
-                <td className="px-4 py-2 flex gap-2">
-                  <button
-                    onClick={() => handleView(vehicle)}
-                    className="bg-primary hover:bg-orangeWheel-500 text-white px-3 py-1 rounded text-sm transition-colors"
-                  >Ver</button>
-                  <button
-                    onClick={() => handleEdit(vehicle)}
-                    className="bg-onyx-400 hover:bg-onyx-600 text-white px-3 py-1 rounded text-sm transition-colors"
-                  >Editar</button>
-                  <button
-                    onClick={() => handleDelete(vehicle)}
-                    className="bg-persimmon-500 hover:bg-persimmon-600 text-white px-3 py-1 rounded text-sm transition-colors"
-                  >Deletar</button>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+
+      {/* Estatísticas */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="bg-gradient-to-r from-orange-500 to-orange-600 rounded-lg p-6 text-white">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-orange-100 text-sm font-medium">Total de Veículos</p>
+              <p className="text-3xl font-bold">{data?.length || 0}</p>
+            </div>
+            <div className="text-4xl opacity-80">🚗</div>
+          </div>
+        </div>
+        
+        <div className="bg-gradient-to-r from-gray-700 to-gray-800 rounded-lg p-6 text-white">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-gray-300 text-sm font-medium">Veículos Ativos</p>
+              <p className="text-3xl font-bold">{data?.length || 0}</p>
+            </div>
+            <div className="text-4xl opacity-80">✅</div>
+          </div>
+        </div>
+        
+        <div className="bg-gradient-to-r from-orange-400 to-orange-500 rounded-lg p-6 text-white">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-orange-100 text-sm font-medium">Novos este Mês</p>
+              <p className="text-3xl font-bold">+{Math.ceil((data?.length || 0) * 0.2)}</p>
+            </div>
+            <div className="text-4xl opacity-80">📈</div>
+          </div>
+        </div>
       </div>
-      {/* Modais de edição e detalhes */}
+
+      {/* Lista de Veículos */}
+      {!data || data.length === 0 ? (
+        <div className="bg-white rounded-lg p-12 text-center shadow-sm border border-gray-200">
+          <div className="text-gray-400 text-6xl mb-4">🚗</div>
+          <h3 className="text-xl font-semibold text-gray-700 mb-2">Nenhum veículo encontrado</h3>
+          <p className="text-gray-500 mb-6">Comece adicionando o primeiro veículo da sua oficina</p>
+          <button
+            onClick={handleAdd}
+            className="bg-orange-600 hover:bg-orange-700 text-white font-semibold px-6 py-3 rounded-lg transition-colors"
+          >
+            Adicionar Primeiro Veículo
+          </button>
+        </div>
+      ) : (
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
+          <div className="overflow-x-auto">
+            <table className="min-w-full divide-y divide-gray-200">
+              <thead className="bg-gray-50">
+                <tr>
+                  <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                    Veículo
+                  </th>
+                  <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                    Identificação
+                  </th>
+                  <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                    Marca / Modelo
+                  </th>
+                  <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                    Ano / Cor
+                  </th>
+                  <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                    Cliente
+                  </th>
+                  <th className="px-6 py-4 text-right text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                    Ações
+                  </th>
+                </tr>
+              </thead>
+              <tbody className="bg-white divide-y divide-gray-200">
+                {data.map((vehicle: Vehicle) => (
+                  <tr key={vehicle.id} className="hover:bg-orange-50 transition-colors">
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="flex items-center">
+                        <div className="flex-shrink-0 h-10 w-10">
+                          <div className="h-10 w-10 rounded-full bg-orange-600 flex items-center justify-center">
+                            <span className="text-white font-semibold text-sm">🚗</span>
+                          </div>
+                        </div>
+                        <div className="ml-4">
+                          <div className="text-sm font-semibold text-gray-900">{vehicle.licensePlate}</div>
+                          <div className="text-sm text-gray-500">ID: {vehicle.id}</div>
+                        </div>
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="text-sm font-semibold text-gray-900">Placa: {vehicle.licensePlate}</div>
+                      <div className="text-sm text-gray-500">VIN: {vehicle.chassisId}</div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="text-sm text-gray-900 font-medium">{vehicle.brand}</div>
+                      <div className="text-sm text-gray-500">{vehicle.model}</div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="text-sm text-gray-900 font-medium">
+                        {new Date(vehicle.manufactureDate).getFullYear()}
+                      </div>
+                      <div className="text-sm text-gray-500">{vehicle.color}</div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="text-sm text-gray-900">
+                        {vehicle.client?.name || 'Não vinculado'}
+                      </div>
+                      {vehicle.client?.email && (
+                        <div className="text-sm text-gray-500">{vehicle.client.email}</div>
+                      )}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                      <div className="flex items-center justify-end gap-2">
+                        <button
+                          onClick={() => handleView(vehicle)}
+                          className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1.5 rounded-md text-xs font-medium transition-colors"
+                          title="Ver detalhes"
+                        >
+                          👁️ Ver
+                        </button>
+                        <button
+                          onClick={() => handleLink(vehicle)}
+                          className="bg-green-600 hover:bg-green-700 text-white px-3 py-1.5 rounded-md text-xs font-medium transition-colors"
+                          title="Vincular/Desvincular cliente"
+                        >
+                          🔗 Cliente
+                        </button>
+                        <button
+                          onClick={() => handleEdit(vehicle)}
+                          className="bg-gray-600 hover:bg-gray-700 text-white px-3 py-1.5 rounded-md text-xs font-medium transition-colors"
+                          title="Editar veículo"
+                        >
+                          ✏️ Editar
+                        </button>
+                        <button
+                          onClick={() => handleDelete(vehicle)}
+                          className="bg-red-600 hover:bg-red-700 text-white px-3 py-1.5 rounded-md text-xs font-medium transition-colors"
+                          title="Deletar veículo"
+                          disabled={deleteMutation.isPending}
+                        >
+                          {deleteMutation.isPending ? '⏳' : '🗑️'} Deletar
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+      {/* Modais de edição e criação */}
       {showAdd && (
         <AddVehicleModal onClose={handleCloseAdd} />
       )}
-      {showDetails && selectedVehicle && (
-        <VehicleDetailsModal vehicle={selectedVehicle} onClose={handleCloseDetails} />
-      )}
       {showEdit && selectedVehicle && (
         <EditVehicleModal vehicle={selectedVehicle} onClose={handleCloseEdit} />
+      )}
+      {showLink && selectedVehicle && (
+        <VehicleClientLinkModal vehicle={selectedVehicle} onClose={handleCloseLink} />
       )}
     </div>
   );

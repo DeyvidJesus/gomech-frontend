@@ -18,7 +18,7 @@ export default function Sidebar() {
   return (
     <aside className="w-full max-w-[220px] bg-[var(--sidebar-bg)] text-[var(--sidebar-text)] m-3.5 rounded h-[calc(100vh-36px)] max-h-screen flex flex-col">
       <div className="p-4 text-center">
-        <img src="/logo.svg" alt="GoMech" width={80} height={80} />
+        <img src="/logo_black.png" alt="GoMech" width={80} height={80} />
       </div>
 
       {/* Informações do usuário */}
@@ -44,7 +44,7 @@ export default function Sidebar() {
           <a className="no-underline text-[var(--sidebar-text)] block p-3 transition-all duration-200 ease-in-out hover:bg-[rgba(255,255,255,0.1)] font-medium" href="/vehicles">Veículos</a>
         </div>
         <div className="text-[var(--sidebar-text)] bg-[var(--sidebar-button-bg)] rounded-sm overflow-hidden hover:bg-[rgba(255, 255, 255, 0.1)] my-0.5">
-          <a className="no-underline text-[var(--sidebar-text)] block p-3 transition-all duration-200 ease-in-out hover:bg-[rgba(255,255,255,0.1)] font-medium" href="/os">Ordens de Serviço</a>
+          <a className="no-underline text-[var(--sidebar-text)] block p-3 transition-all duration-200 ease-in-out hover:bg-[rgba(255,255,255,0.1)] font-medium" href="/service-orders">Ordens de Serviço</a>
         </div>
 
         {/* Menus administrativos apenas para ADMIN */}

@@ -10,11 +10,7 @@ export const rootRoute = createRootRoute({
     if (isAuthPage) {
       return (
         <>
-          <div className="bg-bg text-text min-h-screen flex items-center justify-center">
-            <div className="w-full max-w-md p-8">
-              <Outlet />
-            </div>
-          </div>
+          <Outlet />
           <TanStackRouterDevtools />
         </>
       );

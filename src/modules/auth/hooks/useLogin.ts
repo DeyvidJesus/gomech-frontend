@@ -13,6 +13,8 @@ export function useLogin() {
       return res.data;
     },
     onSuccess: (data) => {
+      localStorage.setItem("token", data.token);
+      
       queryClient.setQueryData(["auth"], data); 
     },
   });

@@ -1,6 +1,5 @@
 import { redirect } from "@tanstack/react-router";
 import axios from "axios";
-import type { SessionData } from "../types/sessionData";
 
 const api = axios.create({
   baseURL: "http://localhost:5080",
@@ -13,12 +12,28 @@ const api = axios.create({
 
 api.interceptors.request.use(
   (config) => {
-    const sessionDataString = localStorage.getItem("REACT_QUERY_OFFLINE_CACHE");
-    const sessionData: SessionData | null = sessionDataString ? JSON.parse(sessionDataString) : null;
-    const { token } = sessionData?.clientState?.queries?.[0]?.state?.data || {}
+    const token = localStorage.getItem("token");
+    
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
+    } else {
+      // Fallback para cache do TanStack Query
+      try {
+        const sessionDataString = localStorage.getItem("tanstack-query-persist-client");
+        if (sessionDataString) {
+          const sessionData = JSON.parse(sessionDataString);
+          const fallbackToken = sessionData?.clientState?.queries?.find(
+            (q: any) => q.queryKey[0] === "auth"
+          )?.state?.data?.token;
+          if (fallbackToken) {
+            config.headers.Authorization = `Bearer ${fallbackToken}`;
+          }
+        }
+      } catch (error) {
+        console.error("Error reading auth cache:", error);
+      }
     }
+    
     return config;
   },
   (error) => Promise.reject(error)

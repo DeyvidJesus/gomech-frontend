@@ -13,11 +13,10 @@ export default function RoleGuard({
   fallback = null 
 }: RoleGuardProps) {
   const { data } = useAuth();
-  const { user } = data || {};
   
-  const hasAccess = user && (
-    roles.includes(user.role) || 
-    user.role === 'ADMIN'
+  const hasAccess = data && (
+    roles.includes(data.role) || 
+    data.role === 'ADMIN'
   );
   
   return hasAccess ? <>{children}</> : <>{fallback}</>;

@@ -3,24 +3,28 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { clientsApi } from "../services/api";
 import type { Client } from "../types/client";
 
-interface EditClientModalProps {
-  client: Client;
+interface CreateClientModalProps {
   onClose: () => void;
 }
 
-export function EditClientModal({ client, onClose }: EditClientModalProps) {
+export function CreateClientModal({ onClose }: CreateClientModalProps) {
   const queryClient = useQueryClient();
-  const [form, setForm] = useState<Partial<Client>>({ ...client });
+  const [form, setForm] = useState<Partial<Client>>({
+    name: '',
+    email: '',
+    phone: '',
+    address: ''
+  });
   const [error, setError] = useState<string | null>(null);
 
   const mutation = useMutation({
-    mutationFn: (data: Partial<Client>) => clientsApi.update(client.id, data),
+    mutationFn: (data: Partial<Client>) => clientsApi.create(data as Client),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["clients"] });
       onClose();
     },
     onError: (error: any) => {
-      setError(error?.response?.data?.message || "Erro ao atualizar cliente. Tente novamente.");
+      setError(error?.response?.data?.message || "Erro ao criar cliente. Tente novamente.");
     },
   });
 
@@ -32,6 +36,7 @@ export function EditClientModal({ client, onClose }: EditClientModalProps) {
     e.preventDefault();
     setError(null);
     
+    // Validação básica
     if (!form.name?.trim()) {
       setError("Nome é obrigatório");
       return;
@@ -45,18 +50,18 @@ export function EditClientModal({ client, onClose }: EditClientModalProps) {
   };
 
   return (
-    <div className="fixed inset-0 bg-[#242424ab] flex items-center justify-center p-4 z-50">
+    <div className="fixed inset-0 bg-[#242424cb] flex items-center justify-center p-4 z-50">
       <div className="bg-white rounded-xl shadow-2xl max-w-md w-full">
         {/* Header */}
         <div className="bg-gradient-to-r from-orange-600 to-orange-700 p-6 rounded-t-xl">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
               <div className="w-12 h-12 bg-white rounded-full flex items-center justify-center">
-                <span className="text-lg font-bold text-white">✏️</span>
+                <span className="text-lg font-bold text-white">👤</span>
               </div>
               <div>
-                <h2 className="text-xl font-bold text-white">Editar Cliente</h2>
-                <p className="text-orange-100">{client.name}</p>
+                <h2 className="text-xl font-bold text-white">Novo Cliente</h2>
+                <p className="text-orange-100">Cadastrar novo cliente</p>
               </div>
             </div>
             <button
@@ -85,7 +90,7 @@ export function EditClientModal({ client, onClose }: EditClientModalProps) {
           {/* Nome */}
           <div>
             <label className="block text-sm font-semibold text-gray-700 mb-2">
-              Nome *
+              Nome Completo *
             </label>
             <input
               type="text"
@@ -93,7 +98,7 @@ export function EditClientModal({ client, onClose }: EditClientModalProps) {
               value={form.name || ''}
               onChange={handleChange}
               className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-colors"
-              placeholder="Digite o nome completo"
+              placeholder="Digite o nome completo do cliente"
               required
             />
           </div>
@@ -144,6 +149,17 @@ export function EditClientModal({ client, onClose }: EditClientModalProps) {
             />
           </div>
 
+          {/* Info */}
+          <div className="bg-orange-50 border border-orange-200 rounded-lg p-3">
+            <div className="flex items-start gap-2">
+              <span className="text-orange-600 mt-0.5">💡</span>
+              <div className="text-orange-800 text-sm">
+                <p className="font-medium mb-1">Dica:</p>
+                <p>Preencha pelo menos o nome e email. Os demais campos podem ser adicionados posteriormente.</p>
+              </div>
+            </div>
+          </div>
+
           {/* Buttons */}
           <div className="flex gap-3 pt-4">
             <button
@@ -162,10 +178,10 @@ export function EditClientModal({ client, onClose }: EditClientModalProps) {
               {mutation.isPending ? (
                 <div className="flex items-center justify-center gap-2">
                   <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                  Salvando...
+                  Criando...
                 </div>
               ) : (
-                'Salvar Alterações'
+                'Criar Cliente'
               )}
             </button>
           </div>

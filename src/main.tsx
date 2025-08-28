@@ -17,13 +17,18 @@ import { clientRoute } from './modules/client/routes/clientRoute.ts'
 import { clientDetailsRoute } from './modules/client/routes/clientDetailsRoute.ts'
 import { vehicleRoute } from './modules/vehicle/routes/vehicleRoute.ts'
 import { vehicleDetailsRoute } from './modules/vehicle/routes/vehicleDetailsRoute.ts'
+import { serviceOrderRoute } from './modules/serviceOrder/routes/serviceOrderRoute.ts'
+import { serviceOrderDetailsRoute } from './modules/serviceOrder/routes/serviceOrderDetailsRoute.ts'
+import { adminRoute } from './modules/admin/routes/adminRoute.ts'
 
 const routeTree = rootRoute.addChildren([
   loginRoute,
   registerRoute,
   dashboardRoute,
   clientRoute.addChildren([clientDetailsRoute]),
-  vehicleRoute.addChildren([vehicleDetailsRoute])
+  vehicleRoute.addChildren([vehicleDetailsRoute]),
+  serviceOrderRoute.addChildren([serviceOrderDetailsRoute]),
+  adminRoute
 ])
 
 const router = createRouter({ routeTree })
