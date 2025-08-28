@@ -2,7 +2,7 @@ import type { SessionData } from "../../../shared/types/sessionData";
 import axios from "axios";
 
 const chatApi = axios.create({
-  baseURL: 'http://localhost:5080',
+  baseURL: "https://clear-ellene-deyvidgondim-8b8a208e.koyeb.app",
   timeout: 120000,
   headers: {
     'Content-Type': 'application/json',
