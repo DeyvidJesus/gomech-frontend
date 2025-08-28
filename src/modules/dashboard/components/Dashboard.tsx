@@ -6,15 +6,14 @@ export default function Dashboard() {
   const { data } = useAuth();
   const { canCreate, canEdit, canDelete } = useRole();
 
-  const { user } = data || {};
-
+  const { name, role } = data || {};
   return (
-    // <ProtectedRoute>
+    <ProtectedRoute>
       <div className="p-8 bg-gray-50 h-[80vh] rounded-lg">
         {/* Welcome Message */}
         <div className="mb-8">
           <h1 className="text-orange-600 text-3xl mb-2 font-bold">
-            Bem-vindo ao GoMech, {user?.email}!
+            Bem-vindo ao GoMech, {name}!
           </h1>
           <p className="text-gray-500 text-lg">
             Aqui você pode gerenciar seus clientes, veículos e ordens de serviço.
@@ -23,16 +22,16 @@ export default function Dashboard() {
           {/* Informações sobre o usuário e suas permissões */}
           <div className={`
           mt-5 p-4 rounded-lg border-2
-          ${user?.role === 'ADMIN'
+          ${role === 'ADMIN'
               ? 'bg-green-50 border-green-500'
               : 'bg-blue-50 border-blue-500'
             }
         `}>
             <h3 className="m-0 mb-2 text-gray-800 font-semibold">
-              {user?.role === 'ADMIN' ? '🛡️ Administrador' : '👤 Usuário'}
+              {role === 'ADMIN' ? '🛡️ Administrador' : '👤 Usuário'}
             </h3>
             <p className="m-0 text-sm text-gray-600">
-              {user?.role === 'ADMIN'
+              {role === 'ADMIN'
                 ? 'Você tem acesso completo ao sistema com permissões de criação, edição e exclusão.'
                 : 'Você tem acesso de visualização aos dados do sistema.'
               }
@@ -122,6 +121,6 @@ export default function Dashboard() {
           </div>
         </div>
       </div>
-    // </ProtectedRoute>
+    </ProtectedRoute>
   );
 } 

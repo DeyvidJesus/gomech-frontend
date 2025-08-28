@@ -1,4 +1,4 @@
-import api from "@/shared/services/axios";
+import api from "../../../shared/services/axios";
 import type { Client } from "../types/client";
 
 export const clientsApi = {

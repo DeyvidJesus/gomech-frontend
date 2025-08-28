@@ -1,9 +1,10 @@
 import { redirect } from "@tanstack/react-router";
 import axios from "axios";
+import type { SessionData } from "../types/sessionData";
 
 const api = axios.create({
-  // baseURL: "http://localhost:5080",
-  baseURL: "https://clear-ellene-deyvidgondim-8b8a208e.koyeb.app",
+  baseURL: "http://localhost:5080",
+  // baseURL: "https://clear-ellene-deyvidgondim-8b8a208e.koyeb.app",
   timeout: 30000,
   headers: {
     "Content-Type": "application/json",
@@ -12,7 +13,9 @@ const api = axios.create({
 
 api.interceptors.request.use(
   (config) => {
-    const token = localStorage.getItem("token");
+    const sessionDataString = localStorage.getItem("REACT_QUERY_OFFLINE_CACHE");
+    const sessionData: SessionData | null = sessionDataString ? JSON.parse(sessionDataString) : null;
+    const { token } = sessionData?.clientState?.queries?.[0]?.state?.data || {}
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }

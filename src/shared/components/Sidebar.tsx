@@ -1,17 +1,18 @@
 import RoleGuard from "../../modules/auth/components/RoleGuard";
 import { useAuth } from "../../modules/auth/hooks/useAuth";
 import { useLogout } from "../../modules/auth/hooks/useLogout";
-import { redirect } from "@tanstack/react-router";
+import { useNavigate } from "@tanstack/react-router";
 import Button from "./Button";
 
 export default function Sidebar() {
   const { data } = useAuth();
-  const { user } = data || {};
+  const { email, role } = data || {};
   const logout = useLogout();
+  const navigate = useNavigate();
 
   const handleLogout = () => {
     logout();
-    redirect({ to: '/login' });
+    navigate({ to: '/login' });
   };
 
   return (
@@ -21,13 +22,13 @@ export default function Sidebar() {
       </div>
 
       {/* Informações do usuário */}
-      {user && (
+      {data && (
         <div className="p-3 mt-0 mx-3 mb-4 bg-[rgba(255, 255, 255, 0.1)] rounded-lg text-xs text-[var(--sidebar-text)]">
           <div className="mb-1.5">
-            <strong>{user?.email}</strong>
+            <strong>{email}</strong>
           </div>
-          <div className={`inline-block px-2 py-1 rounded-xl text-xs font-bold text-white ${user?.role === 'ADMIN' ? 'bg-red-500' : 'bg-blue-500'}`}>
-            {user?.role}
+          <div className={`inline-block px-2 py-1 rounded-xl text-xs font-bold text-white ${role === 'ADMIN' ? 'bg-red-500' : 'bg-blue-500'}`}>
+            {role}
           </div>
         </div>
       )}
@@ -37,10 +38,10 @@ export default function Sidebar() {
           <a className="no-underline text-[var(--sidebar-text)] block p-3 transition-all duration-200 ease-in-out hover:bg-[rgba(255,255,255,0.1)] font-medium" href="/">Dashboard</a>
         </div>
         <div className="text-[var(--sidebar-text)] bg-[var(--sidebar-button-bg)] rounded-sm overflow-hidden hover:bg-[rgba(255, 255, 255, 0.1)] my-0.5">
-          <a className="no-underline text-[var(--sidebar-text)] block p-3 transition-all duration-200 ease-in-out hover:bg-[rgba(255,255,255,0.1)] font-medium" href="/clientes">Clientes</a>
+          <a className="no-underline text-[var(--sidebar-text)] block p-3 transition-all duration-200 ease-in-out hover:bg-[rgba(255,255,255,0.1)] font-medium" href="/clients">Clientes</a>
         </div>
         <div className="text-[var(--sidebar-text)] bg-[var(--sidebar-button-bg)] rounded-sm overflow-hidden hover:bg-[rgba(255, 255, 255, 0.1)] my-0.5">
-          <a className="no-underline text-[var(--sidebar-text)] block p-3 transition-all duration-200 ease-in-out hover:bg-[rgba(255,255,255,0.1)] font-medium" href="/veiculos">Veículos</a>
+          <a className="no-underline text-[var(--sidebar-text)] block p-3 transition-all duration-200 ease-in-out hover:bg-[rgba(255,255,255,0.1)] font-medium" href="/vehicles">Veículos</a>
         </div>
         <div className="text-[var(--sidebar-text)] bg-[var(--sidebar-button-bg)] rounded-sm overflow-hidden hover:bg-[rgba(255, 255, 255, 0.1)] my-0.5">
           <a className="no-underline text-[var(--sidebar-text)] block p-3 transition-all duration-200 ease-in-out hover:bg-[rgba(255,255,255,0.1)] font-medium" href="/os">Ordens de Serviço</a>

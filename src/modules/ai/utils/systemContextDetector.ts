@@ -1,5 +1,5 @@
-import { clientsApi } from "@/modules/client/services/api";
-import { vehiclesApi } from "@/modules/vehicle/services/api";
+import { clientsApi } from "../../../modules/client/services/api";
+import { vehiclesApi } from "../../../modules/vehicle/services/api";
 
 // Palavras-chave para diferentes entidades do sistema
 const CONTEXT_KEYWORDS = {

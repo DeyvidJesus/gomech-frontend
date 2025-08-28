@@ -1,3 +1,4 @@
+import type { SessionData } from "../../../shared/types/sessionData";
 import axios from "axios";
 
 const chatApi = axios.create({
@@ -10,7 +11,9 @@ const chatApi = axios.create({
 
 chatApi.interceptors.request.use(
   (config) => {
-    const token = localStorage.getItem('token');
+    const sessionDataString = localStorage.getItem("REACT_QUERY_OFFLINE_CACHE");
+    const sessionData: SessionData | null = sessionDataString ? JSON.parse(sessionDataString) : null;
+    const { token } = sessionData?.clientState?.queries?.[0]?.state?.data || {}
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }

@@ -1,6 +1,6 @@
 import { useEffect, type ReactNode } from 'react';
 import { useAuth } from '../hooks/useAuth';
-import { redirect } from '@tanstack/react-router';
+import { useNavigate } from '@tanstack/react-router';
 
 interface ProtectedRouteProps {
   children: ReactNode;
@@ -18,13 +18,14 @@ export default function ProtectedRoute({
   )
 }: ProtectedRouteProps) {
   const { data, isLoading } = useAuth();
-  const { user } = data || {};
+  const navigate = useNavigate();
 
   useEffect(() => {
-    if (!isLoading && !user) {
-      redirect({ to: '/login' });
+    if (!isLoading && !data) {
+      navigate({ to: '/login' });
+      return;
     }
-  }, [user, isLoading]);
+  }, [data, isLoading]);
 
   if (isLoading) {
     return (
@@ -34,11 +35,11 @@ export default function ProtectedRoute({
     );
   }
 
-  if (!user) {
+  if (!data) {
     return null;
   }
 
-  if (requiredRole && user?.role !== requiredRole && user?.role !== 'ADMIN') {
+  if (requiredRole && data?.role !== requiredRole && data?.role !== 'ADMIN') {
     return <>{fallback}</>;
   }
 

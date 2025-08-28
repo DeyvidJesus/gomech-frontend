@@ -13,8 +13,18 @@ import { rootRoute } from './app/routes/__root.tsx'
 import { registerRoute } from './modules/auth/routes/registerRoute.ts'
 import { dashboardRoute } from './modules/dashboard/routes/dashboardRoute.ts'
 import { AppProviders } from './app/providers.tsx'
+import { clientRoute } from './modules/client/routes/clientRoute.ts'
+import { clientDetailsRoute } from './modules/client/routes/clientDetailsRoute.ts'
+import { vehicleRoute } from './modules/vehicle/routes/vehicleRoute.ts'
+import { vehicleDetailsRoute } from './modules/vehicle/routes/vehicleDetailsRoute.ts'
 
-const routeTree = rootRoute.addChildren([loginRoute, registerRoute, dashboardRoute])
+const routeTree = rootRoute.addChildren([
+  loginRoute,
+  registerRoute,
+  dashboardRoute,
+  clientRoute.addChildren([clientDetailsRoute]),
+  vehicleRoute.addChildren([vehicleDetailsRoute])
+])
 
 const router = createRouter({ routeTree })
 
