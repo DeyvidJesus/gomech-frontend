@@ -4,12 +4,22 @@ import { vehiclesApi } from "../services/api";
 import type { Vehicle } from "../types/vehicle";
 import { useState } from "react";
 import { EditVehicleModal } from "./EditVehicleModal";
+import { clientsApi } from "../../client/services/api";
+import type { Client } from "../../client/types/client";
 
 export function VehicleDetailsPage() {
   const { id } = useParams({ from: "/vehicles/$id" });
   const navigate = useNavigate();
   const vehicleId = Number(id);
   const [showEdit, setShowEdit] = useState(false);
+
+  const { data: clients } = useQuery<Client[]>({
+    queryKey: ["clients"],
+    queryFn: async () => {
+      const res = await clientsApi.getAll();
+      return res.data;
+    },
+  });
 
   const { data: vehicle, isLoading, error } = useQuery<Vehicle>({
     queryKey: ["vehicle", vehicleId],
@@ -137,20 +147,20 @@ export function VehicleDetailsPage() {
           <h2 className="text-xl font-semibold text-gray-800 mb-4 flex items-center gap-2">
             👤 Proprietário
           </h2>
-          {vehicle.client ? (
+          {vehicle.clientId ? (
             <div className="space-y-4">
               <div className="bg-gray-50 rounded-lg p-4">
                 <label className="text-sm font-medium text-gray-600">Nome</label>
-                <div className="text-lg text-gray-900 font-medium">{vehicle.client.name}</div>
+                <div className="text-lg text-gray-900 font-medium">{clients?.find(client => client.id === vehicle.clientId)?.name}</div>
               </div>
               <div className="bg-gray-50 rounded-lg p-4">
                 <label className="text-sm font-medium text-gray-600">Email</label>
-                <div className="text-lg text-gray-900 font-medium">{vehicle.client.email}</div>
+                <div className="text-lg text-gray-900 font-medium">{clients?.find(client => client.id === vehicle.clientId)?.email}</div>
               </div>
-              {vehicle.client.phone && (
+              {clients?.find(client => client.id === vehicle.clientId)?.phone && (
                 <div className="bg-gray-50 rounded-lg p-4">
                   <label className="text-sm font-medium text-gray-600">Telefone</label>
-                  <div className="text-lg text-gray-900 font-medium">{vehicle.client.phone}</div>
+                  <div className="text-lg text-gray-900 font-medium">{clients.find(client => client.id === vehicle.clientId)?.phone}</div>
                 </div>
               )}
               <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
@@ -160,7 +170,7 @@ export function VehicleDetailsPage() {
                     <p className="text-blue-600 text-sm">Acesse todas as informações e histórico</p>
                   </div>
                   <button
-                    onClick={() => navigate({ to: `/clients/${vehicle.client?.id}` })}
+                    onClick={() => navigate({ to: `/clients/${vehicle.clientId}` })}
                     className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors text-sm"
                   >
                     Ver Cliente

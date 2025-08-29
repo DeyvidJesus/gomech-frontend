@@ -72,7 +72,7 @@ export function EditClientModal({ client, onClose }: EditClientModalProps) {
         </div>
 
         {/* Form */}
-        <form onSubmit={handleSubmit} className="p-6 space-y-4">
+        <form onSubmit={handleSubmit} className="p-6 space-y-4 overflow-y-auto max-h-[80vh]">
           {error && (
             <div className="bg-red-50 border border-red-200 rounded-lg p-3">
               <div className="flex items-center gap-2">
@@ -141,6 +141,50 @@ export function EditClientModal({ client, onClose }: EditClientModalProps) {
               rows={3}
               className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-colors resize-none"
               placeholder="Endereço completo do cliente"
+            />
+          </div>
+
+          {/* Documento */}
+          <div>
+            <label className="block text-sm font-semibold text-gray-700 mb-2">
+              Documento (CPF/CNPJ)
+            </label>
+            <input
+              type="text"
+              name="document"
+              value={form.document || ''}
+              onChange={handleChange}
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-colors"
+              placeholder="000.000.000-00"
+            />
+          </div>
+
+          {/* Data de Nascimento */}
+          <div>
+            <label className="block text-sm font-semibold text-gray-700 mb-2">
+              Data de Nascimento
+            </label>
+            <input
+              type="date"
+              name="birthDate"
+              value={form.birthDate || ''}
+              onChange={handleChange}
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-colors"
+            />
+          </div>
+
+          {/* Observações */}
+          <div>
+            <label className="block text-sm font-semibold text-gray-700 mb-2">
+              Observações
+            </label>
+            <textarea
+              name="observations"
+              value={form.observations || ''}
+              onChange={handleChange}
+              rows={3}
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-colors resize-none"
+              placeholder="Observações adicionais sobre o cliente"
             />
           </div>
 

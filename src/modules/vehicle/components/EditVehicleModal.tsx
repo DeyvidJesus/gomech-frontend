@@ -136,9 +136,9 @@ export function EditVehicleModal({ vehicle, onClose }: EditVehicleModalProps) {
                 </option>
               ))}
             </select>
-            {vehicle.client && (
+            {vehicle.clientId && (
               <p className="text-sm text-gray-600 mt-1">
-                Cliente atual: <span className="font-medium">{vehicle.client.name}</span>
+                Cliente atual: <span className="font-medium">{clients.find(client => client.id === vehicle.clientId)?.name}</span>
               </p>
             )}
           </div>
@@ -269,8 +269,6 @@ export function EditVehicleModal({ vehicle, onClose }: EditVehicleModalProps) {
               placeholder="Informações adicionais sobre o veículo..."
             />
           </div>
-
-
 
           {/* Buttons */}
           <div className="flex gap-3 pt-4">

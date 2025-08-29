@@ -6,9 +6,18 @@ import { EditVehicleModal } from "./EditVehicleModal";
 import { AddVehicleModal } from "./AddVehicleModal";
 import VehicleClientLinkModal from "./VehicleClientLinkModal";
 import { useNavigate } from "@tanstack/react-router";
+import type { Client } from "../../client/types/client";
+import { clientsApi } from "../../client/services/api";
 
 export function VehicleList() {
   const queryClient = useQueryClient();
+  const { data: clients } = useQuery<Client[]>({
+    queryKey: ["clients"],
+    queryFn: async () => {
+      const res = await clientsApi.getAll();
+      return res.data;
+    },
+  });
   const { data, isLoading, error } = useQuery<Vehicle[]>({
     queryKey: ["vehicles"],
     queryFn: async () => {
@@ -215,10 +224,10 @@ export function VehicleList() {
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="text-sm text-gray-900">
-                        {vehicle.client?.name || 'Não vinculado'}
+                        {vehicle.clientId ? clients?.find(client => client.id === vehicle.clientId)?.name : 'Não vinculado'}
                       </div>
-                      {vehicle.client?.email && (
-                        <div className="text-sm text-gray-500">{vehicle.client.email}</div>
+                      {vehicle.clientId && (
+                        <div className="text-sm text-gray-500">{clients?.find(client => client.id === vehicle.clientId)?.email}</div>
                       )}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">

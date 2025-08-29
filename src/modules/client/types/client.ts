@@ -6,6 +6,9 @@ export interface Client {
   email: string;
   phone?: string;
   address?: string;
+  document?: string;
+  birthDate?: string;
+  observations?: string;
   createdAt: string;
   updatedAt: string;
   vehicles?: Vehicle[];

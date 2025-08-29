@@ -1,5 +1,3 @@
-import type { Client } from "@/modules/client/types/client";
-
 export interface Vehicle {
   id: number;
   clientId?: number;
@@ -13,5 +11,4 @@ export interface Vehicle {
   chassisId: string;
   createdAt?: string;
   updatedAt?: string;
-  client?: Client;
 }
