@@ -1,7 +1,8 @@
 import { useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { serviceOrderItemsApi } from "../services/api";
-import type { ServiceOrderItem } from "../types/serviceOrder";
+import type { ServiceOrderItemCreateDTO } from "../types/serviceOrder";
+import { itemTypeDisplayMapping } from "../types/serviceOrder";
 
 interface AddServiceOrderItemModalProps {
   serviceOrderId: number;
@@ -12,20 +13,19 @@ export default function AddServiceOrderItemModal({ serviceOrderId, onClose }: Ad
   const queryClient = useQueryClient();
   const [error, setError] = useState<string | null>(null);
 
-  const [form, setForm] = useState<Partial<ServiceOrderItem>>({
-    type: 'service',
+  const [form, setForm] = useState<ServiceOrderItemCreateDTO>({
+    itemType: 'SERVICE',
     description: '',
     quantity: 1,
     unitPrice: 0,
-    notes: ''
+    productCode: '',
+    requiresStock: false,
+    observations: ''
   });
 
   const mutation = useMutation({
-    mutationFn: (data: Partial<ServiceOrderItem>) => 
-      serviceOrderItemsApi.create(serviceOrderId, {
-        ...data,
-        totalPrice: (data.quantity || 1) * (data.unitPrice || 0)
-      }),
+    mutationFn: (data: ServiceOrderItemCreateDTO) => 
+      serviceOrderItemsApi.create(serviceOrderId, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["serviceOrderItems", serviceOrderId] });
       queryClient.invalidateQueries({ queryKey: ["serviceOrder", serviceOrderId] });
@@ -37,12 +37,15 @@ export default function AddServiceOrderItemModal({ serviceOrderId, onClose }: Ad
   });
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
-    const { name, value } = e.target;
+    const { name, value, type } = e.target;
+    const checked = (e.target as HTMLInputElement).checked;
     setForm({ 
       ...form, 
-      [name]: name === 'quantity' || name === 'unitPrice' ? Number(value) : value 
+      [name]: type === 'checkbox' ? checked : name === 'quantity' || name === 'unitPrice' ? Number(value) : value 
     });
   };
+
+  const totalPrice = (form.quantity || 1) * (form.unitPrice || 0);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -53,183 +56,204 @@ export default function AddServiceOrderItemModal({ serviceOrderId, onClose }: Ad
       setError("Descrição é obrigatória");
       return;
     }
+
     if (!form.quantity || form.quantity <= 0) {
       setError("Quantidade deve ser maior que zero");
       return;
     }
+
     if (!form.unitPrice || form.unitPrice < 0) {
-      setError("Valor unitário deve ser maior ou igual a zero");
+      setError("Preço unitário deve ser maior ou igual a zero");
       return;
     }
     
     mutation.mutate(form);
   };
 
-  const totalPrice = (form.quantity || 1) * (form.unitPrice || 0);
-
   return (
-    <div className="fixed inset-0 bg-[#242424cb] flex items-center justify-center p-4 z-50">
-      <div className="bg-white rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+    <div className="fixed inset-0 bg-[#242424cb] flex items-center justify-center z-50 p-4">
+      <div className="bg-white rounded-lg shadow-lg w-full max-w-2xl max-h-[95vh] overflow-y-auto">
         {/* Header */}
-        <div className="bg-gradient-to-r from-orange-600 to-orange-700 p-6 rounded-t-lg">
+        <div className="bg-orange-600 text-white p-4 sm:p-6 rounded-t-lg">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <div className="w-12 h-12 bg-white rounded-full flex items-center justify-center">
-                <span className="text-lg font-bold text-white">🔧</span>
-              </div>
+              <span className="text-2xl sm:text-3xl">🔧</span>
               <div>
-                <h2 className="text-xl font-bold text-white">Adicionar Item</h2>
-                <p className="text-orange-100">Adicione um serviço ou peça à OS</p>
+                <h2 className="text-xl sm:text-2xl font-bold">Adicionar Item</h2>
+                <p className="text-orange-100 text-sm sm:text-base">Adicionar item à ordem de serviço</p>
               </div>
             </div>
             <button
               onClick={onClose}
-              className="text-white hover:bg-white rounded-lg p-2 transition-colors"
+              className="text-orange-100 hover:text-white p-2 rounded-lg hover:bg-orange-700 transition-colors"
             >
               ✕
             </button>
           </div>
         </div>
 
-        {/* Body */}
-        <form onSubmit={handleSubmit} className="p-6 space-y-6 overflow-y-auto max-h-[80vh]">
-          {/* Exibição de erro */}
+        <form onSubmit={handleSubmit} className="p-4 sm:p-6 space-y-4 sm:space-y-6">
           {error && (
-            <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-              <div className="flex items-center gap-2">
-                <span className="text-red-600">⚠️</span>
-                <span className="text-red-700 text-sm font-medium">{error}</span>
-              </div>
+            <div className="bg-red-50 border border-red-200 rounded-lg p-4 text-red-700 text-sm">
+              {error}
             </div>
           )}
 
-          {/* Tipo */}
-          <div>
-            <label htmlFor="type" className="block text-sm font-semibold text-gray-700 mb-2">
-              Tipo *
-            </label>
-            <select
-              id="type"
-              name="type"
-              value={form.type || 'service'}
-              onChange={handleChange}
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-colors"
-              required
-            >
-              <option value="service">🔧 Serviço</option>
-              <option value="part">🔩 Peça</option>
-            </select>
+          {/* Tipo e Código do Produto */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Tipo *
+              </label>
+              <select
+                name="itemType"
+                value={form.itemType}
+                onChange={handleChange}
+                className="w-full border border-gray-300 rounded-lg px-3 sm:px-4 py-2 sm:py-3 focus:outline-none focus:ring-2 focus:ring-orange-500 text-sm sm:text-base"
+                required
+              >
+                <option value="SERVICE">Serviço</option>
+                <option value="PART">Peça</option>
+                <option value="MATERIAL">Material</option>
+                <option value="LABOR">Mão de Obra</option>
+              </select>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Código do Produto
+              </label>
+              <input
+                type="text"
+                name="productCode"
+                value={form.productCode}
+                onChange={handleChange}
+                className="w-full border border-gray-300 rounded-lg px-3 sm:px-4 py-2 sm:py-3 focus:outline-none focus:ring-2 focus:ring-orange-500 text-sm sm:text-base"
+                placeholder="Ex: PC001, SRV025"
+              />
+            </div>
           </div>
 
           {/* Descrição */}
           <div>
-            <label htmlFor="description" className="block text-sm font-semibold text-gray-700 mb-2">
+            <label className="block text-sm font-medium text-gray-700 mb-2">
               Descrição *
             </label>
             <textarea
-              id="description"
               name="description"
-              value={form.description || ''}
+              value={form.description}
               onChange={handleChange}
               rows={3}
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-colors resize-none"
-              placeholder={form.type === 'service' ? 'Ex: Troca de óleo e filtro' : 'Ex: Filtro de óleo'}
+              className="w-full border border-gray-300 rounded-lg px-3 sm:px-4 py-2 sm:py-3 focus:outline-none focus:ring-2 focus:ring-orange-500 text-sm sm:text-base"
+              placeholder="Descreva o item, peça ou serviço"
               required
             />
           </div>
 
-          {/* Quantidade e Valor Unitário */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {/* Quantidade e Preço */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
             <div>
-              <label htmlFor="quantity" className="block text-sm font-semibold text-gray-700 mb-2">
+              <label className="block text-sm font-medium text-gray-700 mb-2">
                 Quantidade *
               </label>
               <input
-                id="quantity"
-                name="quantity"
                 type="number"
+                name="quantity"
+                value={form.quantity}
+                onChange={handleChange}
                 min="1"
                 step="1"
-                value={form.quantity || 1}
-                onChange={handleChange}
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-colors"
+                className="w-full border border-gray-300 rounded-lg px-3 sm:px-4 py-2 sm:py-3 focus:outline-none focus:ring-2 focus:ring-orange-500 text-sm sm:text-base"
                 required
               />
             </div>
 
             <div>
-              <label htmlFor="unitPrice" className="block text-sm font-semibold text-gray-700 mb-2">
-                Valor Unitário (R$) *
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Preço Unitário (R$) *
               </label>
               <input
-                id="unitPrice"
-                name="unitPrice"
                 type="number"
+                name="unitPrice"
+                value={form.unitPrice}
+                onChange={handleChange}
                 min="0"
                 step="0.01"
-                value={form.unitPrice || ''}
-                onChange={handleChange}
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-colors"
+                className="w-full border border-gray-300 rounded-lg px-3 sm:px-4 py-2 sm:py-3 focus:outline-none focus:ring-2 focus:ring-orange-500 text-sm sm:text-base"
                 placeholder="0,00"
                 required
               />
             </div>
           </div>
 
-          {/* Total */}
-          <div className="bg-orange-50 border border-orange-200 rounded-lg p-4">
-            <div className="flex items-center justify-between">
-              <span className="text-orange-700 font-semibold">Valor Total:</span>
-              <span className="text-orange-600 text-xl font-bold">
-                R$ {totalPrice.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-              </span>
-            </div>
+          {/* Controle de Estoque */}
+          <div className="flex items-center gap-3">
+            <input
+              type="checkbox"
+              id="requiresStock"
+              name="requiresStock"
+              checked={form.requiresStock}
+              onChange={handleChange}
+              className="w-4 h-4 text-orange-600 bg-gray-100 border-gray-300 rounded focus:ring-orange-500"
+            />
+            <label htmlFor="requiresStock" className="text-sm font-medium text-gray-700">
+              Este item requer controle de estoque
+            </label>
           </div>
 
           {/* Observações */}
           <div>
-            <label htmlFor="notes" className="block text-sm font-semibold text-gray-700 mb-2">
+            <label className="block text-sm font-medium text-gray-700 mb-2">
               Observações
             </label>
             <textarea
-              id="notes"
-              name="notes"
-              value={form.notes || ''}
+              name="observations"
+              value={form.observations}
               onChange={handleChange}
-              rows={2}
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-colors resize-none"
-              placeholder="Observações adicionais sobre o item..."
+              rows={3}
+              className="w-full border border-gray-300 rounded-lg px-3 sm:px-4 py-2 sm:py-3 focus:outline-none focus:ring-2 focus:ring-orange-500 text-sm sm:text-base"
+              placeholder="Observações adicionais sobre o item"
             />
           </div>
 
-          {/* Info */}
-          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-            <div className="flex items-start gap-2">
-              <span className="text-blue-600 mt-0.5">💡</span>
-              <div className="text-sm text-blue-700">
-                <p className="font-medium mb-1">Informações importantes:</p>
-                <ul className="text-xs space-y-1 text-blue-600">
-                  <li>• O item será adicionado como "não aplicado"</li>
-                  <li>• Você pode aplicar/desaplicar itens na tela de detalhes</li>
-                  <li>• Apenas itens aplicados contam no valor total da OS</li>
-                </ul>
+          {/* Resumo do item */}
+          <div className="bg-gray-50 rounded-lg p-4">
+            <h3 className="font-medium text-gray-800 mb-3 text-sm sm:text-base">Resumo do Item</h3>
+            <div className="space-y-2 text-sm">
+              <div className="flex justify-between">
+                <span>Tipo:</span>
+                <span className="font-medium">{itemTypeDisplayMapping[form.itemType]}</span>
+              </div>
+              <div className="flex justify-between">
+                <span>Quantidade:</span>
+                <span className="font-medium">{form.quantity}</span>
+              </div>
+              <div className="flex justify-between">
+                <span>Preço unitário:</span>
+                <span className="font-medium">R$ {(form.unitPrice || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span>
+              </div>
+              <div className="flex justify-between font-bold text-base sm:text-lg border-t pt-2">
+                <span>Total:</span>
+                <span className="text-orange-600">
+                  R$ {totalPrice.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                </span>
               </div>
             </div>
           </div>
 
           {/* Buttons */}
-          <div className="flex gap-3 pt-4">
+          <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-end pt-4 sm:pt-6 border-t">
             <button
               type="button"
               onClick={onClose}
-              className="flex-1 px-4 py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors font-medium"
+              className="px-4 sm:px-6 py-2 sm:py-3 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors text-sm sm:text-base order-2 sm:order-1"
             >
               Cancelar
             </button>
             <button
               type="submit"
               disabled={mutation.isPending}
-              className="flex-1 bg-gradient-to-r from-orange-600 to-orange-700 hover:from-orange-700 hover:to-orange-800 disabled:from-gray-400 disabled:to-gray-500 text-white font-semibold py-3 px-4 rounded-lg transition-all duration-200 flex items-center justify-center gap-2"
+              className="px-4 sm:px-6 py-2 sm:py-3 bg-orange-600 hover:bg-orange-700 text-white rounded-lg transition-colors disabled:opacity-50 flex items-center gap-2 justify-center text-sm sm:text-base order-1 sm:order-2"
             >
               {mutation.isPending ? (
                 <>
@@ -238,7 +262,7 @@ export default function AddServiceOrderItemModal({ serviceOrderId, onClose }: Ad
                 </>
               ) : (
                 <>
-                  <span>➕</span>
+                  <span>✅</span>
                   Adicionar Item
                 </>
               )}

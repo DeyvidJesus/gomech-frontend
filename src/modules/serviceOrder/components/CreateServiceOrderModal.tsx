@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useMutation, useQueryClient, useQuery } from "@tanstack/react-query";
 import { serviceOrdersApi } from "../services/api";
 import { vehiclesApi } from "../../vehicle/services/api";
-import type { ServiceOrder } from "../types/serviceOrder";
+import type { ServiceOrderCreateDTO } from "../types/serviceOrder";
 
 interface CreateServiceOrderModalProps {
   onClose: () => void;
@@ -12,23 +12,27 @@ export default function CreateServiceOrderModal({ onClose }: CreateServiceOrderM
   const queryClient = useQueryClient();
   const [error, setError] = useState<string | null>(null);
 
-  // Buscar veículos para o select
   const { data: vehicles = [] } = useQuery({
     queryKey: ["vehicles"],
     queryFn: () => vehiclesApi.getAll().then(res => res.data),
   });
 
-  const [form, setForm] = useState<Partial<ServiceOrder>>({
-    vehicleId: undefined,
+  const [form, setForm] = useState<ServiceOrderCreateDTO>({
+    vehicleId: 0,
+    clientId: 0,
     description: '',
-    priority: 'medium',
-    status: 'pending',
-    estimatedCompletionDate: '',
-    notes: ''
+    problemDescription: '',
+    laborCost: 0,
+    partsCost: 0,
+    discount: 0,
+    estimatedCompletion: '',
+    observations: '',
+    technicianName: '',
+    currentKilometers: undefined
   });
 
   const mutation = useMutation({
-    mutationFn: (data: Partial<ServiceOrder>) => serviceOrdersApi.create(data),
+    mutationFn: (data: ServiceOrderCreateDTO) => serviceOrdersApi.create(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["serviceOrders"] });
       onClose();
@@ -42,26 +46,30 @@ export default function CreateServiceOrderModal({ onClose }: CreateServiceOrderM
     const { name, value } = e.target;
     setForm({ 
       ...form, 
-      [name]: name === 'vehicleId' ? (value ? Number(value) : undefined) : value 
+      [name]: name === 'vehicleId' || name === 'clientId' || name === 'laborCost' || name === 'partsCost' || name === 'discount' || name === 'currentKilometers'
+        ? (value ? Number(value) : (name === 'currentKilometers' ? undefined : 0))
+        : value 
     });
   };
 
-  // Definir clientId automaticamente baseado no veículo selecionado
-  const selectedVehicle = vehicles.find(v => v.id === form.vehicleId);
-  const clientId = selectedVehicle?.clientId;
+  // Quando veículo é selecionado, atualizar clientId automaticamente
+  const handleVehicleChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const vehicleId = Number(e.target.value);
+    const vehicle = vehicles.find(v => v.id === vehicleId);
+    setForm({
+      ...form,
+      vehicleId,
+      clientId: vehicle?.clientId || 0
+    });
+  };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
     
     // Validação básica
-    if (!form.vehicleId) {
-      setError("Veículo é obrigatório");
-      return;
-    }
-    
-    if (!clientId) {
-      setError("Não foi possível identificar o cliente do veículo selecionado");
+    if (!form.vehicleId || form.vehicleId === 0) {
+      setError("Selecione um veículo");
       return;
     }
     
@@ -69,207 +77,269 @@ export default function CreateServiceOrderModal({ onClose }: CreateServiceOrderM
       setError("Descrição é obrigatória");
       return;
     }
+
+    if (!form.clientId || form.clientId === 0) {
+      setError("Cliente não encontrado para o veículo selecionado");
+      return;
+    }
     
-    // Incluir clientId automaticamente baseado no veículo selecionado
-    const orderData = {
-      ...form,
-      clientId: clientId
-    };
-    
-    console.log('Enviando dados da OS:', orderData); // Para debug
-    
-    mutation.mutate(orderData);
+    mutation.mutate(form);
   };
 
   return (
-    <div className="fixed inset-0 bg-[#242424cb] flex items-center justify-center p-4 z-50">
-      <div className="bg-white rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+    <div className="fixed inset-0 bg-[#242424cb] flex items-center justify-center z-50 p-4">
+      <div className="bg-white rounded-lg shadow-lg w-full max-w-4xl max-h-[95vh] overflow-y-auto">
         {/* Header */}
-        <div className="bg-gradient-to-r from-orange-600 to-orange-700 p-6 rounded-t-lg">
+        <div className="bg-orange-600 text-white p-4 sm:p-6 rounded-t-lg">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <div className="w-12 h-12 bg-white rounded-full flex items-center justify-center">
-                <span className="text-lg font-bold text-white">📋</span>
-              </div>
+              <span className="text-2xl sm:text-3xl">📋</span>
               <div>
-                <h2 className="text-xl font-bold text-white">Nova Ordem de Serviço</h2>
-                <p className="text-orange-100">Crie uma nova OS para um cliente</p>
+                <h2 className="text-xl sm:text-2xl font-bold">Nova Ordem de Serviço</h2>
+                <p className="text-orange-100 text-sm sm:text-base">Criar uma nova OS</p>
               </div>
             </div>
             <button
               onClick={onClose}
-              className="text-white hover:bg-white hover:ity-20 rounded-lg p-2 transition-colors"
+              className="text-orange-100 hover:text-white p-2 rounded-lg hover:bg-orange-700 transition-colors"
             >
               ✕
             </button>
           </div>
         </div>
 
-        {/* Body */}
-        <form onSubmit={handleSubmit} className="p-6 space-y-6 overflow-y-auto max-h-[80vh]">
-          {/* Exibição de erro */}
+        <form onSubmit={handleSubmit} className="p-4 sm:p-6 space-y-4 sm:space-y-6">
           {error && (
-            <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-              <div className="flex items-center gap-2">
-                <span className="text-red-600">⚠️</span>
-                <span className="text-red-700 text-sm font-medium">{error}</span>
-              </div>
+            <div className="bg-red-50 border border-red-200 rounded-lg p-4 text-red-700 text-sm">
+              {error}
             </div>
           )}
 
-          {/* Veículo e Prioridade */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <label htmlFor="vehicleId" className="block text-sm font-semibold text-gray-700 mb-2">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
+            {/* Veículo */}
+            <div className="lg:col-span-2">
+              <label className="block text-sm font-medium text-gray-700 mb-2">
                 Veículo *
               </label>
               <select
-                id="vehicleId"
                 name="vehicleId"
-                value={form.vehicleId || ''}
-                onChange={handleChange}
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-colors"
+                value={form.vehicleId}
+                onChange={handleVehicleChange}
+                className="w-full border border-gray-300 rounded-lg px-3 sm:px-4 py-2 sm:py-3 focus:outline-none focus:ring-2 focus:ring-orange-500 text-sm sm:text-base"
                 required
               >
-                <option value="">Selecione um veículo</option>
+                <option value={0}>Selecione um veículo</option>
                 {vehicles.map((vehicle) => (
                   <option key={vehicle.id} value={vehicle.id}>
                     {vehicle.brand} {vehicle.model} - {vehicle.licensePlate}
-                    {vehicle.client && ` (${vehicle.client.name})`}
                   </option>
                 ))}
               </select>
-              {selectedVehicle && (
-                <div className="mt-2">
-                  {selectedVehicle.client ? (
-                    <div className="bg-green-50 border border-green-200 rounded-lg p-3">
-                      <div className="flex items-center gap-2">
-                        <span className="text-green-600">✓</span>
-                        <div>
-                          <p className="text-sm font-medium text-green-800">
-                            Cliente: {selectedVehicle.client.name}
-                          </p>
-                          <p className="text-xs text-green-600">
-                            {selectedVehicle.client.email} • ID: {selectedVehicle.clientId}
-                          </p>
-                        </div>
-                      </div>
-                    </div>
-                  ) : (
-                    <div className="bg-red-50 border border-red-200 rounded-lg p-3">
-                      <div className="flex items-center gap-2">
-                        <span className="text-red-600">⚠️</span>
-                        <p className="text-sm font-medium text-red-800">
-                          Este veículo não possui proprietário cadastrado
-                        </p>
-                      </div>
-                    </div>
-                  )}
-                </div>
-              )}
             </div>
 
+            {/* Cliente (read-only) */}
             <div>
-              <label htmlFor="priority" className="block text-sm font-semibold text-gray-700 mb-2">
-                Prioridade
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Cliente
               </label>
-              <select
-                id="priority"
-                name="priority"
-                value={form.priority || 'medium'}
+              <input
+                type="text"
+                value=""
+                className="w-full border border-gray-300 rounded-lg px-3 sm:px-4 py-2 sm:py-3 bg-gray-50 text-gray-600 text-sm sm:text-base"
+                placeholder="Cliente será preenchido automaticamente"
+                readOnly
+              />
+            </div>
+
+            {/* Técnico */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Técnico Responsável
+              </label>
+              <input
+                type="text"
+                name="technicianName"
+                value={form.technicianName}
                 onChange={handleChange}
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-colors"
-              >
-                <option value="low">🔽 Baixa</option>
-                <option value="medium">➡️ Média</option>
-                <option value="high">🔼 Alta</option>
-                <option value="urgent">🚨 Urgente</option>
-              </select>
+                className="w-full border border-gray-300 rounded-lg px-3 sm:px-4 py-2 sm:py-3 focus:outline-none focus:ring-2 focus:ring-orange-500 text-sm sm:text-base"
+                placeholder="Nome do técnico"
+              />
+            </div>
+
+            {/* Quilometragem */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Quilometragem Atual
+              </label>
+              <input
+                type="number"
+                name="currentKilometers"
+                value={form.currentKilometers || ''}
+                onChange={handleChange}
+                className="w-full border border-gray-300 rounded-lg px-3 sm:px-4 py-2 sm:py-3 focus:outline-none focus:ring-2 focus:ring-orange-500 text-sm sm:text-base"
+                placeholder="Ex: 85000"
+                min="0"
+              />
+            </div>
+
+            {/* Previsão */}
+            <div className="lg:col-span-2">
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Previsão de Conclusão
+              </label>
+              <input
+                type="datetime-local"
+                name="estimatedCompletion"
+                value={form.estimatedCompletion}
+                onChange={handleChange}
+                className="w-full border border-gray-300 rounded-lg px-3 sm:px-4 py-2 sm:py-3 focus:outline-none focus:ring-2 focus:ring-orange-500 text-sm sm:text-base"
+              />
             </div>
           </div>
 
           {/* Descrição */}
           <div>
-            <label htmlFor="description" className="block text-sm font-semibold text-gray-700 mb-2">
-              Descrição do Serviço *
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Descrição *
             </label>
             <textarea
-              id="description"
               name="description"
-              value={form.description || ''}
+              value={form.description}
               onChange={handleChange}
-              rows={4}
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-colors resize-none"
-              placeholder="Descreva o problema ou serviço solicitado..."
+              rows={3}
+              className="w-full border border-gray-300 rounded-lg px-3 sm:px-4 py-2 sm:py-3 focus:outline-none focus:ring-2 focus:ring-orange-500 text-sm sm:text-base"
+              placeholder="Descreva brevemente os serviços a serem realizados"
               required
             />
           </div>
 
-          {/* Data de Previsão */}
+          {/* Descrição do Problema */}
           <div>
-            <label htmlFor="estimatedCompletionDate" className="block text-sm font-semibold text-gray-700 mb-2">
-              Previsão de Conclusão
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Descrição do Problema
             </label>
-            <input
-              id="estimatedCompletionDate"
-              name="estimatedCompletionDate"
-              type="datetime-local"
-              value={form.estimatedCompletionDate || ''}
+            <textarea
+              name="problemDescription"
+              value={form.problemDescription}
               onChange={handleChange}
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-colors"
+              rows={3}
+              className="w-full border border-gray-300 rounded-lg px-3 sm:px-4 py-2 sm:py-3 focus:outline-none focus:ring-2 focus:ring-orange-500 text-sm sm:text-base"
+              placeholder="Descreva o problema relatado pelo cliente"
             />
+          </div>
+
+          {/* Valores */}
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-6">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Custo de Mão de Obra (R$)
+              </label>
+              <input
+                type="number"
+                name="laborCost"
+                value={form.laborCost}
+                onChange={handleChange}
+                step="0.01"
+                min="0"
+                className="w-full border border-gray-300 rounded-lg px-3 sm:px-4 py-2 sm:py-3 focus:outline-none focus:ring-2 focus:ring-orange-500 text-sm sm:text-base"
+                placeholder="0,00"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Custo de Peças (R$)
+              </label>
+              <input
+                type="number"
+                name="partsCost"
+                value={form.partsCost}
+                onChange={handleChange}
+                step="0.01"
+                min="0"
+                className="w-full border border-gray-300 rounded-lg px-3 sm:px-4 py-2 sm:py-3 focus:outline-none focus:ring-2 focus:ring-orange-500 text-sm sm:text-base"
+                placeholder="0,00"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Desconto (R$)
+              </label>
+              <input
+                type="number"
+                name="discount"
+                value={form.discount}
+                onChange={handleChange}
+                step="0.01"
+                min="0"
+                className="w-full border border-gray-300 rounded-lg px-3 sm:px-4 py-2 sm:py-3 focus:outline-none focus:ring-2 focus:ring-orange-500 text-sm sm:text-base"
+                placeholder="0,00"
+              />
+            </div>
           </div>
 
           {/* Observações */}
           <div>
-            <label htmlFor="notes" className="block text-sm font-semibold text-gray-700 mb-2">
+            <label className="block text-sm font-medium text-gray-700 mb-2">
               Observações
             </label>
             <textarea
-              id="notes"
-              name="notes"
-              value={form.notes || ''}
+              name="observations"
+              value={form.observations}
               onChange={handleChange}
               rows={3}
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-colors resize-none"
-              placeholder="Observações internas, instruções especiais, etc..."
+              className="w-full border border-gray-300 rounded-lg px-3 sm:px-4 py-2 sm:py-3 focus:outline-none focus:ring-2 focus:ring-orange-500 text-sm sm:text-base"
+              placeholder="Observações adicionais sobre a ordem de serviço"
             />
           </div>
 
-          {/* Info */}
-          <div className="bg-orange-50 border border-orange-200 rounded-lg p-4">
-            <div className="flex items-start gap-2">
-              <span className="text-orange-600 mt-0.5">💡</span>
-              <div className="text-sm text-orange-700">
-                <p className="font-medium mb-1">Informações importantes:</p>
-                <ul className="text-xs space-y-1 text-orange-600">
-                  <li>• A OS será criada com status "Pendente"</li>
-                  <li>• O cliente será identificado automaticamente pelo veículo selecionado</li>
-                  <li>• Você poderá adicionar itens e serviços após a criação</li>
-                  <li>• O número da OS será gerado automaticamente</li>
-                  {selectedVehicle && selectedVehicle.client && (
-                    <li className="text-green-600 font-medium">
-                      • OS será criada para: {selectedVehicle.client.name}
-                    </li>
-                  )}
-                </ul>
+          {/* Resumo de valores */}
+          {((form.laborCost || 0) > 0 || (form.partsCost || 0) > 0 || (form.discount || 0) > 0) && (
+            <div className="bg-gray-50 rounded-lg p-4">
+              <h3 className="font-medium text-gray-800 mb-3 text-sm sm:text-base">Resumo Financeiro</h3>
+              <div className="space-y-2 text-sm">
+                <div className="flex justify-between">
+                  <span>Mão de obra:</span>
+                  <span>R$ {(form.laborCost || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span>Peças:</span>
+                  <span>R$ {(form.partsCost || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span>Subtotal:</span>
+                  <span>R$ {((form.laborCost || 0) + (form.partsCost || 0)).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span>
+                </div>
+                {(form.discount || 0) > 0 && (
+                  <div className="flex justify-between text-red-600">
+                    <span>Desconto:</span>
+                    <span>- R$ {(form.discount || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span>
+                  </div>
+                )}
+                <div className="flex justify-between font-bold text-base sm:text-lg border-t pt-2">
+                  <span>Total:</span>
+                  <span className="text-orange-600">
+                    R$ {((form.laborCost || 0) + (form.partsCost || 0) - (form.discount || 0)).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                  </span>
+                </div>
               </div>
             </div>
-          </div>
+          )}
 
           {/* Buttons */}
-          <div className="flex gap-3 pt-4">
+          <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-end pt-4 sm:pt-6 border-t">
             <button
               type="button"
               onClick={onClose}
-              className="flex-1 px-4 py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors font-medium"
+              className="px-4 sm:px-6 py-2 sm:py-3 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors text-sm sm:text-base order-2 sm:order-1"
             >
               Cancelar
             </button>
             <button
               type="submit"
               disabled={mutation.isPending}
-              className="flex-1 bg-gradient-to-r from-orange-600 to-orange-700 hover:from-orange-700 hover:to-orange-800 disabled:from-gray-400 disabled:to-gray-500 text-white font-semibold py-3 px-4 rounded-lg transition-all duration-200 flex items-center justify-center gap-2"
+              className="px-4 sm:px-6 py-2 sm:py-3 bg-orange-600 hover:bg-orange-700 text-white rounded-lg transition-colors disabled:opacity-50 flex items-center gap-2 justify-center text-sm sm:text-base order-1 sm:order-2"
             >
               {mutation.isPending ? (
                 <>
@@ -278,7 +348,7 @@ export default function CreateServiceOrderModal({ onClose }: CreateServiceOrderM
                 </>
               ) : (
                 <>
-                  <span>✨</span>
+                  <span>✅</span>
                   Criar OS
                 </>
               )}

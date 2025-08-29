@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { serviceOrderItemsApi } from "../services/api";
-import type { ServiceOrderItem } from "../types/serviceOrder";
+import type { ServiceOrderItem, ServiceOrderItemCreateDTO, ServiceOrderItemType } from "../types/serviceOrder";
 
 interface ServiceOrderItemsManagerProps {
   serviceOrderId: number;
@@ -13,32 +13,30 @@ export function ServiceOrderItemsManager({ serviceOrderId, items }: ServiceOrder
   const [showAddItem, setShowAddItem] = useState(false);
   const [editingItem, setEditingItem] = useState<ServiceOrderItem | null>(null);
   const [newItem, setNewItem] = useState<Partial<ServiceOrderItem>>({
-    type: 'service',
+    itemType: 'SERVICE',
     description: '',
     quantity: 1,
     unitPrice: 0,
-    notes: '',
   });
 
   // Mutações
   const createMutation = useMutation({
-    mutationFn: (data: Partial<ServiceOrderItem>) => 
+    mutationFn: (data: ServiceOrderItemCreateDTO) => 
       serviceOrderItemsApi.create(serviceOrderId, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["serviceOrderItems", serviceOrderId.toString()] });
       setShowAddItem(false);
       setNewItem({
-        type: 'service',
+        itemType: 'SERVICE',
         description: '',
         quantity: 1,
         unitPrice: 0,
-        notes: '',
       });
     },
   });
 
   const updateMutation = useMutation({
-    mutationFn: ({ id, data }: { id: number; data: Partial<ServiceOrderItem> }) =>
+    mutationFn: ({ id, data }: { id: number; data: ServiceOrderItemCreateDTO }) =>
       serviceOrderItemsApi.update(id, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["serviceOrderItems", serviceOrderId.toString()] });
@@ -74,18 +72,23 @@ export function ServiceOrderItemsManager({ serviceOrderId, items }: ServiceOrder
       return;
     }
 
-    const totalPrice = Number(newItem.unitPrice) * Number(newItem.quantity);
     createMutation.mutate({
-      ...newItem,
-      totalPrice,
+      description: newItem.description,
+      itemType: newItem.itemType as ServiceOrderItemType,
+      quantity: newItem.quantity,
+      unitPrice: newItem.unitPrice,
     });
   };
 
   const handleUpdateItem = (item: ServiceOrderItem, updates: Partial<ServiceOrderItem>) => {
-    const totalPrice = (updates.unitPrice || item.unitPrice) * (updates.quantity || item.quantity);
     updateMutation.mutate({
       id: item.id,
-      data: { ...updates, totalPrice },
+      data: {
+        description: updates.description || '',
+        itemType: updates.itemType as ServiceOrderItemType,
+        quantity: updates.quantity || 0,
+        unitPrice: updates.unitPrice || 0,
+      },
     });
   };
 
@@ -126,12 +129,12 @@ export function ServiceOrderItemsManager({ serviceOrderId, items }: ServiceOrder
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Tipo</label>
               <select
-                value={newItem.type}
-                onChange={(e) => setNewItem({ ...newItem, type: e.target.value as 'service' | 'part' })}
+                value={newItem.itemType}
+                onChange={(e) => setNewItem({ ...newItem, itemType: e.target.value as 'SERVICE' | 'PART' })}
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
               >
-                <option value="service">🔧 Serviço</option>
-                <option value="part">📦 Peça</option>
+                <option value="SERVICE">🔧 Serviço</option>
+                <option value="PART">📦 Peça</option>
               </select>
             </div>
             <div>
@@ -225,11 +228,10 @@ export function ServiceOrderItemsManager({ serviceOrderId, items }: ServiceOrder
                   <td className="px-4 py-3">
                     <div className="flex items-start gap-2">
                       <span className="text-lg">
-                        {item.type === 'service' ? '🔧' : '📦'}
+                        {item.itemType === 'SERVICE' ? '🔧' : '📦'}
                       </span>
                       <div>
                         <div className="font-medium text-gray-900">{item.description}</div>
-                        {item.notes && <div className="text-sm text-gray-500">{item.notes}</div>}
                       </div>
                     </div>
                   </td>
@@ -286,7 +288,7 @@ export function ServiceOrderItemsManager({ serviceOrderId, items }: ServiceOrder
 
       {/* Modal de edição inline */}
       {editingItem && (
-        <div className="fixed inset-0 bg-black ity-50 flex items-center justify-center p-4 z-50">
+        <div className="fixed inset-0 bg-[#242424cb] flex items-center justify-center p-4 z-50">
           <div className="bg-white rounded-lg shadow-xl w-full max-w-md">
             <div className="p-6">
               <h3 className="text-lg font-semibold text-gray-800 mb-4">Editar Item</h3>
@@ -294,12 +296,12 @@ export function ServiceOrderItemsManager({ serviceOrderId, items }: ServiceOrder
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Tipo</label>
                   <select
-                    value={editingItem.type}
-                    onChange={(e) => setEditingItem({ ...editingItem, type: e.target.value as 'service' | 'part' })}
+                    value={editingItem.itemType}
+                    onChange={(e) => setEditingItem({ ...editingItem, itemType: e.target.value as 'SERVICE' | 'PART' })}
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
                   >
-                    <option value="service">🔧 Serviço</option>
-                    <option value="part">📦 Peça</option>
+                    <option value="SERVICE">🔧 Serviço</option>
+                    <option value="PART">📦 Peça</option>
                   </select>
                 </div>
                 <div>
@@ -349,7 +351,7 @@ export function ServiceOrderItemsManager({ serviceOrderId, items }: ServiceOrder
                 </button>
                 <button
                   onClick={() => handleUpdateItem(editingItem, {
-                    type: editingItem.type,
+                    itemType: editingItem.itemType,
                     description: editingItem.description,
                     quantity: editingItem.quantity,
                     unitPrice: editingItem.unitPrice,

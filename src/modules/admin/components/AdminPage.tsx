@@ -34,15 +34,15 @@ export default function AdminPage() {
 
   // Cálculos de estatísticas
   const totalRevenue = serviceOrders
-    .filter(order => order.status === 'completed')
-    .reduce((sum, order) => sum + (order.totalPrice || 0), 0);
+    .filter(order => order.status === 'COMPLETED')
+    .reduce((sum, order) => sum + (order.finalCost || 0), 0);
 
-  const pendingOrders = serviceOrders.filter(order => order.status === 'pending').length;
-  const inProgressOrders = serviceOrders.filter(order => order.status === 'in_progress').length;
+  const pendingOrders = serviceOrders.filter(order => order.status === 'PENDING').length;
+  const inProgressOrders = serviceOrders.filter(order => order.status === 'IN_PROGRESS').length;
   
   const completedThisMonth = serviceOrders.filter(order => {
-    if (!order.completedAt) return false;
-    const completed = new Date(order.completedAt);
+    if (!order.actualCompletion) return false;
+    const completed = new Date(order.actualCompletion);
     const now = new Date();
     return completed.getMonth() === now.getMonth() && completed.getFullYear() === now.getFullYear();
   }).length;

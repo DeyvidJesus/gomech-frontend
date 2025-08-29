@@ -2,7 +2,8 @@ import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useNavigate, useParams, Link } from "@tanstack/react-router";
 import { serviceOrdersApi, serviceOrderItemsApi } from "../services/api";
-import type { ServiceOrder, ServiceOrderItem } from "../types/serviceOrder";
+import type { ServiceOrder, ServiceOrderItem, ServiceOrderStatus } from "../types/serviceOrder";
+import { statusDisplayMapping } from "../types/serviceOrder";
 import EditServiceOrderModal from "./EditServiceOrderModal";
 import AddServiceOrderItemModal from "./AddServiceOrderItemModal";
 
@@ -31,7 +32,7 @@ export default function ServiceOrderDetailsPage() {
 
   // Mutation para atualizar status
   const updateStatusMutation = useMutation({
-    mutationFn: ({ id, status }: { id: number; status: ServiceOrder['status'] }) =>
+    mutationFn: ({ id, status }: { id: number; status: ServiceOrderStatus }) =>
       serviceOrdersApi.updateStatus(id, status),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["serviceOrder", serviceOrderId] });
@@ -58,7 +59,7 @@ export default function ServiceOrderDetailsPage() {
     },
   });
 
-  const handleStatusChange = (status: ServiceOrder['status']) => {
+  const handleStatusChange = (status: ServiceOrderStatus) => {
     updateStatusMutation.mutate({ id: serviceOrderId, status });
   };
 
@@ -75,61 +76,53 @@ export default function ServiceOrderDetailsPage() {
     }
   };
 
-  const getStatusColor = (status: ServiceOrder['status']) => {
+  const getStatusColor = (status: ServiceOrderStatus) => {
     const colors = {
-      pending: 'bg-yellow-100 text-yellow-800',
-      in_progress: 'bg-blue-100 text-blue-800',
-      waiting_parts: 'bg-purple-100 text-purple-800',
-      waiting_approval: 'bg-orange-100 text-orange-800',
-      completed: 'bg-green-100 text-green-800',
-      canceled: 'bg-red-100 text-red-800',
-      overdue: 'bg-red-100 text-red-800'
+      PENDING: 'bg-yellow-100 text-yellow-800',
+      IN_PROGRESS: 'bg-blue-100 text-blue-800',
+      WAITING_PARTS: 'bg-purple-100 text-purple-800',
+      WAITING_APPROVAL: 'bg-orange-100 text-orange-800',
+      COMPLETED: 'bg-green-100 text-green-800',
+      CANCELLED: 'bg-red-100 text-red-800',
+      DELIVERED: 'bg-emerald-100 text-emerald-800'
     };
     return colors[status] || 'bg-gray-100 text-gray-800';
   };
 
-  const getStatusLabel = (status: ServiceOrder['status']) => {
+  const getStatusLabel = (status: ServiceOrderStatus) => {
+    return statusDisplayMapping[status] || status;
+  };
+
+  const getItemTypeLabel = (itemType: ServiceOrderItem['itemType']) => {
     const labels = {
-      pending: 'Pendente',
-      in_progress: 'Em Andamento',
-      waiting_parts: 'Aguardando Peças',
-      waiting_approval: 'Aguardando Aprovação',
-      completed: 'Concluída',
-      canceled: 'Cancelada',
-      overdue: 'Atrasada'
+      SERVICE: 'Serviço',
+      PART: 'Peça',
+      MATERIAL: 'Material',
+      LABOR: 'Mão de Obra'
     };
-    return labels[status] || status;
+    return labels[itemType] || itemType;
   };
 
-  const getPriorityColor = (priority: ServiceOrder['priority']) => {
+  const getItemTypeColor = (itemType: ServiceOrderItem['itemType']) => {
     const colors = {
-      low: 'text-green-600',
-      medium: 'text-yellow-600',
-      high: 'text-orange-600',
-      urgent: 'text-red-600'
+      SERVICE: 'bg-blue-100 text-blue-800',
+      PART: 'bg-purple-100 text-purple-800',
+      MATERIAL: 'bg-green-100 text-green-800',
+      LABOR: 'bg-orange-100 text-orange-800'
     };
-    return colors[priority || 'low'];
+    return colors[itemType] || 'bg-gray-100 text-gray-800';
   };
 
-  const getPriorityIcon = (priority: ServiceOrder['priority']) => {
-    const icons = {
-      low: '🔽',
-      medium: '➡️',
-      high: '🔼',
-      urgent: '🚨'
-    };
-    return icons[priority || 'low'];
-  };
-
-  // Calcular totais
+  // Calcular totais baseado nos novos campos
   const appliedItems = items.filter(item => item.applied);
-  const totalValue = appliedItems.reduce((sum, item) => sum + item.totalPrice, 0);
-  const serviceItems = appliedItems.filter(item => item.type === 'service');
-  const partItems = appliedItems.filter(item => item.type === 'part');
+  const serviceItems = appliedItems.filter(item => item.itemType === 'SERVICE');
+  const partItems = appliedItems.filter(item => item.itemType === 'PART');
+  const materialItems = appliedItems.filter(item => item.itemType === 'MATERIAL');
+  const laborItems = appliedItems.filter(item => item.itemType === 'LABOR');
 
   if (isLoading) {
     return (
-      <div className="p-8 bg-gray-50 min-h-screen flex items-center justify-center">
+      <div className="p-4 sm:p-6 lg:p-8 bg-gray-50 min-h-screen flex items-center justify-center">
         <div className="text-center">
           <div className="w-12 h-12 border-2 border-orange-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
           <p className="text-gray-600">Carregando ordem de serviço...</p>
@@ -140,7 +133,7 @@ export default function ServiceOrderDetailsPage() {
 
   if (error || !serviceOrder) {
     return (
-      <div className="p-8 bg-gray-50 min-h-screen">
+      <div className="p-4 sm:p-6 lg:p-8 bg-gray-50 min-h-screen">
         <div className="bg-red-50 border border-red-200 rounded-lg p-6 text-center">
           <span className="text-4xl mb-4 block">⚠️</span>
           <h2 className="text-xl font-semibold text-red-800 mb-2">Ordem de serviço não encontrada</h2>
@@ -159,70 +152,75 @@ export default function ServiceOrderDetailsPage() {
   }
 
   return (
-    <div className="p-8 bg-gray-50 min-h-screen">
+    <div className="p-4 sm:p-6 lg:p-8 bg-gray-50 min-h-screen">
       {/* Header */}
-      <div className="bg-white rounded-lg p-6 shadow-sm border border-gray-200 mb-6">
-        <div className="flex items-center justify-between mb-4">
-          <button
-            onClick={() => navigate({ to: "/service-orders" })}
-            className="text-gray-600 hover:text-gray-800 p-2 rounded-lg hover:bg-gray-100 transition-colors"
-          >
-            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
-            </svg>
-          </button>
-          <div className="w-16 h-16 bg-orange-600 rounded-full flex items-center justify-center">
-            <span className="text-3xl">📋</span>
-          </div>
-          <div className="flex-1 ml-4">
-            <h1 className="text-3xl font-bold text-orange-600">OS #{serviceOrder.orderNumber}</h1>
-            <p className="text-gray-600">
-              {serviceOrder.client?.name} • {serviceOrder.vehicle?.brand} {serviceOrder.vehicle?.model}
-            </p>
+      <div className="bg-white rounded-lg p-4 sm:p-6 shadow-sm border border-gray-200 mb-4 sm:mb-6">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-4">
+          <div className="flex items-center gap-3">
+            <button
+              onClick={() => navigate({ to: "/service-orders" })}
+              className="text-gray-600 hover:text-gray-800 p-2 rounded-lg hover:bg-gray-100 transition-colors"
+            >
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+              </svg>
+            </button>
+            <div className="w-12 h-12 sm:w-16 sm:h-16 bg-orange-600 rounded-full flex items-center justify-center">
+              <span className="text-2xl sm:text-3xl">📋</span>
+            </div>
+            <div className="flex-1">
+              <h1 className="text-2xl sm:text-3xl font-bold text-orange-600">OS #{serviceOrder.orderNumber}</h1>
+              <p className="text-sm sm:text-base text-gray-600">
+                {serviceOrder.client?.name} • {serviceOrder.vehicle?.brand} {serviceOrder.vehicle?.model}
+              </p>
+            </div>
           </div>
           <button
             onClick={() => setShowEdit(true)}
-            className="bg-orange-600 hover:bg-orange-700 text-white font-semibold px-6 py-3 rounded-lg transition-colors flex items-center gap-2"
+            className="bg-orange-600 hover:bg-orange-700 text-white font-semibold px-4 sm:px-6 py-2 sm:py-3 rounded-lg transition-colors flex items-center gap-2 justify-center"
           >
             <span>✏️</span>
-            Editar
+            <span className="hidden sm:inline">Editar</span>
           </button>
         </div>
 
-        {/* Status e Prioridade */}
-        <div className="flex items-center gap-4 mb-4">
+        {/* Status */}
+        <div className="flex flex-col sm:flex-row sm:items-center gap-4">
           <div className="flex items-center gap-2">
             <span className={`px-3 py-1 text-sm font-medium rounded-full ${getStatusColor(serviceOrder.status)}`}>
               {getStatusLabel(serviceOrder.status)}
             </span>
-            <div className={`flex items-center gap-1 font-medium ${getPriorityColor(serviceOrder.priority)}`}>
-              <span>{getPriorityIcon(serviceOrder.priority)}</span>
-              <span className="text-sm">{serviceOrder.priority?.toUpperCase()}</span>
-            </div>
           </div>
 
-          {/* Botões de mudança de status */}
-          <div className="flex gap-2 ml-auto">
-            {serviceOrder.status === 'pending' && (
+          {/* Botões de mudança de status - Responsivo */}
+          <div className="flex flex-wrap gap-2 sm:ml-auto">
+            {serviceOrder.status === 'PENDING' && (
               <button
-                onClick={() => handleStatusChange('in_progress')}
+                onClick={() => handleStatusChange('IN_PROGRESS')}
                 className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded text-sm transition-colors"
                 disabled={updateStatusMutation.isPending}
               >
                 Iniciar
               </button>
             )}
-            {serviceOrder.status === 'in_progress' && (
+            {serviceOrder.status === 'IN_PROGRESS' && (
               <>
                 <button
-                  onClick={() => handleStatusChange('waiting_parts')}
+                  onClick={() => handleStatusChange('WAITING_PARTS')}
                   className="bg-purple-600 hover:bg-purple-700 text-white px-3 py-1 rounded text-sm transition-colors"
                   disabled={updateStatusMutation.isPending}
                 >
-                  Aguardar Peças
+                  <span className="hidden sm:inline">Aguardar </span>Peças
                 </button>
                 <button
-                  onClick={() => handleStatusChange('completed')}
+                  onClick={() => handleStatusChange('WAITING_APPROVAL')}
+                  className="bg-orange-600 hover:bg-orange-700 text-white px-3 py-1 rounded text-sm transition-colors"
+                  disabled={updateStatusMutation.isPending}
+                >
+                  <span className="hidden sm:inline">Aguardar </span>Aprovação
+                </button>
+                <button
+                  onClick={() => handleStatusChange('COMPLETED')}
                   className="bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded text-sm transition-colors"
                   disabled={updateStatusMutation.isPending}
                 >
@@ -230,53 +228,98 @@ export default function ServiceOrderDetailsPage() {
                 </button>
               </>
             )}
-            {['waiting_parts', 'waiting_approval'].includes(serviceOrder.status) && (
+            {['WAITING_PARTS', 'WAITING_APPROVAL'].includes(serviceOrder.status) && (
               <button
-                onClick={() => handleStatusChange('in_progress')}
+                onClick={() => handleStatusChange('IN_PROGRESS')}
                 className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded text-sm transition-colors"
                 disabled={updateStatusMutation.isPending}
               >
                 Retomar
               </button>
             )}
+            {serviceOrder.status === 'COMPLETED' && (
+              <button
+                onClick={() => handleStatusChange('DELIVERED')}
+                className="bg-emerald-600 hover:bg-emerald-700 text-white px-3 py-1 rounded text-sm transition-colors"
+                disabled={updateStatusMutation.isPending}
+              >
+                Entregar
+              </button>
+            )}
           </div>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      {/* Layout responsivo - Stack em mobile, Grid em desktop */}
+      <div className="flex flex-col xl:grid xl:grid-cols-3 gap-4 sm:gap-6">
         {/* Coluna Principal */}
-        <div className="lg:col-span-2 space-y-6">
+        <div className="xl:col-span-2 space-y-4 sm:space-y-6">
           {/* Informações Básicas */}
-          <div className="bg-white rounded-lg p-6 shadow-sm border border-gray-200">
-            <h2 className="text-xl font-semibold text-gray-800 mb-4 flex items-center gap-2">
+          <div className="bg-white rounded-lg p-4 sm:p-6 shadow-sm border border-gray-200">
+            <h2 className="text-lg sm:text-xl font-semibold text-gray-800 mb-4 flex items-center gap-2">
               📋 Informações da OS
             </h2>
             <div className="space-y-4">
-              <div className="bg-gray-50 rounded-lg p-4">
-                <label className="text-sm font-medium text-gray-600">Descrição</label>
-                <div className="text-lg text-gray-900 font-medium">{serviceOrder.description}</div>
-              </div>
-              {serviceOrder.notes && (
-                <div className="bg-gray-50 rounded-lg p-4">
+              {serviceOrder.description && (
+                <div className="bg-gray-50 rounded-lg p-3 sm:p-4">
+                  <label className="text-sm font-medium text-gray-600">Descrição</label>
+                  <div className="text-sm sm:text-base text-gray-900 font-medium break-words">{serviceOrder.description}</div>
+                </div>
+              )}
+              {serviceOrder.problemDescription && (
+                <div className="bg-gray-50 rounded-lg p-3 sm:p-4">
+                  <label className="text-sm font-medium text-gray-600">Descrição do Problema</label>
+                  <div className="text-sm sm:text-base text-gray-900 font-medium break-words">{serviceOrder.problemDescription}</div>
+                </div>
+              )}
+              {serviceOrder.diagnosis && (
+                <div className="bg-gray-50 rounded-lg p-3 sm:p-4">
+                  <label className="text-sm font-medium text-gray-600">Diagnóstico</label>
+                  <div className="text-sm sm:text-base text-gray-900 font-medium break-words">{serviceOrder.diagnosis}</div>
+                </div>
+              )}
+              {serviceOrder.solutionDescription && (
+                <div className="bg-gray-50 rounded-lg p-3 sm:p-4">
+                  <label className="text-sm font-medium text-gray-600">Descrição da Solução</label>
+                  <div className="text-sm sm:text-base text-gray-900 font-medium break-words">{serviceOrder.solutionDescription}</div>
+                </div>
+              )}
+              {serviceOrder.observations && (
+                <div className="bg-gray-50 rounded-lg p-3 sm:p-4">
                   <label className="text-sm font-medium text-gray-600">Observações</label>
-                  <div className="text-lg text-gray-900 font-medium">{serviceOrder.notes}</div>
+                  <div className="text-sm sm:text-base text-gray-900 font-medium break-words">{serviceOrder.observations}</div>
+                </div>
+              )}
+              {serviceOrder.technicianName && (
+                <div className="bg-gray-50 rounded-lg p-3 sm:p-4">
+                  <label className="text-sm font-medium text-gray-600">Técnico Responsável</label>
+                  <div className="text-sm sm:text-base text-gray-900 font-medium">{serviceOrder.technicianName}</div>
+                </div>
+              )}
+              {serviceOrder.currentKilometers && (
+                <div className="bg-gray-50 rounded-lg p-3 sm:p-4">
+                  <label className="text-sm font-medium text-gray-600">Quilometragem Atual</label>
+                  <div className="text-sm sm:text-base text-gray-900 font-medium">
+                    {serviceOrder.currentKilometers.toLocaleString('pt-BR')} km
+                  </div>
                 </div>
               )}
             </div>
           </div>
 
           {/* Itens da OS */}
-          <div className="bg-white rounded-lg p-6 shadow-sm border border-gray-200">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-xl font-semibold text-gray-800 flex items-center gap-2">
+          <div className="bg-white rounded-lg p-4 sm:p-6 shadow-sm border border-gray-200">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-4">
+              <h2 className="text-lg sm:text-xl font-semibold text-gray-800 flex items-center gap-2">
                 🔧 Itens da OS
               </h2>
               <button
                 onClick={() => setShowAddItem(true)}
-                className="bg-orange-600 hover:bg-orange-700 text-white px-4 py-2 rounded-lg transition-colors flex items-center gap-2"
+                className="bg-orange-600 hover:bg-orange-700 text-white px-4 py-2 rounded-lg transition-colors flex items-center gap-2 justify-center"
               >
                 <span>➕</span>
-                Adicionar Item
+                <span className="hidden sm:inline">Adicionar Item</span>
+                <span className="sm:hidden">Adicionar</span>
               </button>
             </div>
 
@@ -296,34 +339,42 @@ export default function ServiceOrderDetailsPage() {
                 {items.map((item) => (
                   <div 
                     key={item.id} 
-                    className={`border rounded-lg p-4 transition-colors ${
+                    className={`border rounded-lg p-3 sm:p-4 transition-colors ${
                       item.applied ? 'border-green-200 bg-green-50' : 'border-gray-200 bg-gray-50'
                     }`}
                   >
-                    <div className="flex items-center justify-between">
-                      <div className="flex-1">
-                        <div className="flex items-center gap-2 mb-1">
-                          <span className={`px-2 py-1 text-xs rounded ${
-                            item.type === 'service' ? 'bg-blue-100 text-blue-800' : 'bg-purple-100 text-purple-800'
-                          }`}>
-                            {item.type === 'service' ? 'Serviço' : 'Peça'}
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                      <div className="flex-1 min-w-0">
+                        <div className="flex flex-wrap items-center gap-2 mb-2">
+                          <span className={`px-2 py-1 text-xs rounded ${getItemTypeColor(item.itemType)}`}>
+                            {getItemTypeLabel(item.itemType)}
                           </span>
                           {item.applied && (
                             <span className="px-2 py-1 text-xs bg-green-100 text-green-800 rounded">
                               Aplicado
                             </span>
                           )}
+                          {item.productCode && (
+                            <span className="px-2 py-1 text-xs bg-gray-100 text-gray-600 rounded">
+                              {item.productCode}
+                            </span>
+                          )}
                         </div>
-                        <div className="font-medium text-gray-900">{item.description}</div>
-                        <div className="text-sm text-gray-600">
+                        <div className="font-medium text-gray-900 text-sm sm:text-base break-words">{item.description}</div>
+                        <div className="text-xs sm:text-sm text-gray-600 mt-1">
                           Qtd: {item.quantity} × R$ {item.unitPrice.toLocaleString('pt-BR', { minimumFractionDigits: 2 })} = 
                           <span className="font-medium"> R$ {item.totalPrice.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span>
                         </div>
+                        {item.observations && (
+                          <div className="text-xs sm:text-sm text-gray-500 mt-1 break-words">
+                            {item.observations}
+                          </div>
+                        )}
                       </div>
-                      <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-2 justify-end sm:justify-start">
                         <button
                           onClick={() => handleToggleItem(item)}
-                          className={`px-3 py-1 rounded text-sm transition-colors ${
+                          className={`px-3 py-1 rounded text-xs sm:text-sm transition-colors whitespace-nowrap ${
                             item.applied
                               ? 'bg-yellow-600 hover:bg-yellow-700 text-white'
                               : 'bg-green-600 hover:bg-green-700 text-white'
@@ -349,10 +400,10 @@ export default function ServiceOrderDetailsPage() {
         </div>
 
         {/* Sidebar */}
-        <div className="space-y-6">
+        <div className="space-y-4 sm:space-y-6">
           {/* Cliente */}
-          <div className="bg-white rounded-lg p-6 shadow-sm border border-gray-200">
-            <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
+          <div className="bg-white rounded-lg p-4 sm:p-6 shadow-sm border border-gray-200">
+            <h3 className="text-base sm:text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
               👤 Cliente
             </h3>
             {serviceOrder.client ? (
@@ -362,19 +413,19 @@ export default function ServiceOrderDetailsPage() {
                   params={{ id: serviceOrder.client.id.toString() }}
                   className="block hover:bg-orange-50 p-3 rounded-lg transition-colors"
                 >
-                  <div className="font-medium text-gray-900">{serviceOrder.client.name}</div>
-                  <div className="text-sm text-gray-600">{serviceOrder.client.email}</div>
-                  <div className="text-sm text-gray-600">{serviceOrder.client.phone}</div>
+                  <div className="font-medium text-gray-900 text-sm sm:text-base break-words">{serviceOrder.client.name}</div>
+                  <div className="text-xs sm:text-sm text-gray-600 break-words">{serviceOrder.client.email}</div>
+                  <div className="text-xs sm:text-sm text-gray-600">{serviceOrder.client.phone}</div>
                 </Link>
               </div>
             ) : (
-              <p className="text-gray-500">Cliente não encontrado</p>
+              <p className="text-gray-500 text-sm">Cliente não encontrado</p>
             )}
           </div>
 
           {/* Veículo */}
-          <div className="bg-white rounded-lg p-6 shadow-sm border border-gray-200">
-            <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
+          <div className="bg-white rounded-lg p-4 sm:p-6 shadow-sm border border-gray-200">
+            <h3 className="text-base sm:text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
               🚗 Veículo
             </h3>
             {serviceOrder.vehicle ? (
@@ -384,41 +435,87 @@ export default function ServiceOrderDetailsPage() {
                   params={{ id: serviceOrder.vehicle.id.toString() }}
                   className="block hover:bg-orange-50 p-3 rounded-lg transition-colors"
                 >
-                  <div className="font-medium text-gray-900">
+                  <div className="font-medium text-gray-900 text-sm sm:text-base break-words">
                     {serviceOrder.vehicle.brand} {serviceOrder.vehicle.model}
                   </div>
-                  <div className="text-sm text-gray-600">{serviceOrder.vehicle.licensePlate}</div>
-                  <div className="text-sm text-gray-600">{serviceOrder.vehicle.color}</div>
+                  <div className="text-xs sm:text-sm text-gray-600">{serviceOrder.vehicle.licensePlate}</div>
+                  <div className="text-xs sm:text-sm text-gray-600">{serviceOrder.vehicle.color}</div>
                 </Link>
               </div>
             ) : (
-              <p className="text-gray-500">Veículo não encontrado</p>
+              <p className="text-gray-500 text-sm">Veículo não encontrado</p>
             )}
           </div>
 
           {/* Resumo Financeiro */}
-          <div className="bg-white rounded-lg p-6 shadow-sm border border-gray-200">
-            <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
+          <div className="bg-white rounded-lg p-4 sm:p-6 shadow-sm border border-gray-200">
+            <h3 className="text-base sm:text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
               💰 Resumo Financeiro
             </h3>
             <div className="space-y-3">
-              <div className="flex justify-between">
-                <span className="text-gray-600">Serviços ({serviceItems.length})</span>
+              <div className="flex justify-between text-sm">
+                <span className="text-gray-600">Mão de Obra</span>
                 <span className="font-medium">
-                  R$ {serviceItems.reduce((sum, item) => sum + item.totalPrice, 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                  R$ {serviceOrder.laborCost.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                 </span>
               </div>
-              <div className="flex justify-between">
-                <span className="text-gray-600">Peças ({partItems.length})</span>
+              <div className="flex justify-between text-sm">
+                <span className="text-gray-600">Peças</span>
                 <span className="font-medium">
-                  R$ {partItems.reduce((sum, item) => sum + item.totalPrice, 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                  R$ {serviceOrder.partsCost.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                 </span>
               </div>
+              {serviceItems.length > 0 && (
+                <div className="flex justify-between text-sm">
+                  <span className="text-gray-600">Serviços ({serviceItems.length})</span>
+                  <span className="font-medium">
+                    R$ {serviceItems.reduce((sum, item) => sum + item.totalPrice, 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                  </span>
+                </div>
+              )}
+              {partItems.length > 0 && (
+                <div className="flex justify-between text-sm">
+                  <span className="text-gray-600">Itens - Peças ({partItems.length})</span>
+                  <span className="font-medium">
+                    R$ {partItems.reduce((sum, item) => sum + item.totalPrice, 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                  </span>
+                </div>
+              )}
+              {materialItems.length > 0 && (
+                <div className="flex justify-between text-sm">
+                  <span className="text-gray-600">Materiais ({materialItems.length})</span>
+                  <span className="font-medium">
+                    R$ {materialItems.reduce((sum, item) => sum + item.totalPrice, 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                  </span>
+                </div>
+              )}
+              {laborItems.length > 0 && (
+                <div className="flex justify-between text-sm">
+                  <span className="text-gray-600">Itens - Mão de Obra ({laborItems.length})</span>
+                  <span className="font-medium">
+                    R$ {laborItems.reduce((sum, item) => sum + item.totalPrice, 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                  </span>
+                </div>
+              )}
               <div className="border-t pt-3">
-                <div className="flex justify-between text-lg font-bold">
-                  <span>Total</span>
+                <div className="flex justify-between text-sm">
+                  <span className="text-gray-600">Total Bruto</span>
+                  <span className="font-medium">
+                    R$ {serviceOrder.totalCost.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                  </span>
+                </div>
+                {serviceOrder.discount > 0 && (
+                  <div className="flex justify-between text-red-600 text-sm">
+                    <span>Desconto</span>
+                    <span className="font-medium">
+                      - R$ {serviceOrder.discount.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                    </span>
+                  </div>
+                )}
+                <div className="flex justify-between text-base sm:text-lg font-bold mt-2">
+                  <span>Total Final</span>
                   <span className="text-orange-600">
-                    R$ {totalValue.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                    R$ {serviceOrder.finalCost.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                   </span>
                 </div>
               </div>
@@ -426,14 +523,14 @@ export default function ServiceOrderDetailsPage() {
           </div>
 
           {/* Informações do Sistema */}
-          <div className="bg-white rounded-lg p-6 shadow-sm border border-gray-200">
-            <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
+          <div className="bg-white rounded-lg p-4 sm:p-6 shadow-sm border border-gray-200">
+            <h3 className="text-base sm:text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
               📅 Informações do Sistema
             </h3>
             <div className="space-y-3">
               <div className="bg-gray-50 rounded-lg p-3">
-                <label className="text-sm font-medium text-gray-600">Criada em</label>
-                <div className="text-sm text-gray-900">
+                <label className="text-xs sm:text-sm font-medium text-gray-600">Criada em</label>
+                <div className="text-xs sm:text-sm text-gray-900">
                   {new Date(serviceOrder.createdAt).toLocaleDateString('pt-BR', {
                     day: '2-digit',
                     month: '2-digit',
@@ -443,11 +540,11 @@ export default function ServiceOrderDetailsPage() {
                   })}
                 </div>
               </div>
-              {serviceOrder.estimatedCompletionDate && (
+              {serviceOrder.estimatedCompletion && (
                 <div className="bg-gray-50 rounded-lg p-3">
-                  <label className="text-sm font-medium text-gray-600">Previsão</label>
-                  <div className="text-sm text-gray-900">
-                    {new Date(serviceOrder.estimatedCompletionDate).toLocaleDateString('pt-BR', {
+                  <label className="text-xs sm:text-sm font-medium text-gray-600">Previsão</label>
+                  <div className="text-xs sm:text-sm text-gray-900">
+                    {new Date(serviceOrder.estimatedCompletion).toLocaleDateString('pt-BR', {
                       day: '2-digit',
                       month: '2-digit',
                       year: 'numeric',
@@ -457,11 +554,11 @@ export default function ServiceOrderDetailsPage() {
                   </div>
                 </div>
               )}
-              {serviceOrder.completedAt && (
+              {serviceOrder.actualCompletion && (
                 <div className="bg-gray-50 rounded-lg p-3">
-                  <label className="text-sm font-medium text-gray-600">Concluída em</label>
-                  <div className="text-sm text-gray-900">
-                    {new Date(serviceOrder.completedAt).toLocaleDateString('pt-BR', {
+                  <label className="text-xs sm:text-sm font-medium text-gray-600">Concluída em</label>
+                  <div className="text-xs sm:text-sm text-gray-900">
+                    {new Date(serviceOrder.actualCompletion).toLocaleDateString('pt-BR', {
                       day: '2-digit',
                       month: '2-digit',
                       year: 'numeric',
