@@ -1,9 +1,5 @@
 import api from "../../../shared/services/axios";
-import type { 
-  ServiceOrder, 
-  ServiceOrderItem, 
-  ServiceOrderReport,
-  VehicleServiceHistory,
+import type {
   ServiceOrderCreateDTO,
   ServiceOrderUpdateDTO,
   ServiceOrderItemCreateDTO,

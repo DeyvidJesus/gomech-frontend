@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useNavigate, useParams, Link } from "@tanstack/react-router";
 import { serviceOrdersApi, serviceOrderItemsApi } from "../services/api";
-import type { ServiceOrder, ServiceOrderItem, ServiceOrderStatus } from "../types/serviceOrder";
+import type { ServiceOrderItem, ServiceOrderStatus } from "../types/serviceOrder";
 import { statusDisplayMapping } from "../types/serviceOrder";
 import EditServiceOrderModal from "./EditServiceOrderModal";
 import AddServiceOrderItemModal from "./AddServiceOrderItemModal";
