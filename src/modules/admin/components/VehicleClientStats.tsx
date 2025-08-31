@@ -15,7 +15,6 @@ export default function VehicleClientStats() {
 
   const isLoading = vehiclesLoading || clientsLoading;
 
-  // Calcular estatísticas de vinculação
   const linkedVehicles = vehicles.filter(vehicle => vehicle.clientId);
   const unlinkedVehicles = vehicles.filter(vehicle => !vehicle.clientId);
   const clientsWithVehicles = clients.filter(client => 

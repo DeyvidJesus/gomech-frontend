@@ -14,7 +14,6 @@ export default function AdminPage() {
   // const { canCreate, canEdit, canDelete } = useRole(); // Não utilizado no momento
   const [activeTab, setActiveTab] = useState<'overview' | 'users' | 'system' | 'reports'>('overview');
 
-  // Buscar dados para estatísticas
   const { data: clients = [], isLoading: clientsLoading } = useQuery({
     queryKey: ["clients"],
     queryFn: () => clientsApi.getAll().then(res => res.data),
@@ -32,7 +31,6 @@ export default function AdminPage() {
 
   const isLoading = clientsLoading || vehiclesLoading || serviceOrdersLoading;
 
-  // Cálculos de estatísticas
   const totalRevenue = serviceOrders
     .filter(order => order.status === 'COMPLETED')
     .reduce((sum, order) => sum + (order.finalCost || 0), 0);

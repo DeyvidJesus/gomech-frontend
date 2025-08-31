@@ -5,7 +5,6 @@ export function useAuth() {
   return useQuery<AuthResponse | null>({
     queryKey: ["auth"],
     queryFn: async () => {
-      // Primeiro tenta buscar do cache do TanStack Query
       const stored = localStorage.getItem("tanstack-query-persist-client");
       if (stored) {
         try {

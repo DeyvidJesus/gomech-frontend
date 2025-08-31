@@ -9,7 +9,6 @@ import type {
 } from "../types/serviceOrder";
 
 export const serviceOrdersApi = {
-  // CRUD básico
   getAll: () => api.get<ServiceOrderResponseDTO[]>("/service-orders"),
   getById: (id: number) => api.get<ServiceOrderResponseDTO>(`/service-orders/${id}`),
   getByOrderNumber: (orderNumber: string) => 
