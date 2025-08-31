@@ -11,7 +11,7 @@ interface RegisterInput {
 export function useRegister() {
   return useMutation({
     mutationFn: async (data: RegisterInput) => {
-      const res = await axios.post("/api/auth/register", {
+      const res = await axios.post("/auth/register", {
         ...data,
         role: "USER",
       });
