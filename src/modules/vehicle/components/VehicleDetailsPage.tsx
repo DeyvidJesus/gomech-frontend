@@ -1,8 +1,9 @@
 import { useQuery } from "@tanstack/react-query";
-import { useNavigate, useParams } from "@tanstack/react-router";
+import { Link, useNavigate, useParams } from "@tanstack/react-router";
 import { vehiclesApi } from "../services/api";
 import type { Vehicle } from "../types/vehicle";
 import { useState } from "react";
+import { serviceOrdersApi } from '../../serviceOrder/services/api';
 import { EditVehicleModal } from "./EditVehicleModal";
 import { clientsApi } from "../../client/services/api";
 import type { Client } from "../../client/types/client";
@@ -13,6 +14,18 @@ export function VehicleDetailsPage() {
   const vehicleId = Number(id);
   const [showEdit, setShowEdit] = useState(false);
 
+  const {
+    data: vehicleServiceOrders = [],
+    isLoading: vehicleOrdersLoading
+  } = useQuery({
+    queryKey: ["serviceOrders", vehicleId],
+    queryFn: async () => {
+      const res = await serviceOrdersApi.getByVehicle(vehicleId);
+      return res.data;
+    },
+    enabled: !!vehicleId,
+  });
+
   const { data: clients } = useQuery<Client[]>({
     queryKey: ["clients"],
     queryFn: async () => {
@@ -21,7 +34,7 @@ export function VehicleDetailsPage() {
     },
   });
 
-  const { data: vehicle, isLoading, error } = useQuery<Vehicle>({
+  const { data: vehicle, isLoading } = useQuery<Vehicle>({
     queryKey: ["vehicle", vehicleId],
     queryFn: async () => {
       const res = await vehiclesApi.getById(vehicleId);
@@ -41,18 +54,19 @@ export function VehicleDetailsPage() {
     );
   }
 
-  if (error || !vehicle) {
+  if (!vehicle) {
     return (
-      <div className="bg-red-50 border border-red-200 rounded-lg p-8 text-center">
-        <div className="text-red-600 text-6xl mb-4">❌</div>
-        <h3 className="text-red-800 text-xl font-semibold mb-2">Veículo não encontrado</h3>
-        <p className="text-red-600 mb-6">O veículo que você está procurando não existe ou foi removido.</p>
-        <button
-          onClick={() => navigate({ to: "/vehicles" })}
-          className="bg-orange-600 hover:bg-orange-700 text-white font-semibold px-6 py-3 rounded-lg transition-colors"
-        >
-          ← Voltar à Lista
-        </button>
+      <div className="flex items-center justify-center h-64">
+        <div className="text-center">
+          <div className="text-gray-400 text-6xl mb-4">🚗</div>
+          <p className="text-gray-500 text-lg">Veículo não encontrado</p>
+          <button
+            onClick={() => navigate({ to: "/vehicles" })}
+            className="mt-4 bg-orange-600 hover:bg-orange-700 text-white font-semibold px-4 py-2 rounded-lg transition-colors"
+          >
+            Voltar à lista de veículos
+          </button>
+        </div>
       </div>
     );
   }
@@ -207,11 +221,43 @@ export function VehicleDetailsPage() {
           </button>
         </div>
 
-        <div className="text-center py-8">
-          <div className="text-gray-400 text-4xl mb-4">🔧</div>
-          <p className="text-gray-500">Nenhum serviço registrado para este veículo</p>
-          <p className="text-sm text-gray-400 mt-2">O histórico de manutenções aparecerá aqui</p>
-        </div>
+        {vehicleOrdersLoading ? (
+          <div className="text-center py-8">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-orange-600 mb-4 mx-auto"></div>
+            <p className="text-gray-600">Carregando histórico de serviços...</p>
+          </div>
+        ) : vehicleServiceOrders.length === 0 ? (
+          <div className="text-center py-8">
+            <div className="text-gray-400 text-4xl mb-4">🔧</div>
+            <p className="text-gray-500">Nenhum serviço registrado para este veículo</p>
+            <p className="text-sm text-gray-400 mt-2">O histórico de manutenções aparecerá aqui</p>
+          </div>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead className="bg-gray-50">
+                <tr>
+                  <th className="px-4 py-2 text-left text-xs font-semibold text-gray-600 uppercase">OS</th>
+                  <th className="px-4 py-2 text-left text-xs font-semibold text-gray-600 uppercase">Status</th>
+                  <th className="px-4 py-2 text-left text-xs font-semibold text-gray-600 uppercase">Valor</th>
+                  <th className="px-4 py-2 text-left text-xs font-semibold text-gray-600 uppercase">Data</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-200">
+                {vehicleServiceOrders.map(order => (
+                  <tr key={order.id} className="hover:bg-gray-50">
+                    <td className="px-4 py-2 font-semibold text-gray-900"><Link params={{ id: order.id.toString() }} to={"/service-orders/$id"}>#{order.orderNumber}</Link></td>
+                    <td className="px-4 py-2">
+                      <span className="px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-800">{order.status}</span>
+                    </td>
+                    <td className="px-4 py-2 font-medium text-gray-900">R$ {order.totalCost.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</td>
+                    <td className="px-4 py-2 text-gray-900">{new Date(order.createdAt).toLocaleDateString('pt-BR')}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
       </div>
 
       {/* Informações do Sistema */}
@@ -249,9 +295,9 @@ export function VehicleDetailsPage() {
 
       {/* Modal de Edição */}
       {showEdit && (
-        <EditVehicleModal 
-          vehicle={vehicle} 
-          onClose={() => setShowEdit(false)} 
+        <EditVehicleModal
+          vehicle={vehicle}
+          onClose={() => setShowEdit(false)}
         />
       )}
     </div>

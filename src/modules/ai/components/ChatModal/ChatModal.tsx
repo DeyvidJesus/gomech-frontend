@@ -3,6 +3,7 @@ import { aiService } from '../../services/api';
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { formatPromptWithSystemContext, getSystemContext } from '../../utils/systemContextDetector';
+import DataManagementModal from '../DataManagementModal/DataManagementModal';
 
 interface Message {
   content: string;
@@ -25,6 +26,7 @@ export default function ChatModal({ isOpen, onClose }: ChatModalProps) {
   const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
   const [loadingTime, setLoadingTime] = useState(0);
   const [isLoadingContext, setIsLoadingContext] = useState(false);
+  const [isDataModalOpen, setIsDataModalOpen] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const panelRef = useRef<HTMLDivElement>(null);
   const loadingTimerRef = useRef<NodeJS.Timeout | null>(null);
@@ -216,8 +218,15 @@ export default function ChatModal({ isOpen, onClose }: ChatModalProps) {
           <h2 className="m-0 text-lg font-semibold">🤖 Assistente IA</h2>
           <div className="flex gap-2">
             <button
+              onClick={() => setIsDataModalOpen(true)}
+              className="bg-transparent border-none text-gray-200 cursor-pointer p-1 text-base hover:bg-white/20 rounded transition-colors"
+              title="Gerenciar dados da IA"
+            >
+              📊
+            </button>
+            <button
               onClick={handleClearChat}
-              className="bg-transparent border-none text-gray-400 cursor-pointer p-1 text-base"
+              className="bg-transparent border-none text-gray-400 cursor-pointer p-1 text-base hover:bg-white/20 rounded transition-colors"
               title="Limpar conversa"
             >
               🗑️
@@ -321,6 +330,12 @@ export default function ChatModal({ isOpen, onClose }: ChatModalProps) {
             </button>
           </div>
         </div>
+
+        {/* Modal de Gerenciamento de Dados */}
+        <DataManagementModal 
+          isOpen={isDataModalOpen}
+          onClose={() => setIsDataModalOpen(false)}
+        />
     </div>
   );
 }

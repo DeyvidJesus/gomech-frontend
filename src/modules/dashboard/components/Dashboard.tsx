@@ -5,11 +5,14 @@ import { vehiclesApi } from "../../vehicle/services/api";
 import { serviceOrdersApi } from "../../serviceOrder/services/api";
 import ProtectedRoute from "../../auth/components/ProtectedRoute";
 import { useAuth } from "../../auth/hooks/useAuth";
+import ChartCard from "./ChartCard";
+import ServiceOrderChart from "./ServiceOrderChart";
+import RevenueChart from "./RevenueChart";
+import { calculateRevenueSummary, formatCurrency } from "../utils/chartUtils";
 
 export default function Dashboard() {
   const { data } = useAuth();
 
-  // Buscar dados para estatísticas
   const { data: clients = [], isLoading: clientsLoading } = useQuery({
     queryKey: ["clients"],
     queryFn: () => clientsApi.getAll().then(res => res.data),
@@ -25,7 +28,6 @@ export default function Dashboard() {
     queryFn: () => serviceOrdersApi.getAll().then(res => res.data),
   });
 
-  // Calcular estatísticas
   const totalClients = clients.length;
   const totalVehicles = vehicles.length;
   const totalServiceOrders = serviceOrders.length;
@@ -33,7 +35,9 @@ export default function Dashboard() {
   const pendingServiceOrders = serviceOrders.filter(order => order.status === 'PENDING').length;
   const inProgressServiceOrders = serviceOrders.filter(order => order.status === 'IN_PROGRESS').length;
 
-  // Verificar se está carregando
+  // Calcular métricas de receita
+  const revenueSummary = calculateRevenueSummary(serviceOrders);
+
   const isLoading = clientsLoading || vehiclesLoading || serviceOrdersLoading;
 
   const { name, role } = data || {};
@@ -70,8 +74,7 @@ export default function Dashboard() {
         </div>
 
         {/* Stats Grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 sm:gap-6 mt-6 sm:mt-8">
-          {/* Total de Clientes */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-5 gap-4 sm:gap-6 mt-6 sm:mt-8">
           <Link to="/clients" className="block">
             <div className="bg-white rounded-lg p-4 sm:p-6 border border-gray-200 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md hover:border-orange-300 cursor-pointer">
               <div className="flex items-center justify-between mb-2">
@@ -93,7 +96,6 @@ export default function Dashboard() {
             </div>
           </Link>
 
-          {/* Veículos Cadastrados */}
           <Link to="/vehicles" className="block">
             <div className="bg-white rounded-lg p-4 sm:p-6 border border-gray-200 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md hover:border-orange-300 cursor-pointer">
               <div className="flex items-center justify-between mb-2">
@@ -115,7 +117,6 @@ export default function Dashboard() {
             </div>
           </Link>
 
-          {/* Ordens de Serviço */}
           <div className="bg-white rounded-lg p-4 sm:p-6 border border-gray-200 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md">
             <div className="flex items-center justify-between mb-2">
               <h3 className="text-gray-700 text-xs sm:text-sm font-medium uppercase tracking-wide m-0">
@@ -140,7 +141,6 @@ export default function Dashboard() {
             </div>
           </div>
 
-          {/* Serviços Concluídos */}
           <div className="bg-white rounded-lg p-4 sm:p-6 border border-gray-200 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md">
             <div className="flex items-center justify-between mb-2">
               <h3 className="text-gray-700 text-xs sm:text-sm font-medium uppercase tracking-wide m-0">
@@ -159,6 +159,39 @@ export default function Dashboard() {
               Serviços finalizados
             </p>
           </div>
+
+          <div className="bg-white rounded-lg p-4 sm:p-6 border border-gray-200 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md">
+            <div className="flex items-center justify-between mb-2">
+              <h3 className="text-gray-700 text-xs sm:text-sm font-medium uppercase tracking-wide m-0">
+                Receita Total
+              </h3>
+              <span className="text-xl sm:text-2xl">💰</span>
+            </div>
+            <div className="text-orange-600 text-2xl sm:text-3xl font-bold m-0">
+              {isLoading ? (
+                <div className="w-6 h-6 sm:w-8 sm:h-8 border-2 border-orange-600 border-t-transparent rounded-full animate-spin"></div>
+              ) : (
+                formatCurrency(revenueSummary.totalRevenue)
+              )}
+            </div>
+            <div className="mt-2 text-xs">
+              <span className={`${revenueSummary.monthlyGrowth >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                {revenueSummary.monthlyGrowth >= 0 ? '📈' : '📉'} 
+                {Math.abs(revenueSummary.monthlyGrowth).toFixed(1)}% este mês
+              </span>
+            </div>
+          </div>
+        </div>
+
+        {/* Charts Section */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-8">
+          <ChartCard title="Distribuição de Ordens de Serviço" isLoading={isLoading}>
+            <ServiceOrderChart serviceOrders={serviceOrders} />
+          </ChartCard>
+          
+          <ChartCard title="Receita dos Últimos 6 Meses" isLoading={isLoading}>
+            <RevenueChart serviceOrders={serviceOrders} />
+          </ChartCard>
         </div>
 
         {/* Sistema Info */}

@@ -1,8 +1,10 @@
 import { useState } from "react";
+import { clientsApi } from '../../client/services/api';
 import { useMutation, useQueryClient, useQuery } from "@tanstack/react-query";
 import { serviceOrdersApi } from "../services/api";
 import { vehiclesApi } from "../../vehicle/services/api";
 import type { ServiceOrderCreateDTO } from "../types/serviceOrder";
+import type { Client } from "../../client/types/client";
 
 interface CreateServiceOrderModalProps {
   onClose: () => void;
@@ -11,6 +13,11 @@ interface CreateServiceOrderModalProps {
 export default function CreateServiceOrderModal({ onClose }: CreateServiceOrderModalProps) {
   const queryClient = useQueryClient();
   const [error, setError] = useState<string | null>(null);
+
+  const { data: clients = [] } = useQuery({
+    queryKey: ["clients"],
+    queryFn: (): Promise<Client[]> => clientsApi.getAll().then((res: { data: Client[] }) => res.data),
+  });
 
   const { data: vehicles = [] } = useQuery({
     queryKey: ["vehicles"],
@@ -30,6 +37,9 @@ export default function CreateServiceOrderModal({ onClose }: CreateServiceOrderM
     technicianName: '',
     currentKilometers: undefined
   });
+
+  const selectedVehicle = vehicles.find(v => v.id === form.vehicleId);
+  const clientName = selectedVehicle?.clientId ? (clients.find((c: import("../../client/types/client").Client) => c.id === selectedVehicle.clientId)?.name || '') : '';
 
   const mutation = useMutation({
     mutationFn: (data: ServiceOrderCreateDTO) => serviceOrdersApi.create(data),
@@ -52,7 +62,6 @@ export default function CreateServiceOrderModal({ onClose }: CreateServiceOrderM
     });
   };
 
-  // Quando veículo é selecionado, atualizar clientId automaticamente
   const handleVehicleChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const vehicleId = Number(e.target.value);
     const vehicle = vehicles.find(v => v.id === vehicleId);
@@ -144,7 +153,7 @@ export default function CreateServiceOrderModal({ onClose }: CreateServiceOrderM
               </label>
               <input
                 type="text"
-                value=""
+                value={clientName}
                 className="w-full border border-gray-300 rounded-lg px-3 sm:px-4 py-2 sm:py-3 bg-gray-50 text-gray-600 text-sm sm:text-base"
                 placeholder="Cliente será preenchido automaticamente"
                 readOnly

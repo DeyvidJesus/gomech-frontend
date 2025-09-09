@@ -12,3 +12,5 @@ export interface Vehicle {
   createdAt?: string;
   updatedAt?: string;
 }
+
+export type VehicleCreateDTO = Omit<Vehicle, "id" | "createdAt" | "updatedAt">;

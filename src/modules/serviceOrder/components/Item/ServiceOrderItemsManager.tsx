@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { serviceOrderItemsApi } from "../services/api";
-import type { ServiceOrderItem, ServiceOrderItemCreateDTO, ServiceOrderItemType } from "../types/serviceOrder";
+import { serviceOrderItemsApi } from "../../services/api";
+import type { ServiceOrderItem, ServiceOrderItemCreateDTO, ServiceOrderItemType } from "../../types/serviceOrder";
 
 interface ServiceOrderItemsManagerProps {
   serviceOrderId: number;

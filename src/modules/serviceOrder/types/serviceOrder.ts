@@ -1,23 +1,22 @@
-import type { Client } from "../../client/types/client";
 import type { Vehicle } from "../../vehicle/types/vehicle";
 
-// Enums que correspondem ao backend Java
-export type ServiceOrderStatus = 
-  | "PENDING" 
-  | "IN_PROGRESS" 
-  | "WAITING_PARTS" 
-  | "WAITING_APPROVAL" 
-  | "COMPLETED" 
-  | "CANCELLED" 
+// --------------------- Enums do backend ---------------------
+export type ServiceOrderStatus =
+  | "PENDING"
+  | "IN_PROGRESS"
+  | "WAITING_PARTS"
+  | "WAITING_APPROVAL"
+  | "COMPLETED"
+  | "CANCELLED"
   | "DELIVERED";
 
-export type ServiceOrderItemType = 
-  | "SERVICE" 
-  | "PART" 
-  | "MATERIAL" 
+export type ServiceOrderItemType =
+  | "SERVICE"
+  | "PART"
+  | "MATERIAL"
   | "LABOR";
 
-// Interface principal ServiceOrder correspondente ao backend
+// --------------------- Interfaces principais ---------------------
 export interface ServiceOrder {
   id: number;
   orderNumber: string;
@@ -32,7 +31,6 @@ export interface ServiceOrder {
   partsCost: number;
   totalCost: number;
   discount: number;
-  finalCost: number;
   estimatedCompletion?: string;
   actualCompletion?: string;
   observations?: string;
@@ -40,17 +38,17 @@ export interface ServiceOrder {
   currentKilometers?: number;
   createdAt: string;
   updatedAt: string;
-
-  // Relacionamentos (populados quando necessário)
-  client?: Client;
-  vehicle?: Vehicle;
+  clientName?: string;
+  clientPhone?: string;
+  vehicleLicensePlate?: string;
+  vehicleModel?: string;
+  vehicleBrand?: string;
   items?: ServiceOrderItem[];
 }
 
-// Interface ServiceOrderItem correspondente ao backend
 export interface ServiceOrderItem {
   id: number;
-  serviceOrder?: ServiceOrder; // Relacionamento bidirecional
+  serviceOrderId?: number; // referência simplificada
   description: string;
   itemType: ServiceOrderItemType;
   quantity: number;
@@ -66,7 +64,7 @@ export interface ServiceOrderItem {
   updatedAt: string;
 }
 
-// DTOs para criação
+// --------------------- DTOs ---------------------
 export interface ServiceOrderCreateDTO {
   vehicleId: number;
   clientId: number;
@@ -79,9 +77,9 @@ export interface ServiceOrderCreateDTO {
   observations?: string;
   technicianName?: string;
   currentKilometers?: number;
+  items?: ServiceOrderItemCreateDTO[];
 }
 
-// DTOs para atualização
 export interface ServiceOrderUpdateDTO {
   description?: string;
   problemDescription?: string;
@@ -94,9 +92,9 @@ export interface ServiceOrderUpdateDTO {
   observations?: string;
   technicianName?: string;
   currentKilometers?: number;
+  items?: ServiceOrderItemCreateDTO[];
 }
 
-// DTO para criação de itens
 export interface ServiceOrderItemCreateDTO {
   description: string;
   itemType: ServiceOrderItemType;
@@ -105,20 +103,19 @@ export interface ServiceOrderItemCreateDTO {
   productCode?: string;
   requiresStock?: boolean;
   observations?: string;
+  stockProductId?: number;
 }
 
-// DTO de resposta para ServiceOrder
+// --------------------- DTOs de resposta ---------------------
 export interface ServiceOrderResponseDTO extends ServiceOrder {
-  daysPastDue?: number;
-  // Campos calculados que podem vir do backend
+  daysPastDue?: number; // campo calculado
 }
 
-// DTO de resposta para ServiceOrderItem
 export interface ServiceOrderItemResponseDTO extends ServiceOrderItem {
-  // Campos calculados que podem vir do backend
+  // campos calculados se necessário
 }
 
-// Filtros para busca
+// --------------------- Filtros e relatórios ---------------------
 export interface ServiceOrderFilters {
   status?: ServiceOrderStatus;
   clientId?: number;
@@ -127,7 +124,6 @@ export interface ServiceOrderFilters {
   endDate?: string;
 }
 
-// Interface para relatórios
 export interface ServiceOrderReport {
   id: number;
   orderNumber: string;
@@ -138,7 +134,7 @@ export interface ServiceOrderReport {
   status: ServiceOrderStatus;
   estimatedCompletion?: string;
   daysPastDue?: number;
-  finalCost: number;
+  totalCost: number;
 }
 
 export interface ServiceOrderReports {
@@ -156,43 +152,20 @@ export interface VehicleServiceHistory {
   lastService?: string;
 }
 
-// Tipos de conveniência para compatibilidade com o frontend atual
-export type ServiceOrderPriority = "low" | "medium" | "high" | "urgent";
-
-// Mapeamentos de status para compatibilidade
-export const statusMapping: Record<string, ServiceOrderStatus> = {
-  'pending': 'PENDING',
-  'in_progress': 'IN_PROGRESS', 
-  'waiting_parts': 'WAITING_PARTS',
-  'waiting_approval': 'WAITING_APPROVAL',
-  'completed': 'COMPLETED',
-  'canceled': 'CANCELLED',
-  'cancelled': 'CANCELLED',
-  'delivered': 'DELIVERED'
-};
-
-// Mapeamento reverso para exibição
+// --------------------- Mapeamentos de exibição ---------------------
 export const statusDisplayMapping: Record<ServiceOrderStatus, string> = {
-  'PENDING': 'Pendente',
-  'IN_PROGRESS': 'Em Andamento',
-  'WAITING_PARTS': 'Aguardando Peças', 
-  'WAITING_APPROVAL': 'Aguardando Aprovação',
-  'COMPLETED': 'Concluída',
-  'CANCELLED': 'Cancelada',
-  'DELIVERED': 'Entregue'
-};
-
-// Mapeamento de tipos de item
-export const itemTypeMapping: Record<string, ServiceOrderItemType> = {
-  'service': 'SERVICE',
-  'part': 'PART',
-  'material': 'MATERIAL',
-  'labor': 'LABOR'
+  PENDING: "Pendente",
+  IN_PROGRESS: "Em Andamento",
+  WAITING_PARTS: "Aguardando Peças",
+  WAITING_APPROVAL: "Aguardando Aprovação",
+  COMPLETED: "Concluída",
+  CANCELLED: "Cancelada",
+  DELIVERED: "Entregue",
 };
 
 export const itemTypeDisplayMapping: Record<ServiceOrderItemType, string> = {
-  'SERVICE': 'Serviço',
-  'PART': 'Peça',
-  'MATERIAL': 'Material', 
-  'LABOR': 'Mão de Obra'
+  SERVICE: "Serviço",
+  PART: "Peça",
+  MATERIAL: "Material",
+  LABOR: "Mão de Obra",
 };

@@ -5,7 +5,7 @@ import { serviceOrdersApi, serviceOrderItemsApi } from "../services/api";
 import type { ServiceOrderItem, ServiceOrderStatus } from "../types/serviceOrder";
 import { statusDisplayMapping } from "../types/serviceOrder";
 import EditServiceOrderModal from "./EditServiceOrderModal";
-import AddServiceOrderItemModal from "./AddServiceOrderItemModal";
+import AddServiceOrderItemModal from "./Item/AddServiceOrderItemModal";
 
 export default function ServiceOrderDetailsPage() {
   const navigate = useNavigate();
@@ -22,6 +22,8 @@ export default function ServiceOrderDetailsPage() {
     queryFn: () => serviceOrdersApi.getById(serviceOrderId).then(res => res.data),
     enabled: !!serviceOrderId,
   });
+
+  console.log('serviceOrder', serviceOrder);
 
   // Buscar itens da OS
   const { data: items = [] } = useQuery({
@@ -171,7 +173,11 @@ export default function ServiceOrderDetailsPage() {
             <div className="flex-1">
               <h1 className="text-2xl sm:text-3xl font-bold text-orange-600">OS #{serviceOrder.orderNumber}</h1>
               <p className="text-sm sm:text-base text-gray-600">
-                {serviceOrder.client?.name} • {serviceOrder.vehicle?.brand} {serviceOrder.vehicle?.model}
+                {serviceOrder.clientName}
+                {serviceOrder.clientPhone ? ` (${serviceOrder.clientPhone})` : ''}
+                {' • '}
+                {serviceOrder.vehicleBrand} {serviceOrder.vehicleModel}
+                {serviceOrder.vehicleLicensePlate ? ` (${serviceOrder.vehicleLicensePlate})` : ''}
               </p>
             </div>
           </div>
@@ -300,7 +306,7 @@ export default function ServiceOrderDetailsPage() {
                 <div className="bg-gray-50 rounded-lg p-3 sm:p-4">
                   <label className="text-sm font-medium text-gray-600">Quilometragem Atual</label>
                   <div className="text-sm sm:text-base text-gray-900 font-medium">
-                    {serviceOrder.currentKilometers.toLocaleString('pt-BR')} km
+                    {serviceOrder.currentKilometers?.toLocaleString('pt-BR')} km
                   </div>
                 </div>
               )}
@@ -362,8 +368,8 @@ export default function ServiceOrderDetailsPage() {
                         </div>
                         <div className="font-medium text-gray-900 text-sm sm:text-base break-words">{item.description}</div>
                         <div className="text-xs sm:text-sm text-gray-600 mt-1">
-                          Qtd: {item.quantity} × R$ {item.unitPrice.toLocaleString('pt-BR', { minimumFractionDigits: 2 })} = 
-                          <span className="font-medium"> R$ {item.totalPrice.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span>
+                          Qtd: {item.quantity} × R$ {item.unitPrice?.toLocaleString('pt-BR', { minimumFractionDigits: 2 })} = 
+                          <span className="font-medium"> R$ {item.totalPrice?.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span>
                         </div>
                         {item.observations && (
                           <div className="text-xs sm:text-sm text-gray-500 mt-1 break-words">
@@ -406,21 +412,21 @@ export default function ServiceOrderDetailsPage() {
             <h3 className="text-base sm:text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
               👤 Cliente
             </h3>
-            {serviceOrder.client ? (
-              <div className="space-y-3">
+            <div className="space-y-3">
+              {serviceOrder.clientId ? (
                 <Link
                   to="/clients/$id"
-                  params={{ id: serviceOrder.client.id.toString() }}
+                  params={{ id: serviceOrder.clientId.toString() }}
                   className="block hover:bg-orange-50 p-3 rounded-lg transition-colors"
                 >
-                  <div className="font-medium text-gray-900 text-sm sm:text-base break-words">{serviceOrder.client.name}</div>
-                  <div className="text-xs sm:text-sm text-gray-600 break-words">{serviceOrder.client.email}</div>
-                  <div className="text-xs sm:text-sm text-gray-600">{serviceOrder.client.phone}</div>
+                  <div className="font-medium text-gray-900 text-sm sm:text-base break-words">{serviceOrder.clientName}</div>
+                  <div className="text-xs sm:text-sm text-gray-600">{serviceOrder.clientPhone}</div>
                 </Link>
-              </div>
-            ) : (
-              <p className="text-gray-500 text-sm">Cliente não encontrado</p>
-            )}
+              ) : null}
+              {!serviceOrder.clientId && !serviceOrder.clientName && (
+                <p className="text-gray-500 text-sm">Cliente não encontrado</p>
+              )}
+            </div>
           </div>
 
           {/* Veículo */}
@@ -428,23 +434,23 @@ export default function ServiceOrderDetailsPage() {
             <h3 className="text-base sm:text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
               🚗 Veículo
             </h3>
-            {serviceOrder.vehicle ? (
-              <div className="space-y-3">
+            <div className="space-y-3">
+              {serviceOrder.vehicleId ? (
                 <Link
                   to="/vehicles/$id"
-                  params={{ id: serviceOrder.vehicle.id.toString() }}
+                  params={{ id: serviceOrder.vehicleId.toString() }}
                   className="block hover:bg-orange-50 p-3 rounded-lg transition-colors"
                 >
                   <div className="font-medium text-gray-900 text-sm sm:text-base break-words">
-                    {serviceOrder.vehicle.brand} {serviceOrder.vehicle.model}
+                    {serviceOrder.vehicleBrand} {serviceOrder.vehicleModel}
                   </div>
-                  <div className="text-xs sm:text-sm text-gray-600">{serviceOrder.vehicle.licensePlate}</div>
-                  <div className="text-xs sm:text-sm text-gray-600">{serviceOrder.vehicle.color}</div>
+                  <div className="text-xs sm:text-sm text-gray-600">{serviceOrder.vehicleLicensePlate}</div>
                 </Link>
-              </div>
-            ) : (
-              <p className="text-gray-500 text-sm">Veículo não encontrado</p>
-            )}
+              ) : null}
+              {!serviceOrder.vehicleId && !serviceOrder.vehicleBrand && !serviceOrder.vehicleModel && !serviceOrder.vehicleLicensePlate && (
+                <p className="text-gray-500 text-sm">Veículo não encontrado</p>
+              )}
+            </div>
           </div>
 
           {/* Resumo Financeiro */}
@@ -456,20 +462,20 @@ export default function ServiceOrderDetailsPage() {
               <div className="flex justify-between text-sm">
                 <span className="text-gray-600">Mão de Obra</span>
                 <span className="font-medium">
-                  R$ {serviceOrder.laborCost.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                  R$ {serviceOrder.laborCost?.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                 </span>
               </div>
               <div className="flex justify-between text-sm">
                 <span className="text-gray-600">Peças</span>
                 <span className="font-medium">
-                  R$ {serviceOrder.partsCost.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                  R$ {serviceOrder.partsCost?.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                 </span>
               </div>
               {serviceItems.length > 0 && (
                 <div className="flex justify-between text-sm">
                   <span className="text-gray-600">Serviços ({serviceItems.length})</span>
                   <span className="font-medium">
-                    R$ {serviceItems.reduce((sum, item) => sum + item.totalPrice, 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                    R$ {serviceItems.reduce((sum, item) => sum + item.totalPrice, 0)?.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                   </span>
                 </div>
               )}
@@ -477,7 +483,7 @@ export default function ServiceOrderDetailsPage() {
                 <div className="flex justify-between text-sm">
                   <span className="text-gray-600">Itens - Peças ({partItems.length})</span>
                   <span className="font-medium">
-                    R$ {partItems.reduce((sum, item) => sum + item.totalPrice, 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                    R$ {partItems.reduce((sum, item) => sum + item.totalPrice, 0)?.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                   </span>
                 </div>
               )}
@@ -485,7 +491,7 @@ export default function ServiceOrderDetailsPage() {
                 <div className="flex justify-between text-sm">
                   <span className="text-gray-600">Materiais ({materialItems.length})</span>
                   <span className="font-medium">
-                    R$ {materialItems.reduce((sum, item) => sum + item.totalPrice, 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                    R$ {materialItems.reduce((sum, item) => sum + item.totalPrice, 0)?.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                   </span>
                 </div>
               )}
@@ -493,7 +499,7 @@ export default function ServiceOrderDetailsPage() {
                 <div className="flex justify-between text-sm">
                   <span className="text-gray-600">Itens - Mão de Obra ({laborItems.length})</span>
                   <span className="font-medium">
-                    R$ {laborItems.reduce((sum, item) => sum + item.totalPrice, 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                    R$ {laborItems.reduce((sum, item) => sum + item.totalPrice, 0)?.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                   </span>
                 </div>
               )}
@@ -501,21 +507,21 @@ export default function ServiceOrderDetailsPage() {
                 <div className="flex justify-between text-sm">
                   <span className="text-gray-600">Total Bruto</span>
                   <span className="font-medium">
-                    R$ {serviceOrder.totalCost.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                    R$ {serviceOrder.totalCost?.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                   </span>
                 </div>
                 {serviceOrder.discount > 0 && (
                   <div className="flex justify-between text-red-600 text-sm">
                     <span>Desconto</span>
                     <span className="font-medium">
-                      - R$ {serviceOrder.discount.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                      - R$ {serviceOrder.discount?.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                     </span>
                   </div>
                 )}
                 <div className="flex justify-between text-base sm:text-lg font-bold mt-2">
                   <span>Total Final</span>
                   <span className="text-orange-600">
-                    R$ {serviceOrder.finalCost.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                    R$ {serviceOrder.totalCost?.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                   </span>
                 </div>
               </div>

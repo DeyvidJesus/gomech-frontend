@@ -9,7 +9,7 @@ import { useNavigate } from "@tanstack/react-router";
 
 export function ClientList() {
   const queryClient = useQueryClient();
-  const { data, isLoading, error } = useQuery<Client[]>({
+  const { data: clients, isLoading, error } = useQuery<Client[]>({
     queryKey: ["clients"],
     queryFn: async () => {
       const res = await clientsApi.getAll();
@@ -82,6 +82,8 @@ export function ClientList() {
     );
   }
 
+  console.log(clients)
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -107,7 +109,7 @@ export function ClientList() {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-orange-100 text-sm font-medium">Total de Clientes</p>
-              <p className="text-3xl font-bold">{data?.length || 0}</p>
+              <p className="text-3xl font-bold">{clients?.length || 0}</p>
             </div>
             <div className="text-4xl opacity-80">👥</div>
           </div>
@@ -117,7 +119,7 @@ export function ClientList() {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-gray-300 text-sm font-medium">Clientes Ativos</p>
-              <p className="text-3xl font-bold">{data?.length || 0}</p>
+              <p className="text-3xl font-bold">{clients?.length || 0}</p>
             </div>
             <div className="text-4xl opacity-80">✅</div>
           </div>
@@ -127,7 +129,7 @@ export function ClientList() {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-orange-100 text-sm font-medium">Novos este Mês</p>
-              <p className="text-3xl font-bold">+{Math.ceil((data?.length || 0) * 0.2)}</p>
+              <p className="text-3xl font-bold">+{Math.ceil((clients?.length || 0) * 0.2)}</p>
             </div>
             <div className="text-4xl opacity-80">📈</div>
           </div>
@@ -135,7 +137,7 @@ export function ClientList() {
       </div>
 
       {/* Lista de Clientes */}
-      {!data || data.length === 0 ? (
+      {!clients || clients.length === 0 ? (
         <div className="bg-white rounded-lg p-12 text-center shadow-sm border border-gray-200">
           <div className="text-gray-400 text-6xl mb-4">👤</div>
           <h3 className="text-xl font-semibold text-gray-700 mb-2">Nenhum cliente encontrado</h3>
@@ -171,7 +173,7 @@ export function ClientList() {
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
-                {data.map((client: Client) => (
+                {clients.map((client: Client) => (
                   <tr key={client.id} className="hover:bg-orange-50 transition-colors">
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="flex items-center">

@@ -1,8 +1,8 @@
 import { useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { serviceOrderItemsApi } from "../services/api";
-import type { ServiceOrderItemCreateDTO } from "../types/serviceOrder";
-import { itemTypeDisplayMapping } from "../types/serviceOrder";
+import { serviceOrderItemsApi } from "../../services/api";
+import type { ServiceOrderItemCreateDTO } from "../../types/serviceOrder";
+import { itemTypeDisplayMapping } from "../../types/serviceOrder";
 
 interface AddServiceOrderItemModalProps {
   serviceOrderId: number;
@@ -20,7 +20,8 @@ export default function AddServiceOrderItemModal({ serviceOrderId, onClose }: Ad
     unitPrice: 0,
     productCode: '',
     requiresStock: false,
-    observations: ''
+    observations: '',
+    stockProductId: undefined,
   });
 
   const mutation = useMutation({

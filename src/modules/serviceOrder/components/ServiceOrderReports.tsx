@@ -121,10 +121,10 @@ export default function ServiceOrderReports() {
                         </div>
                       </div>
                     </td>
-                    <td className="px-6 py-4 text-gray-900">{report.clientId}</td>
+                    <td className="px-6 py-4 text-gray-900">{report.clientName || report.clientId}</td>
                     <td className="px-6 py-4">
-                      <div className="text-gray-900">{report.vehicle!.brand} {report.vehicle!.model}</div>
-                      <div className="text-sm text-gray-500">{report.vehicle!.licensePlate}</div>
+                      <div className="text-gray-900">{report.vehicleBrand} {report.vehicleModel}</div>
+                      <div className="text-sm text-gray-500">{report.vehicleLicensePlate}</div>
                     </td>
                     <td className="px-6 py-4">
                       <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-red-100 text-red-800">
@@ -132,7 +132,7 @@ export default function ServiceOrderReports() {
                       </span>
                     </td>
                     <td className="px-6 py-4 font-medium text-gray-900">
-                      R$ {report.totalCost.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                      R$ {report.totalCost?.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                     </td>
                     <td className="px-6 py-4 text-right">
                       <Link
@@ -190,10 +190,10 @@ export default function ServiceOrderReports() {
                         </div>
                       </div>
                     </td>
-                    <td className="px-6 py-4 text-gray-900">{report.clientId}</td>
+                    <td className="px-6 py-4 text-gray-900">{report.clientName || report.clientId}</td>
                     <td className="px-6 py-4">
-                      <div className="text-gray-900">{report.vehicle!.brand} {report.vehicle!.model}</div>
-                      <div className="text-sm text-gray-500">{report.vehicle!.licensePlate}</div>
+                      <div className="text-gray-900">{report.vehicleBrand} {report.vehicleModel}</div>
+                      <div className="text-sm text-gray-500">{report.vehicleLicensePlate}</div>
                     </td>
                     <td className="px-6 py-4">
                       <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
@@ -264,13 +264,13 @@ export default function ServiceOrderReports() {
                         </div>
                       </div>
                     </td>
-                    <td className="px-6 py-4 text-gray-900">{report.clientId}</td>
+                    <td className="px-6 py-4 text-gray-900">{report.clientName || report.clientId}</td>
                     <td className="px-6 py-4">
-                      <div className="text-gray-900">{report.vehicle!.brand} {report.vehicle!.model}</div>
-                      <div className="text-sm text-gray-500">{report.vehicle!.licensePlate}</div>
+                      <div className="text-gray-900">{report.vehicleBrand} {report.vehicleModel}</div>
+                      <div className="text-sm text-gray-500">{report.vehicleLicensePlate}</div>
                     </td>
                     <td className="px-6 py-4 font-medium text-gray-900">
-                      R$ {report.totalCost.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                      R$ {report.totalCost?.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                     </td>
                     <td className="px-6 py-4 text-right">
                       <Link

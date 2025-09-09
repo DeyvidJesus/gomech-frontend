@@ -12,13 +12,11 @@ export default function ServiceOrderList() {
   const [showCreate, setShowCreate] = useState(false);
   const [statusFilter, setStatusFilter] = useState<ServiceOrderStatus | 'all'>('all');
 
-  // Buscar ordens de serviço
   const { data: serviceOrders = [], isLoading, error } = useQuery({
     queryKey: ["serviceOrders"],
     queryFn: () => serviceOrdersApi.getAll().then(res => res.data),
   });
 
-  // Mutation para deletar
   const deleteMutation = useMutation({
     mutationFn: (id: number) => serviceOrdersApi.delete(id),
     onSuccess: () => {
@@ -29,7 +27,6 @@ export default function ServiceOrderList() {
     },
   });
 
-  // Filtrar por status
   const filteredOrders = serviceOrders.filter(order => 
     statusFilter === 'all' || order.status === statusFilter
   );
@@ -232,7 +229,9 @@ export default function ServiceOrderList() {
                   </tr>
                 </thead>
                 <tbody>
-                  {filteredOrders.map((order) => (
+                  {filteredOrders.map((order) => { 
+                    console.log('ORDER', order) 
+                  return (
                     <tr 
                       key={order.id} 
                       className="border-b border-gray-100 hover:bg-gray-50 transition-colors"
@@ -247,18 +246,18 @@ export default function ServiceOrderList() {
                       </td>
                       <td className="py-4 px-6">
                         <div className="font-medium text-gray-900">
-                          {order.client?.name || 'Cliente não encontrado'}
+                          {order.clientName || 'Cliente não encontrado'}
                         </div>
-                        {order.client?.phone && (
-                          <div className="text-sm text-gray-600">{order.client.phone}</div>
+                        {order.clientPhone && (
+                          <div className="text-sm text-gray-600">{order.clientPhone}</div>
                         )}
                       </td>
                       <td className="py-4 px-6">
                         <div className="font-medium text-gray-900">
-                          {order.vehicle?.brand} {order.vehicle?.model}
+                          {order.vehicleBrand} {order.vehicleModel}
                         </div>
-                        {order.vehicle?.licensePlate && (
-                          <div className="text-sm text-gray-600">{order.vehicle.licensePlate}</div>
+                        {order.vehicleLicensePlate && (
+                          <div className="text-sm text-gray-600">{order.vehicleLicensePlate}</div>
                         )}
                       </td>
                       <td className="py-4 px-6">
@@ -268,7 +267,7 @@ export default function ServiceOrderList() {
                       </td>
                       <td className="py-4 px-6">
                         <div className="font-medium text-gray-900">
-                          R$ {order.finalCost.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                          R$ {order.totalCost?.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                         </div>
                       </td>
                       <td className="py-4 px-6">
@@ -301,7 +300,7 @@ export default function ServiceOrderList() {
                         </div>
                       </td>
                     </tr>
-                  ))}
+                  )})}
                 </tbody>
               </table>
             </div>
@@ -321,7 +320,7 @@ export default function ServiceOrderList() {
                         #{order.orderNumber}
                       </div>
                       <div className="text-sm text-gray-600 truncate">
-                        {order.client?.name || 'Cliente não encontrado'}
+                        {order.clientName || 'Cliente não encontrado'}
                       </div>
                     </div>
                     <div className="flex items-center gap-2 ml-3">
@@ -351,14 +350,14 @@ export default function ServiceOrderList() {
 
                   {/* Informações principais */}
                   <div className="space-y-2 mb-3">
-                    {order.vehicle && (
+                    {order.vehicleId && (
                       <div className="text-sm">
                         <span className="font-medium text-gray-700">Veículo: </span>
                         <span className="text-gray-900">
-                          {order.vehicle.brand} {order.vehicle.model}
+                          {order.vehicleBrand} {order.vehicleModel}
                         </span>
-                        {order.vehicle.licensePlate && (
-                          <span className="text-gray-600"> • {order.vehicle.licensePlate}</span>
+                        {order.vehicleLicensePlate && (
+                          <span className="text-gray-600"> • {order.vehicleLicensePlate}</span>
                         )}
                       </div>
                     )}
@@ -373,7 +372,7 @@ export default function ServiceOrderList() {
                     <div className="text-sm">
                       <span className="font-medium text-gray-700">Valor: </span>
                       <span className="text-gray-900 font-bold">
-                        R$ {order.finalCost.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                        R$ {order.totalCost?.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                       </span>
                     </div>
 

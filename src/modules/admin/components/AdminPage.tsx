@@ -33,7 +33,7 @@ export default function AdminPage() {
 
   const totalRevenue = serviceOrders
     .filter(order => order.status === 'COMPLETED')
-    .reduce((sum, order) => sum + (order.finalCost || 0), 0);
+    .reduce((sum, order) => sum + (order.totalCost || 0), 0);
 
   const pendingOrders = serviceOrders.filter(order => order.status === 'PENDING').length;
   const inProgressOrders = serviceOrders.filter(order => order.status === 'IN_PROGRESS').length;

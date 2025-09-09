@@ -61,8 +61,7 @@ export default function EditServiceOrderModal({ serviceOrder, onClose }: EditSer
     mutation.mutate(form);
   };
 
-  const totalCost = (form.laborCost || 0) + (form.partsCost || 0);
-  const finalCost = totalCost - (form.discount || 0);
+  const totalCost = ((form.laborCost || 0) + (form.partsCost || 0)) - (form.discount || 0);
 
   return (
     <div className="fixed inset-0 bg-[#242424cb] flex items-center justify-center z-50 p-4">
@@ -294,7 +293,7 @@ export default function EditServiceOrderModal({ serviceOrder, onClose }: EditSer
                 <div className="flex justify-between font-bold text-base sm:text-lg border-t pt-2">
                   <span>Total Final:</span>
                   <span className="text-orange-600">
-                    R$ {finalCost.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                    R$ {totalCost.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                   </span>
                 </div>
               </div>
