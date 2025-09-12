@@ -52,4 +52,5 @@ chatApi.interceptors.response.use(
 
 export const aiService = {
   chat: (data: Record<string, unknown>) => chatApi.post('/ai/chat', data),
+  status: () => chatApi.get('/ai/chat/status'),
 }

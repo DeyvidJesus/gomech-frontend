@@ -8,7 +8,6 @@ const fileUploadApi = axios.create({
   },
 });
 
-// Interceptors para autenticação
 fileUploadApi.interceptors.request.use(
   (config) => {
     const token = localStorage.getItem("token");

@@ -17,7 +17,7 @@ export default function FileUpload({ onUploadSuccess, onUploadError }: FileUploa
 
   const handleFileSelect = (files: FileList | null) => {
     if (!files || files.length === 0) return;
-    
+
     const file = files[0];
     uploadFile(file);
   };
@@ -51,7 +51,7 @@ export default function FileUpload({ onUploadSuccess, onUploadError }: FileUploa
       }, 200);
 
       const response = await fileUploadService.uploadFile(file);
-      
+
       clearInterval(progressInterval);
       setUploadProgress(100);
 
@@ -94,7 +94,7 @@ export default function FileUpload({ onUploadSuccess, onUploadError }: FileUploa
     e.preventDefault();
     e.stopPropagation();
     setDragActive(false);
-    
+
     const files = e.dataTransfer.files;
     handleFileSelect(files);
   };
@@ -125,11 +125,10 @@ export default function FileUpload({ onUploadSuccess, onUploadError }: FileUploa
 
       {/* Área de Upload */}
       <div
-        className={`border-2 border-dashed rounded-lg p-8 text-center transition-colors ${
-          dragActive
+        className={`border-2 border-dashed rounded-lg p-8 text-center transition-colors ${dragActive
             ? 'border-blue-400 bg-blue-50'
             : 'border-gray-300 hover:border-gray-400'
-        } ${isUploading ? 'opacity-50 pointer-events-none' : ''}`}
+          } ${isUploading ? 'opacity-50 pointer-events-none' : ''}`}
         onDragEnter={handleDragEnter}
         onDragLeave={handleDragLeave}
         onDragOver={handleDragOver}
@@ -156,7 +155,7 @@ export default function FileUpload({ onUploadSuccess, onUploadError }: FileUploa
             <div>
               <p className="text-sm text-gray-600">Processando arquivo...</p>
               <div className="w-full bg-gray-200 rounded-full h-2 mt-2">
-                <div 
+                <div
                   className="bg-blue-600 h-2 rounded-full transition-all duration-300"
                   style={{ width: `${uploadProgress}%` }}
                 ></div>
@@ -186,8 +185,7 @@ export default function FileUpload({ onUploadSuccess, onUploadError }: FileUploa
         )}
       </div>
 
-      {/* Botões de Ação */}
-      <div className="mt-6 flex gap-3">
+      {/* Botões de Ação */}      <div className="mt-6 flex gap-3">
         <button
           onClick={clearData}
           disabled={isUploading}
@@ -195,7 +193,7 @@ export default function FileUpload({ onUploadSuccess, onUploadError }: FileUploa
         >
           🗑️ Limpar Dados
         </button>
-        
+
         <button
           onClick={() => fileInputRef.current?.click()}
           disabled={isUploading}
