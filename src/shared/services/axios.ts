@@ -2,8 +2,8 @@ import { redirect } from "@tanstack/react-router";
 import axios from "axios";
 
 const api = axios.create({
-  baseURL: "http://localhost:5080",
-  // baseURL: "https://clear-ellene-deyvidgondim-8b8a208e.koyeb.app",
+  // baseURL: "http://localhost:5080",
+  baseURL: "https://clear-ellene-deyvidgondim-8b8a208e.koyeb.app",
   timeout: 30000,
   headers: {
     "Content-Type": "application/json",
