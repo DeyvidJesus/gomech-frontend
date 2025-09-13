@@ -49,7 +49,7 @@ export default function ServiceOrderList() {
       PENDING: 'bg-yellow-100 text-yellow-800',
       IN_PROGRESS: 'bg-blue-100 text-blue-800',
       WAITING_PARTS: 'bg-purple-100 text-purple-800',
-      WAITING_APPROVAL: 'bg-orange-100 text-orange-800',
+      WAITING_APPROVAL: 'bg-orangeWheel-100 text-orangeWheel-800',
       COMPLETED: 'bg-green-100 text-green-800',
       CANCELLED: 'bg-red-100 text-red-800',
       DELIVERED: 'bg-emerald-100 text-emerald-800'
@@ -85,18 +85,18 @@ export default function ServiceOrderList() {
     <div className="p-4 sm:p-6 lg:p-8 bg-gray-50 min-h-screen">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 sm:gap-8 mb-6 sm:mb-8">
-        <div className="flex items-center gap-4">
-          <div className="w-12 h-12 bg-orange-600 rounded-full flex items-center justify-center">
-            <span className="text-2xl">📋</span>
+        <div className="flex items-center gap-3 sm:gap-4">
+          <div className="w-10 h-10 sm:w-12 sm:h-12 bg-orangeWheel-500 rounded-full flex items-center justify-center flex-shrink-0">
+            <span className="text-lg sm:text-2xl">📋</span>
           </div>
-          <div>
-            <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Ordens de Serviço</h1>
-            <p className="text-sm sm:text-base text-gray-600">Gerencie todas as ordens de serviço</p>
+          <div className="min-w-0 flex-1">
+            <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-900">Ordens de Serviço</h1>
+            <p className="text-xs sm:text-sm lg:text-base text-gray-600">Gerencie todas as ordens de serviço</p>
           </div>
         </div>
         <button
           onClick={() => setShowCreate(true)}
-          className="bg-orange-600 hover:bg-orange-700 text-white font-semibold px-4 sm:px-6 py-2 sm:py-3 rounded-lg transition-colors flex items-center gap-2 justify-center"
+          className="bg-orangeWheel-500 hover:bg-orangeWheel-600 text-white font-semibold px-4 sm:px-6 py-2.5 sm:py-3 rounded-lg transition-colors flex items-center gap-2 justify-center w-full sm:w-auto"
         >
           <span>➕</span>
           <span className="hidden sm:inline">Nova OS</span>
@@ -165,12 +165,12 @@ export default function ServiceOrderList() {
 
       {/* Filtros */}
       <div className="bg-white rounded-lg p-4 sm:p-6 shadow-sm border border-gray-200 mb-4 sm:mb-6">
-        <div className="flex flex-col sm:flex-row sm:items-center gap-4">
-          <span className="text-sm font-medium text-gray-700">Filtrar por status:</span>
+        <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4">
+          <span className="text-xs sm:text-sm font-medium text-gray-700 flex-shrink-0">Filtrar por status:</span>
           <select
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value as ServiceOrderStatus | 'all')}
-            className="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500 w-full sm:w-auto"
+            className="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orangeWheel-500 focus:border-orangeWheel-500 w-full sm:w-auto min-w-0"
           >
             <option value="all">Todos os status</option>
             <option value="PENDING">Pendente</option>
@@ -187,17 +187,17 @@ export default function ServiceOrderList() {
       {/* Lista de Ordens */}
       <div className="bg-white rounded-lg shadow-sm border border-gray-200">
         {isLoading ? (
-          <div className="p-8 sm:p-12 text-center">
-            <div className="w-8 h-8 border-2 border-orange-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-            <p className="text-gray-600">Carregando ordens de serviço...</p>
+          <div className="p-6 sm:p-8 lg:p-12 text-center">
+            <div className="w-6 h-6 sm:w-8 sm:h-8 border-2 border-orangeWheel-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+            <p className="text-gray-600 text-sm sm:text-base">Carregando ordens de serviço...</p>
           </div>
         ) : filteredOrders.length === 0 ? (
-          <div className="p-8 sm:p-12 text-center">
-            <span className="text-4xl sm:text-6xl mb-4 block">📋</span>
-            <h3 className="text-lg sm:text-xl font-semibold text-gray-800 mb-2">
+          <div className="p-6 sm:p-8 lg:p-12 text-center">
+            <span className="text-3xl sm:text-4xl lg:text-6xl mb-4 block">📋</span>
+            <h3 className="text-base sm:text-lg lg:text-xl font-semibold text-gray-800 mb-2">
               {statusFilter === 'all' ? 'Nenhuma ordem de serviço encontrada' : 'Nenhuma OS com este status'}
             </h3>
-            <p className="text-sm sm:text-base text-gray-600 mb-4 sm:mb-6">
+            <p className="text-xs sm:text-sm lg:text-base text-gray-600 mb-4 sm:mb-6">
               {statusFilter === 'all' 
                 ? 'Comece criando sua primeira ordem de serviço.' 
                 : 'Altere o filtro para ver outras ordens de serviço.'
@@ -206,7 +206,7 @@ export default function ServiceOrderList() {
             {statusFilter === 'all' && (
               <button
                 onClick={() => setShowCreate(true)}
-                className="bg-orange-600 hover:bg-orange-700 text-white px-4 sm:px-6 py-2 sm:py-3 rounded-lg transition-colors"
+                className="bg-orangeWheel-500 hover:bg-orangeWheel-600 text-white px-4 sm:px-6 py-2 sm:py-3 rounded-lg transition-colors text-sm sm:text-base"
               >
                 Criar primeira OS
               </button>
@@ -284,7 +284,7 @@ export default function ServiceOrderList() {
                         <div className="flex items-center justify-center gap-1">
                           <button
                             onClick={() => handleView(order)}
-                            className="text-orange-600 hover:text-orange-800 p-1.5 rounded-lg hover:bg-orange-50 transition-colors"
+                            className="text-orangeWheel-600 hover:text-orangeWheel-800 p-1.5 rounded-lg hover:bg-orangeWheel-50 transition-colors"
                             title="Ver detalhes"
                           >
                             👁️
@@ -412,5 +412,4 @@ export default function ServiceOrderList() {
       )}
     </div>
   );
-}
 }

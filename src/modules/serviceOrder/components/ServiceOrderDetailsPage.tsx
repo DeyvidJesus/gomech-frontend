@@ -83,7 +83,7 @@ export default function ServiceOrderDetailsPage() {
       PENDING: 'bg-yellow-100 text-yellow-800',
       IN_PROGRESS: 'bg-blue-100 text-blue-800',
       WAITING_PARTS: 'bg-purple-100 text-purple-800',
-      WAITING_APPROVAL: 'bg-orange-100 text-orange-800',
+      WAITING_APPROVAL: 'bg-orangeWheel-100 text-orangeWheel-800',
       COMPLETED: 'bg-green-100 text-green-800',
       CANCELLED: 'bg-red-100 text-red-800',
       DELIVERED: 'bg-emerald-100 text-emerald-800'
@@ -126,8 +126,8 @@ export default function ServiceOrderDetailsPage() {
     return (
       <div className="p-4 sm:p-6 lg:p-8 bg-gray-50 min-h-screen flex items-center justify-center">
         <div className="text-center">
-          <div className="w-12 h-12 border-2 border-orange-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-          <p className="text-gray-600">Carregando ordem de serviço...</p>
+          <div className="w-8 h-8 sm:w-12 sm:h-12 border-2 border-orangeWheel-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+          <p className="text-gray-600 text-sm sm:text-base">Carregando ordem de serviço...</p>
         </div>
       </div>
     );
@@ -167,11 +167,11 @@ export default function ServiceOrderDetailsPage() {
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
               </svg>
             </button>
-            <div className="w-12 h-12 sm:w-16 sm:h-16 bg-orange-600 rounded-full flex items-center justify-center">
-              <span className="text-2xl sm:text-3xl">📋</span>
+            <div className="w-10 h-10 sm:w-12 sm:h-12 lg:w-16 lg:h-16 bg-orangeWheel-500 rounded-full flex items-center justify-center flex-shrink-0">
+              <span className="text-lg sm:text-2xl lg:text-3xl">📋</span>
             </div>
-            <div className="flex-1">
-              <h1 className="text-2xl sm:text-3xl font-bold text-orange-600">OS #{serviceOrder.orderNumber}</h1>
+            <div className="flex-1 min-w-0">
+              <h1 className="text-lg sm:text-2xl lg:text-3xl font-bold text-orangeWheel-500 truncate">OS #{serviceOrder.orderNumber}</h1>
               <p className="text-sm sm:text-base text-gray-600">
                 {serviceOrder.clientName}
                 {serviceOrder.clientPhone ? ` (${serviceOrder.clientPhone})` : ''}
@@ -183,7 +183,7 @@ export default function ServiceOrderDetailsPage() {
           </div>
           <button
             onClick={() => setShowEdit(true)}
-            className="bg-orange-600 hover:bg-orange-700 text-white font-semibold px-4 sm:px-6 py-2 sm:py-3 rounded-lg transition-colors flex items-center gap-2 justify-center"
+            className="bg-orangeWheel-500 hover:bg-orangeWheel-600 text-white font-semibold px-4 sm:px-6 py-2 sm:py-3 rounded-lg transition-colors flex items-center gap-2 justify-center w-full sm:w-auto"
           >
             <span>✏️</span>
             <span className="hidden sm:inline">Editar</span>
@@ -321,7 +321,7 @@ export default function ServiceOrderDetailsPage() {
               </h2>
               <button
                 onClick={() => setShowAddItem(true)}
-                className="bg-orange-600 hover:bg-orange-700 text-white px-4 py-2 rounded-lg transition-colors flex items-center gap-2 justify-center"
+                className="bg-orangeWheel-500 hover:bg-orangeWheel-600 text-white px-4 py-2 rounded-lg transition-colors flex items-center gap-2 justify-center w-full sm:w-auto"
               >
                 <span>➕</span>
                 <span className="hidden sm:inline">Adicionar Item</span>
@@ -330,12 +330,12 @@ export default function ServiceOrderDetailsPage() {
             </div>
 
             {items.length === 0 ? (
-              <div className="text-center py-8 text-gray-500">
-                <span className="text-4xl mb-2 block">🔧</span>
-                <p>Nenhum item adicionado ainda</p>
+              <div className="text-center py-6 sm:py-8 text-gray-500">
+                <span className="text-3xl sm:text-4xl mb-2 block">🔧</span>
+                <p className="text-sm sm:text-base">Nenhum item adicionado ainda</p>
                 <button
                   onClick={() => setShowAddItem(true)}
-                  className="text-orange-600 hover:text-orange-700 font-medium mt-2"
+                  className="text-orangeWheel-600 hover:text-orangeWheel-700 font-medium mt-2 text-sm sm:text-base"
                 >
                   Adicionar primeiro item
                 </button>

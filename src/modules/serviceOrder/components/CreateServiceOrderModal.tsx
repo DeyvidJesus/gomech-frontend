@@ -96,28 +96,28 @@ export default function CreateServiceOrderModal({ onClose }: CreateServiceOrderM
   };
 
   return (
-    <div className="fixed inset-0 bg-[#242424cb] flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-lg shadow-lg w-full max-w-4xl max-h-[95vh] overflow-y-auto">
+    <div className="fixed inset-0 bg-[#242424cb] flex items-center justify-center z-50 p-3 sm:p-4">
+      <div className="bg-white rounded-lg shadow-lg w-full max-w-4xl max-h-[95vh] flex flex-col">
         {/* Header */}
-        <div className="bg-orange-600 text-white p-4 sm:p-6 rounded-t-lg">
+        <div className="bg-orangeWheel-500 text-white p-4 sm:p-6 rounded-t-lg flex-shrink-0">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <span className="text-2xl sm:text-3xl">📋</span>
-              <div>
-                <h2 className="text-xl sm:text-2xl font-bold">Nova Ordem de Serviço</h2>
-                <p className="text-orange-100 text-sm sm:text-base">Criar uma nova OS</p>
+              <span className="text-lg sm:text-2xl lg:text-3xl">📋</span>
+              <div className="min-w-0 flex-1">
+                <h2 className="text-lg sm:text-xl lg:text-2xl font-bold truncate">Nova Ordem de Serviço</h2>
+                <p className="text-orangeWheel-100 text-xs sm:text-sm lg:text-base">Criar uma nova OS</p>
               </div>
             </div>
             <button
               onClick={onClose}
-              className="text-orange-100 hover:text-white p-2 rounded-lg hover:bg-orange-700 transition-colors"
+              className="text-orangeWheel-100 hover:text-white p-2 rounded-lg hover:bg-orangeWheel-600 transition-colors flex-shrink-0"
             >
               ✕
             </button>
           </div>
         </div>
 
-        <form onSubmit={handleSubmit} className="p-4 sm:p-6 space-y-4 sm:space-y-6">
+        <form onSubmit={handleSubmit} className="overflow-y-auto flex-1 p-4 sm:p-6 space-y-4 sm:space-y-6">
           {error && (
             <div className="bg-red-50 border border-red-200 rounded-lg p-4 text-red-700 text-sm">
               {error}
@@ -134,7 +134,7 @@ export default function CreateServiceOrderModal({ onClose }: CreateServiceOrderM
                 name="vehicleId"
                 value={form.vehicleId}
                 onChange={handleVehicleChange}
-                className="w-full border border-gray-300 rounded-lg px-3 sm:px-4 py-2 sm:py-3 focus:outline-none focus:ring-2 focus:ring-orange-500 text-sm sm:text-base"
+                className="w-full border border-gray-300 rounded-lg px-3 sm:px-4 py-2 sm:py-3 focus:outline-none focus:ring-2 focus:ring-orangeWheel-500 focus:border-orangeWheel-500 text-sm sm:text-base"
                 required
               >
                 <option value={0}>Selecione um veículo</option>
@@ -170,7 +170,7 @@ export default function CreateServiceOrderModal({ onClose }: CreateServiceOrderM
                 name="technicianName"
                 value={form.technicianName}
                 onChange={handleChange}
-                className="w-full border border-gray-300 rounded-lg px-3 sm:px-4 py-2 sm:py-3 focus:outline-none focus:ring-2 focus:ring-orange-500 text-sm sm:text-base"
+                className="w-full border border-gray-300 rounded-lg px-3 sm:px-4 py-2 sm:py-3 focus:outline-none focus:ring-2 focus:ring-orangeWheel-500 focus:border-orangeWheel-500 text-sm sm:text-base"
                 placeholder="Nome do técnico"
               />
             </div>
@@ -185,7 +185,7 @@ export default function CreateServiceOrderModal({ onClose }: CreateServiceOrderM
                 name="currentKilometers"
                 value={form.currentKilometers || ''}
                 onChange={handleChange}
-                className="w-full border border-gray-300 rounded-lg px-3 sm:px-4 py-2 sm:py-3 focus:outline-none focus:ring-2 focus:ring-orange-500 text-sm sm:text-base"
+                className="w-full border border-gray-300 rounded-lg px-3 sm:px-4 py-2 sm:py-3 focus:outline-none focus:ring-2 focus:ring-orangeWheel-500 focus:border-orangeWheel-500 text-sm sm:text-base"
                 placeholder="Ex: 85000"
                 min="0"
               />
@@ -201,7 +201,7 @@ export default function CreateServiceOrderModal({ onClose }: CreateServiceOrderM
                 name="estimatedCompletion"
                 value={form.estimatedCompletion}
                 onChange={handleChange}
-                className="w-full border border-gray-300 rounded-lg px-3 sm:px-4 py-2 sm:py-3 focus:outline-none focus:ring-2 focus:ring-orange-500 text-sm sm:text-base"
+                className="w-full border border-gray-300 rounded-lg px-3 sm:px-4 py-2 sm:py-3 focus:outline-none focus:ring-2 focus:ring-orangeWheel-500 focus:border-orangeWheel-500 text-sm sm:text-base"
               />
             </div>
           </div>
@@ -250,7 +250,7 @@ export default function CreateServiceOrderModal({ onClose }: CreateServiceOrderM
                 onChange={handleChange}
                 step="0.01"
                 min="0"
-                className="w-full border border-gray-300 rounded-lg px-3 sm:px-4 py-2 sm:py-3 focus:outline-none focus:ring-2 focus:ring-orange-500 text-sm sm:text-base"
+                className="w-full border border-gray-300 rounded-lg px-3 sm:px-4 py-2 sm:py-3 focus:outline-none focus:ring-2 focus:ring-orangeWheel-500 focus:border-orangeWheel-500 text-sm sm:text-base"
                 placeholder="0,00"
               />
             </div>
@@ -266,7 +266,7 @@ export default function CreateServiceOrderModal({ onClose }: CreateServiceOrderM
                 onChange={handleChange}
                 step="0.01"
                 min="0"
-                className="w-full border border-gray-300 rounded-lg px-3 sm:px-4 py-2 sm:py-3 focus:outline-none focus:ring-2 focus:ring-orange-500 text-sm sm:text-base"
+                className="w-full border border-gray-300 rounded-lg px-3 sm:px-4 py-2 sm:py-3 focus:outline-none focus:ring-2 focus:ring-orangeWheel-500 focus:border-orangeWheel-500 text-sm sm:text-base"
                 placeholder="0,00"
               />
             </div>
@@ -282,7 +282,7 @@ export default function CreateServiceOrderModal({ onClose }: CreateServiceOrderM
                 onChange={handleChange}
                 step="0.01"
                 min="0"
-                className="w-full border border-gray-300 rounded-lg px-3 sm:px-4 py-2 sm:py-3 focus:outline-none focus:ring-2 focus:ring-orange-500 text-sm sm:text-base"
+                className="w-full border border-gray-300 rounded-lg px-3 sm:px-4 py-2 sm:py-3 focus:outline-none focus:ring-2 focus:ring-orangeWheel-500 focus:border-orangeWheel-500 text-sm sm:text-base"
                 placeholder="0,00"
               />
             </div>
@@ -328,7 +328,7 @@ export default function CreateServiceOrderModal({ onClose }: CreateServiceOrderM
                 )}
                 <div className="flex justify-between font-bold text-base sm:text-lg border-t pt-2">
                   <span>Total:</span>
-                  <span className="text-orange-600">
+                  <span className="text-orangeWheel-600">
                     R$ {((form.laborCost || 0) + (form.partsCost || 0) - (form.discount || 0)).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                   </span>
                 </div>
@@ -341,14 +341,14 @@ export default function CreateServiceOrderModal({ onClose }: CreateServiceOrderM
             <button
               type="button"
               onClick={onClose}
-              className="px-4 sm:px-6 py-2 sm:py-3 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors text-sm sm:text-base order-2 sm:order-1"
+              className="px-4 sm:px-6 py-2 sm:py-3 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors text-sm sm:text-base order-2 sm:order-1 w-full sm:w-auto"
             >
               Cancelar
             </button>
             <button
               type="submit"
               disabled={mutation.isPending}
-              className="px-4 sm:px-6 py-2 sm:py-3 bg-orange-600 hover:bg-orange-700 text-white rounded-lg transition-colors disabled:opacity-50 flex items-center gap-2 justify-center text-sm sm:text-base order-1 sm:order-2"
+              className="px-4 sm:px-6 py-2 sm:py-3 bg-orangeWheel-500 hover:bg-orangeWheel-600 text-white rounded-lg transition-colors disabled:opacity-50 flex items-center gap-2 justify-center text-sm sm:text-base order-1 sm:order-2 w-full sm:w-auto"
             >
               {mutation.isPending ? (
                 <>
