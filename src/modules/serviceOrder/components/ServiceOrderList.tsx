@@ -216,16 +216,23 @@ export default function ServiceOrderList() {
           <>
             {/* Desktop: Tabela */}
             <div className="hidden lg:block overflow-x-auto">
-              <table className="w-full">
+              <table className="w-full table-fixed">
+                <colgroup>
+                  <col className="w-1/6" />
+                  <col className="w-1/5" />
+                  <col className="w-1/5" />
+                  <col className="w-1/8" />
+                  <col className="w-1/8" />
+                  <col className="w-1/8" />
+                </colgroup>
                 <thead className="bg-gray-50 border-b border-gray-200">
                   <tr>
-                    <th className="text-left py-4 px-6 font-medium text-gray-700">OS</th>
-                    <th className="text-left py-4 px-6 font-medium text-gray-700">Cliente</th>
-                    <th className="text-left py-4 px-6 font-medium text-gray-700">Veículo</th>
-                    <th className="text-left py-4 px-6 font-medium text-gray-700">Status</th>
-                    <th className="text-left py-4 px-6 font-medium text-gray-700">Valor</th>
-                    <th className="text-left py-4 px-6 font-medium text-gray-700">Data</th>
-                    <th className="text-center py-4 px-6 font-medium text-gray-700">Ações</th>
+                    <th className="text-left py-3 px-4 font-medium text-gray-700 text-xs uppercase tracking-wider">OS</th>
+                    <th className="text-left py-3 px-4 font-medium text-gray-700 text-xs uppercase tracking-wider">Cliente</th>
+                    <th className="text-left py-3 px-4 font-medium text-gray-700 text-xs uppercase tracking-wider">Veículo</th>
+                    <th className="text-left py-3 px-4 font-medium text-gray-700 text-xs uppercase tracking-wider">Status</th>
+                    <th className="text-left py-3 px-4 font-medium text-gray-700 text-xs uppercase tracking-wider">Valor</th>
+                    <th className="text-center py-3 px-4 font-medium text-gray-700 text-xs uppercase tracking-wider">Ações</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -236,62 +243,55 @@ export default function ServiceOrderList() {
                       key={order.id} 
                       className="border-b border-gray-100 hover:bg-gray-50 transition-colors"
                     >
-                      <td className="py-4 px-6">
-                        <div className="font-medium text-gray-900">#{order.orderNumber}</div>
+                      <td className="py-3 px-4">
+                        <div className="font-medium text-gray-900 text-sm">#{order.orderNumber}</div>
                         {order.description && (
-                          <div className="text-sm text-gray-600 truncate max-w-xs">
+                          <div className="text-xs text-gray-600 truncate">
                             {order.description}
                           </div>
                         )}
                       </td>
-                      <td className="py-4 px-6">
-                        <div className="font-medium text-gray-900">
+                      <td className="py-3 px-4">
+                        <div className="font-medium text-gray-900 text-sm truncate">
                           {order.clientName || 'Cliente não encontrado'}
                         </div>
                         {order.clientPhone && (
-                          <div className="text-sm text-gray-600">{order.clientPhone}</div>
+                          <div className="text-xs text-gray-600 truncate">{order.clientPhone}</div>
                         )}
                       </td>
-                      <td className="py-4 px-6">
-                        <div className="font-medium text-gray-900">
+                      <td className="py-3 px-4">
+                        <div className="font-medium text-gray-900 text-sm truncate">
                           {order.vehicleBrand} {order.vehicleModel}
                         </div>
                         {order.vehicleLicensePlate && (
-                          <div className="text-sm text-gray-600">{order.vehicleLicensePlate}</div>
+                          <div className="text-xs text-gray-600">{order.vehicleLicensePlate}</div>
                         )}
                       </td>
-                      <td className="py-4 px-6">
-                        <span className={`px-3 py-1 text-sm font-medium rounded-full ${getStatusColor(order.status)}`}>
+                      <td className="py-3 px-4">
+                        <span className={`px-2 py-1 text-xs font-medium rounded-full ${getStatusColor(order.status)}`}>
                           {getStatusLabel(order.status)}
                         </span>
                       </td>
-                      <td className="py-4 px-6">
-                        <div className="font-medium text-gray-900">
+                      <td className="py-3 px-4">
+                        <div className="font-medium text-gray-900 text-sm">
                           R$ {order.totalCost?.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                         </div>
-                      </td>
-                      <td className="py-4 px-6">
-                        <div className="text-sm text-gray-900">
+                        <div className="text-xs text-gray-500">
                           {new Date(order.createdAt).toLocaleDateString('pt-BR')}
                         </div>
-                        {order.estimatedCompletion && (
-                          <div className="text-xs text-gray-500">
-                            Previsão: {new Date(order.estimatedCompletion).toLocaleDateString('pt-BR')}
-                          </div>
-                        )}
                       </td>
-                      <td className="py-4 px-6">
-                        <div className="flex items-center justify-center gap-2">
+                      <td className="py-3 px-4">
+                        <div className="flex items-center justify-center gap-1">
                           <button
                             onClick={() => handleView(order)}
-                            className="text-orange-600 hover:text-orange-800 p-2 rounded-lg hover:bg-orange-50 transition-colors"
+                            className="text-orange-600 hover:text-orange-800 p-1.5 rounded-lg hover:bg-orange-50 transition-colors"
                             title="Ver detalhes"
                           >
                             👁️
                           </button>
                           <button
                             onClick={() => handleDelete(order)}
-                            className="text-red-600 hover:text-red-800 p-2 rounded-lg hover:bg-red-50 transition-colors"
+                            className="text-red-600 hover:text-red-800 p-1.5 rounded-lg hover:bg-red-50 transition-colors"
                             disabled={deleteMutation.isPending}
                             title="Deletar"
                           >
@@ -412,4 +412,5 @@ export default function ServiceOrderList() {
       )}
     </div>
   );
+}
 }

@@ -15,12 +15,12 @@ export default function ServiceOrderChart({ serviceOrders }: ServiceOrderChartPr
     return acc;
   }, {} as Record<string, number>);
 
-  // Configuração das cores para cada status
+  // Configuração das cores para cada status usando o design system
   const statusColors: Record<string, string> = {
     'PENDING': '#FCD34D', // Amarelo
     'IN_PROGRESS': '#60A5FA', // Azul
     'WAITING_PARTS': '#F87171', // Vermelho claro
-    'WAITING_APPROVAL': '#FBBF24', // Laranja
+    'WAITING_APPROVAL': '#f57c00', // orangeWheel-500
     'COMPLETED': '#34D399', // Verde
     'CANCELLED': '#6B7280', // Cinza
     'DELIVERED': '#10B981', // Verde escuro
@@ -58,10 +58,10 @@ export default function ServiceOrderChart({ serviceOrders }: ServiceOrderChartPr
       legend: {
         position: 'bottom' as const,
         labels: {
-          padding: 20,
+          padding: window.innerWidth < 640 ? 15 : 20,
           usePointStyle: true,
           font: {
-            size: 12,
+            size: window.innerWidth < 640 ? 10 : 12,
           },
         },
       },

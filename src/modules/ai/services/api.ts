@@ -50,7 +50,14 @@ chatApi.interceptors.response.use(
   }
 );
 
+interface ChatRequest {
+  prompt: string;
+  includeChart?: boolean;
+  threadId?: string;
+  userId?: number;
+}
+
 export const aiService = {
-  chat: (data: Record<string, unknown>) => chatApi.post('/ai/chat', data),
+  chat: (data: ChatRequest) => chatApi.post('/ai/chat', data),
   status: () => chatApi.get('/ai/chat/status'),
 }

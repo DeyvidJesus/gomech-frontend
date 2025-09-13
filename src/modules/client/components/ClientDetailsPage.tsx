@@ -24,10 +24,10 @@ export function ClientDetailsPage() {
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center h-64">
+      <div className="flex items-center justify-center h-48 sm:h-64">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-600 mb-4 mx-auto"></div>
-          <p className="text-gray-600 text-lg">Carregando dados do cliente...</p>
+          <div className="animate-spin rounded-full h-8 w-8 sm:h-12 sm:w-12 border-b-2 border-orangeWheel-500 mb-4 mx-auto"></div>
+          <p className="text-gray-600 text-sm sm:text-lg">Carregando dados do cliente...</p>
         </div>
       </div>
     );
@@ -35,13 +35,13 @@ export function ClientDetailsPage() {
 
   if (error || !client) {
     return (
-      <div className="bg-red-50 border border-red-200 rounded-lg p-8 text-center">
-        <div className="text-red-600 text-6xl mb-4">❌</div>
-        <h3 className="text-red-800 text-xl font-semibold mb-2">Cliente não encontrado</h3>
-        <p className="text-red-600 mb-6">O cliente que você está procurando não existe ou foi removido.</p>
+      <div className="bg-red-50 border border-red-200 rounded-lg p-4 sm:p-8 text-center">
+        <div className="text-red-600 text-4xl sm:text-6xl mb-4">❌</div>
+        <h3 className="text-red-800 text-lg sm:text-xl font-semibold mb-2">Cliente não encontrado</h3>
+        <p className="text-red-600 mb-6 text-sm sm:text-base">O cliente que você está procurando não existe ou foi removido.</p>
         <button
           onClick={() => navigate({ to: "/clients" })}
-          className="bg-orange-600 hover:bg-orange-700 text-white font-semibold px-6 py-3 rounded-lg transition-colors"
+          className="bg-orangeWheel-500 hover:bg-orangeWheel-600 text-white font-semibold px-6 py-3 rounded-lg transition-colors"
         >
           ← Voltar à Lista
         </button>
@@ -50,54 +50,57 @@ export function ClientDetailsPage() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6">
       {/* Header */}
-      <div className="bg-white rounded-lg p-6 shadow-sm border border-gray-200">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-4">
+      <div className="bg-white rounded-lg p-4 sm:p-6 shadow-sm border border-gray-200">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <div className="flex items-center gap-3 sm:gap-4">
             <button
               onClick={() => navigate({ to: "/clients" })}
-              className="bg-gray-100 hover:bg-gray-200 text-gray-600 p-2 rounded-lg transition-colors"
+              className="bg-gray-100 hover:bg-gray-200 text-gray-600 p-2 rounded-lg transition-colors flex-shrink-0"
               title="Voltar à lista"
             >
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg className="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
               </svg>
             </button>
-            <div className="w-16 h-16 bg-orange-600 rounded-full flex items-center justify-center">
-              <span className="text-2xl font-bold text-white">
+            <div className="w-12 h-12 sm:w-16 sm:h-16 bg-orangeWheel-500 rounded-full flex items-center justify-center flex-shrink-0">
+              <span className="text-lg sm:text-2xl font-bold text-white">
                 {client.name.substring(0, 2).toUpperCase()}
               </span>
             </div>
-            <div>
-              <h1 className="text-3xl font-bold text-orange-600">{client.name}</h1>
-              <p className="text-gray-600">Cliente ID: {client.id}</p>
+            <div className="min-w-0 flex-1">
+              <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-orangeWheel-500 truncate">{client.name}</h1>
+              <p className="text-gray-600 text-sm sm:text-base">Cliente ID: {client.id}</p>
             </div>
           </div>
           <button
             onClick={() => setShowEdit(true)}
-            className="bg-orange-600 hover:bg-orange-700 text-white font-semibold px-6 py-3 rounded-lg transition-colors flex items-center gap-2"
+            className="bg-orangeWheel-500 hover:bg-orangeWheel-600 text-white font-semibold px-4 sm:px-6 py-2.5 sm:py-3 rounded-lg transition-colors flex items-center justify-center gap-2 w-full sm:w-auto"
           >
-            ✏️ Editar Cliente
+            <span>✏️</span>
+            <span className="hidden xs:inline">Editar Cliente</span>
+            <span className="xs:hidden">Editar</span>
           </button>
         </div>
       </div>
 
       {/* Informações Principais */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
         {/* Informações de Contato */}
-        <div className="bg-white rounded-lg p-6 shadow-sm border border-gray-200">
-          <h2 className="text-xl font-semibold text-gray-800 mb-4 flex items-center gap-2">
-            📞 Informações de Contato
+        <div className="bg-white rounded-lg p-4 sm:p-6 shadow-sm border border-gray-200">
+          <h2 className="text-lg sm:text-xl font-semibold text-gray-800 mb-4 flex items-center gap-2">
+            <span className="text-base sm:text-lg">📞</span>
+            Informações de Contato
           </h2>
-          <div className="space-y-4">
-            <div className="bg-gray-50 rounded-lg p-4">
-              <label className="text-sm font-medium text-gray-600">Email</label>
-              <div className="text-lg text-gray-900 font-medium">{client.email}</div>
+          <div className="space-y-3 sm:space-y-4">
+            <div className="bg-gray-50 rounded-lg p-3 sm:p-4">
+              <label className="text-xs sm:text-sm font-medium text-gray-600">Email</label>
+              <div className="text-sm sm:text-lg text-gray-900 font-medium break-all">{client.email}</div>
             </div>
-            <div className="bg-gray-50 rounded-lg p-4">
-              <label className="text-sm font-medium text-gray-600">Telefone</label>
-              <div className="text-lg text-gray-900 font-medium">
+            <div className="bg-gray-50 rounded-lg p-3 sm:p-4">
+              <label className="text-xs sm:text-sm font-medium text-gray-600">Telefone</label>
+              <div className="text-sm sm:text-lg text-gray-900 font-medium">
                 {client.phone || (
                   <span className="text-gray-400 italic">Não informado</span>
                 )}
@@ -107,12 +110,13 @@ export function ClientDetailsPage() {
         </div>
 
         {/* Endereço */}
-        <div className="bg-white rounded-lg p-6 shadow-sm border border-gray-200">
-          <h2 className="text-xl font-semibold text-gray-800 mb-4 flex items-center gap-2">
-            🏠 Endereço
+        <div className="bg-white rounded-lg p-4 sm:p-6 shadow-sm border border-gray-200">
+          <h2 className="text-lg sm:text-xl font-semibold text-gray-800 mb-4 flex items-center gap-2">
+            <span className="text-base sm:text-lg">🏠</span>
+            Endereço
           </h2>
-          <div className="bg-gray-50 rounded-lg p-4">
-            <div className="text-lg text-gray-900">
+          <div className="bg-gray-50 rounded-lg p-3 sm:p-4">
+            <div className="text-sm sm:text-lg text-gray-900">
               {client.address || (
                 <span className="text-gray-400 italic">Endereço não informado</span>
               )}
@@ -122,13 +126,14 @@ export function ClientDetailsPage() {
       </div>
 
       {/* Veículos */}
-      <div className="bg-white rounded-lg p-6 shadow-sm border border-gray-200">
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="text-xl font-semibold text-gray-800 flex items-center gap-2">
-            🚗 Veículos {client.vehicles && client.vehicles.length > 0 && `(${client.vehicles.length})`}
+      <div className="bg-white rounded-lg p-4 sm:p-6 shadow-sm border border-gray-200">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-4">
+          <h2 className="text-lg sm:text-xl font-semibold text-gray-800 flex items-center gap-2">
+            <span className="text-base sm:text-lg">🚗</span>
+            Veículos {client.vehicles && client.vehicles.length > 0 && `(${client.vehicles.length})`}
           </h2>
           <button
-            className="bg-orange-600 hover:bg-orange-700 text-white font-semibold px-4 py-2 rounded-lg transition-colors text-sm"
+            className="bg-orangeWheel-500 hover:bg-orangeWheel-600 text-white font-semibold px-4 py-2 rounded-lg transition-colors text-sm w-full sm:w-auto"
             onClick={() => alert('Funcionalidade de adicionar veículo será implementada')}
           >
             + Adicionar Veículo
@@ -136,14 +141,14 @@ export function ClientDetailsPage() {
         </div>
 
         {client.vehicles && client.vehicles.length > 0 ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
             {client.vehicles.map((vehicle) => (
-              <div key={vehicle.id} className="bg-gray-50 rounded-lg p-4 border border-gray-200">
+              <div key={vehicle.id} className="bg-gray-50 rounded-lg p-3 sm:p-4 border border-gray-200">
                 <div className="flex items-center justify-between mb-2">
-                  <div className="text-lg font-semibold text-gray-900">{vehicle.model}</div>
-                  <div className="text-orange-600 text-2xl">🚗</div>
+                  <div className="text-sm sm:text-lg font-semibold text-gray-900 truncate">{vehicle.model}</div>
+                  <div className="text-orangeWheel-500 text-lg sm:text-2xl">🚗</div>
                 </div>
-                <div className="text-sm text-gray-600">
+                <div className="text-xs sm:text-sm text-gray-600 space-y-1">
                   <div><strong>Placa:</strong> {vehicle.licensePlate}</div>
                   {vehicle.manufactureDate && (
                     <div><strong>Ano:</strong> {new Date(vehicle.manufactureDate).getFullYear()}</div>
@@ -157,23 +162,24 @@ export function ClientDetailsPage() {
             ))}
           </div>
         ) : (
-          <div className="text-center py-8">
-            <div className="text-gray-400 text-4xl mb-4">🚗</div>
-            <p className="text-gray-500">Nenhum veículo cadastrado para este cliente</p>
-            <p className="text-sm text-gray-400 mt-2">Adicione o primeiro veículo para começar</p>
+          <div className="text-center py-6 sm:py-8">
+            <div className="text-gray-400 text-3xl sm:text-4xl mb-4">🚗</div>
+            <p className="text-gray-500 text-sm sm:text-base">Nenhum veículo cadastrado para este cliente</p>
+            <p className="text-xs sm:text-sm text-gray-400 mt-2">Adicione o primeiro veículo para começar</p>
           </div>
         )}
       </div>
 
       {/* Informações do Sistema */}
-      <div className="bg-white rounded-lg p-6 shadow-sm border border-gray-200">
-        <h2 className="text-xl font-semibold text-gray-800 mb-4 flex items-center gap-2">
-          📅 Informações do Sistema
+      <div className="bg-white rounded-lg p-4 sm:p-6 shadow-sm border border-gray-200">
+        <h2 className="text-lg sm:text-xl font-semibold text-gray-800 mb-4 flex items-center gap-2">
+          <span className="text-base sm:text-lg">📅</span>
+          Informações do Sistema
         </h2>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div className="bg-gray-50 rounded-lg p-4">
-            <label className="text-sm font-medium text-gray-600">Cadastrado em</label>
-            <div className="text-lg text-gray-900 font-medium">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+          <div className="bg-gray-50 rounded-lg p-3 sm:p-4">
+            <label className="text-xs sm:text-sm font-medium text-gray-600">Cadastrado em</label>
+            <div className="text-sm sm:text-lg text-gray-900 font-medium">
               {new Date(client.createdAt).toLocaleDateString('pt-BR', {
                 day: '2-digit',
                 month: '2-digit',
@@ -183,9 +189,9 @@ export function ClientDetailsPage() {
               })}
             </div>
           </div>
-          <div className="bg-gray-50 rounded-lg p-4">
-            <label className="text-sm font-medium text-gray-600">Última atualização</label>
-            <div className="text-lg text-gray-900 font-medium">
+          <div className="bg-gray-50 rounded-lg p-3 sm:p-4">
+            <label className="text-xs sm:text-sm font-medium text-gray-600">Última atualização</label>
+            <div className="text-sm sm:text-lg text-gray-900 font-medium">
               {new Date(client.updatedAt).toLocaleDateString('pt-BR', {
                 day: '2-digit',
                 month: '2-digit',

@@ -2,9 +2,14 @@ import RoleGuard from "../../modules/auth/components/RoleGuard";
 import { useAuth } from "../../modules/auth/hooks/useAuth";
 import { useLogout } from "../../modules/auth/hooks/useLogout";
 import { useNavigate } from "@tanstack/react-router";
-import Button from "./Button";
+import { useEffect } from "react";
 
-export default function Sidebar() {
+interface SidebarProps {
+  isOpen: boolean;
+  onClose: () => void;
+}
+
+export default function Sidebar({ isOpen, onClose }: SidebarProps) {
   const { data } = useAuth();
   const { email, role } = data || {};
   const logout = useLogout();
@@ -13,59 +18,108 @@ export default function Sidebar() {
   const handleLogout = () => {
     logout();
     navigate({ to: '/login' });
+    onClose();
   };
 
-  return (
-    <aside className="w-full max-w-[220px] bg-[var(--sidebar-bg)] text-[var(--sidebar-text)] m-3.5 rounded h-[calc(100vh-36px)] max-h-screen flex flex-col">
-      <div className="p-4 text-center">
-        <img src="/logo_black.png" alt="GoMech" width={80} height={80} />
-      </div>
+  const handleLinkClick = () => {
+    if (window.innerWidth < 1024) {
+      onClose();
+    }
+  };
 
-      {/* Informações do usuário */}
-      {data && (
-        <div className="p-3 mt-0 mx-3 mb-4 bg-[rgba(255, 255, 255, 0.1)] rounded-lg text-xs text-[var(--sidebar-text)]">
-          <div className="mb-1.5">
-            <strong>{email}</strong>
-          </div>
-          <div className={`inline-block px-2 py-1 rounded-xl text-xs font-bold text-white ${role === 'ADMIN' ? 'bg-red-500' : 'bg-blue-500'}`}>
-            {role}
-          </div>
-        </div>
+  useEffect(() => {
+    if (isOpen) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = 'unset';
+    }
+
+    return () => {
+      document.body.style.overflow = 'unset';
+    };
+  }, [isOpen]);
+
+  return (
+    <>
+      {/* Overlay para mobile */}
+      {isOpen && (
+        <div 
+          className="fixed inset-0 bg-[#242424cb] bg-opacity-50 z-40 lg:hidden"
+          onClick={onClose}
+        />
       )}
 
-      <nav className="flex flex-col flex-1 p-3">
-        <div className="text-[var(--sidebar-text)] bg-[var(--sidebar-button-bg)] rounded-sm overflow-hidden hover:bg-[rgba(255, 255, 255, 0.1)] my-0.5">
-          <a className="no-underline text-[var(--sidebar-text)] block p-3 transition-all duration-200 ease-in-out hover:bg-[rgba(255,255,255,0.1)] font-medium" href="/">Dashboard</a>
-        </div>
-        <div className="text-[var(--sidebar-text)] bg-[var(--sidebar-button-bg)] rounded-sm overflow-hidden hover:bg-[rgba(255, 255, 255, 0.1)] my-0.5">
-          <a className="no-underline text-[var(--sidebar-text)] block p-3 transition-all duration-200 ease-in-out hover:bg-[rgba(255,255,255,0.1)] font-medium" href="/clients">Clientes</a>
-        </div>
-        <div className="text-[var(--sidebar-text)] bg-[var(--sidebar-button-bg)] rounded-sm overflow-hidden hover:bg-[rgba(255, 255, 255, 0.1)] my-0.5">
-          <a className="no-underline text-[var(--sidebar-text)] block p-3 transition-all duration-200 ease-in-out hover:bg-[rgba(255,255,255,0.1)] font-medium" href="/vehicles">Veículos</a>
-        </div>
-        <div className="text-[var(--sidebar-text)] bg-[var(--sidebar-button-bg)] rounded-sm overflow-hidden hover:bg-[rgba(255, 255, 255, 0.1)] my-0.5">
-          <a className="no-underline text-[var(--sidebar-text)] block p-3 transition-all duration-200 ease-in-out hover:bg-[rgba(255,255,255,0.1)] font-medium" href="/service-orders">Ordens de Serviço</a>
-        </div>
-
-        {/* Menus administrativos apenas para ADMIN */}
-        <RoleGuard roles={['ADMIN']}>
-          <div className="text-[var(--sidebar-text)] bg-[var(--sidebar-button-bg)] rounded-sm overflow-hidden hover:bg-[rgba(255, 255, 255, 0.1)] my-0.5">
-            <a className="no-underline text-[var(--sidebar-text)] block p-3 transition-all duration-200 ease-in-out hover:bg-[rgba(255,255,255,0.1)] font-medium" href="/admin">Administração</a>
-          </div>
-        </RoleGuard>
-
-        <div className="h-0.25 bg-[rgba(255,255,255,0.2)] my-4"/>
-
-        <div className="text-[var(--sidebar-text)] rounded-sm overflow-hidden hover:bg-[rgba(255, 255, 255, 0.1)]">
-          <Button
-            fullWidth
-            className="text-[var(--sidebar-text)] bg-[var(--sidebar-button-bg)] font-medium w-full cursor-pointer p-3 justify-start flex"
-            onClick={handleLogout}
+      {/* Sidebar/Drawer */}
+      <aside className={`
+        fixed lg:static top-0 left-0 z-50
+        w-full max-w-[280px] lg:max-w-[220px]
+        bg-[var(--sidebar-bg)] text-[var(--sidebar-text)]
+        h-full lg:h-[calc(100vh-28px)]
+        lg:m-3.5 lg:rounded
+        flex flex-col
+        transform transition-transform duration-300 ease-in-out
+        ${isOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
+      `}>
+        {/* Header com logo e botão de fechar */}
+        <div className="flex items-center justify-between p-4 lg:justify-center">
+          <img src="/logo_black.png" alt="GoMech" className="w-16 h-16 lg:w-20 lg:h-20" />
+          <button
+            onClick={onClose}
+            className="lg:hidden p-2 text-[var(--sidebar-text)] hover:bg-[rgba(255,255,255,0.1)] rounded-md transition-colors duration-200"
           >
-            Sair
-          </Button>
+            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
         </div>
-      </nav>
-    </aside>
+
+        {/* Informações do usuário */}
+        {data && (
+          <div className="p-3 mt-0 mx-3 mb-4 bg-[rgba(255,255,255,0.1)] rounded-lg text-xs text-[var(--sidebar-text)]">
+            <div className="mb-1.5">
+              <strong>{email}</strong>
+            </div>
+            <div className={`inline-block px-2 py-1 rounded-xl text-xs font-bold text-white ${
+              role === 'ADMIN' ? 'bg-red-500' : 'bg-blue-500'
+            }`}>
+              {role}
+            </div>
+          </div>
+        )}
+
+        <nav className="flex flex-col flex-1 p-3">
+          <div className="text-[var(--sidebar-text)] bg-[var(--sidebar-button-bg)] rounded-sm overflow-hidden hover:bg-[#242424e1] my-0.5">
+            <a className="no-underline text-[var(--sidebar-text)] block p-3 transition-all duration-200 ease-in-out hover:bg-[#242424e1] font-medium" href="/" onClick={handleLinkClick}>Dashboard</a>
+          </div>
+          <div className="text-[var(--sidebar-text)] bg-[var(--sidebar-button-bg)] rounded-sm overflow-hidden hover:bg-[#242424e1] my-0.5">
+            <a className="no-underline text-[var(--sidebar-text)] block p-3 transition-all duration-200 ease-in-out hover:bg-[#242424e1] font-medium" href="/clients" onClick={handleLinkClick}>Clientes</a>
+          </div>
+          <div className="text-[var(--sidebar-text)] bg-[var(--sidebar-button-bg)] rounded-sm overflow-hidden hover:bg-[#242424e1] my-0.5">
+            <a className="no-underline text-[var(--sidebar-text)] block p-3 transition-all duration-200 ease-in-out hover:bg-[#242424e1] font-medium" href="/vehicles" onClick={handleLinkClick}>Veículos</a>
+          </div>
+          <div className="text-[var(--sidebar-text)] bg-[var(--sidebar-button-bg)] rounded-sm overflow-hidden hover:bg-[#242424e1] my-0.5">
+            <a className="no-underline text-[var(--sidebar-text)] block p-3 transition-all duration-200 ease-in-out hover:bg-[#242424e1] font-medium" href="/service-orders" onClick={handleLinkClick}>Ordens de Serviço</a>
+          </div>
+
+          {/* Menus administrativos apenas para ADMIN */}
+          <RoleGuard roles={['ADMIN']}>
+            <div className="text-[var(--sidebar-text)] bg-[var(--sidebar-button-bg)] rounded-sm overflow-hidden hover:bg-[#242424e1] my-0.5">
+              <a className="no-underline text-[var(--sidebar-text)] block p-3 transition-all duration-200 ease-in-out hover:bg-[#242424e1] font-medium" href="/admin" onClick={handleLinkClick}>Administração</a>
+            </div>
+          </RoleGuard>
+
+          <div className="h-0.25 bg-[rgba(255,255,255,0.2)] my-4"/>
+
+          <div className="text-[var(--sidebar-text)] rounded-sm overflow-hidden hover:bg-[rgba(255,255,255,0.1)]">
+            <button
+              className="text-[var(--sidebar-text)] bg-[var(--sidebar-button-bg)] font-medium w-full cursor-pointer p-3 justify-start flex hover:bg-[#242424e1]"
+              onClick={handleLogout}
+            >
+              Sair
+            </button>
+          </div>
+        </nav>
+      </aside>
+    </>
   );
 }

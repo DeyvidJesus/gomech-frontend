@@ -53,23 +53,23 @@ export function CreateClientModal({ onClose }: CreateClientModalProps) {
   };
 
   return (
-    <div className="fixed inset-0 bg-[#242424cb] flex items-center justify-center p-4 z-50">
-      <div className="bg-white rounded-xl shadow-2xl max-w-md w-full">
+    <div className="fixed inset-0 bg-[#242424cb] flex items-center justify-center p-3 sm:p-4 z-50">
+      <div className="bg-white rounded-xl shadow-2xl max-w-md w-full max-h-[95vh] flex flex-col">
         {/* Header */}
-        <div className="bg-gradient-to-r from-orange-600 to-orange-700 p-6 rounded-t-xl">
+        <div className="bg-gradient-to-r from-orangeWheel-500 to-orangeWheel-600 p-4 sm:p-6 rounded-t-xl flex-shrink-0">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <div className="w-12 h-12 bg-white rounded-full flex items-center justify-center">
-                <span className="text-lg font-bold text-white">👤</span>
+              <div className="w-10 h-10 sm:w-12 sm:h-12 bg-white bg-opacity-20 rounded-full flex items-center justify-center">
+                <span className="text-base sm:text-lg font-bold text-white">👤</span>
               </div>
               <div>
-                <h2 className="text-xl font-bold text-white">Novo Cliente</h2>
-                <p className="text-orange-100">Cadastrar novo cliente</p>
+                <h2 className="text-lg sm:text-xl font-bold text-white">Novo Cliente</h2>
+                <p className="text-orange-100 text-sm">Cadastrar novo cliente</p>
               </div>
             </div>
             <button
               onClick={onClose}
-              className="text-white hover:bg-white rounded-lg p-2 transition-colors"
+              className="text-white hover:bg-white hover:bg-opacity-20 rounded-lg p-2 transition-colors"
               title="Fechar"
             >
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -80,7 +80,7 @@ export function CreateClientModal({ onClose }: CreateClientModalProps) {
         </div>
 
         {/* Form */}
-        <form onSubmit={handleSubmit} className="p-6 space-y-4 overflow-y-auto max-h-[80vh]">
+        <form onSubmit={handleSubmit} className="p-4 sm:p-6 space-y-4 overflow-y-auto flex-1">
           {error && (
             <div className="bg-red-50 border border-red-200 rounded-lg p-3">
               <div className="flex items-center gap-2">
@@ -100,7 +100,7 @@ export function CreateClientModal({ onClose }: CreateClientModalProps) {
               name="name"
               value={form.name || ''}
               onChange={handleChange}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-colors"
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orangeWheel-500 focus:border-orangeWheel-500 transition-colors"
               placeholder="Digite o nome completo do cliente"
               required
             />
@@ -116,7 +116,7 @@ export function CreateClientModal({ onClose }: CreateClientModalProps) {
               name="email"
               value={form.email || ''}
               onChange={handleChange}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-colors"
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orangeWheel-500 focus:border-orangeWheel-500 transition-colors"
               placeholder="exemplo@email.com"
               required
             />
@@ -132,7 +132,7 @@ export function CreateClientModal({ onClose }: CreateClientModalProps) {
               name="phone"
               value={form.phone || ''}
               onChange={handleChange}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-colors"
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orangeWheel-500 focus:border-orangeWheel-500 transition-colors"
               placeholder="(11) 99999-9999"
             />
           </div>
@@ -162,7 +162,7 @@ export function CreateClientModal({ onClose }: CreateClientModalProps) {
               name="document"
               value={form.document || ''}
               onChange={handleChange}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-colors"
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orangeWheel-500 focus:border-orangeWheel-500 transition-colors"
               placeholder="000.000.000-00"
             />
           </div>
@@ -177,7 +177,7 @@ export function CreateClientModal({ onClose }: CreateClientModalProps) {
               name="birthDate"
               value={form.birthDate || ''}
               onChange={handleChange}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-colors"
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orangeWheel-500 focus:border-orangeWheel-500 transition-colors"
             />
           </div>
 
@@ -208,18 +208,18 @@ export function CreateClientModal({ onClose }: CreateClientModalProps) {
           </div>
 
           {/* Buttons */}
-          <div className="flex gap-3 pt-4">
+          <div className="flex flex-col sm:flex-row gap-3 pt-4 border-t border-gray-200">
             <button
               type="button"
               onClick={onClose}
-              className="flex-1 bg-gray-200 hover:bg-gray-300 text-gray-700 font-semibold py-2.5 rounded-lg transition-colors"
+              className="flex-1 bg-gray-200 hover:bg-gray-300 text-gray-700 font-semibold py-2.5 rounded-lg transition-colors order-2 sm:order-1"
               disabled={mutation.isPending}
             >
               Cancelar
             </button>
             <button
               type="submit"
-              className="flex-1 bg-orange-600 hover:bg-orange-700 text-white font-semibold py-2.5 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              className="flex-1 bg-orangeWheel-500 hover:bg-orangeWheel-600 text-white font-semibold py-2.5 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed order-1 sm:order-2"
               disabled={mutation.isPending}
             >
               {mutation.isPending ? (

@@ -61,10 +61,10 @@ export default function RevenueChart({ serviceOrders }: RevenueChartProps) {
         label: 'Receita (R$)',
         data: months.map(month => month.value),
         fill: true,
-        backgroundColor: 'rgba(251, 146, 60, 0.1)', // Orange com transparência
-        borderColor: 'rgb(251, 146, 60)', // Orange
+        backgroundColor: 'rgba(245, 124, 0, 0.1)', // orangeWheel com transparência
+        borderColor: 'rgb(245, 124, 0)', // orangeWheel-500
         borderWidth: 2,
-        pointBackgroundColor: 'rgb(251, 146, 60)',
+        pointBackgroundColor: 'rgb(245, 124, 0)',
         pointBorderColor: '#fff',
         pointBorderWidth: 2,
         pointRadius: 4,
@@ -103,7 +103,7 @@ export default function RevenueChart({ serviceOrders }: RevenueChartProps) {
         },
         ticks: {
           font: {
-            size: 12,
+            size: window.innerWidth < 640 ? 10 : 12,
           },
         },
       },
@@ -115,7 +115,7 @@ export default function RevenueChart({ serviceOrders }: RevenueChartProps) {
         },
         ticks: {
           font: {
-            size: 12,
+            size: window.innerWidth < 640 ? 10 : 12,
           },
           callback: function(value: any) {
             return new Intl.NumberFormat('pt-BR', {
