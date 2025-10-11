@@ -20,11 +20,15 @@ import { vehicleDetailsRoute } from './modules/vehicle/routes/vehicleDetailsRout
 import { serviceOrderRoute } from './modules/serviceOrder/routes/serviceOrderRoute.ts'
 import { serviceOrderDetailsRoute } from './modules/serviceOrder/routes/serviceOrderDetailsRoute.ts'
 import { adminRoute } from './modules/admin/routes/adminRoute.ts'
+import { privacyPolicyRoute } from './modules/auth/routes/privacy-policy.ts'
+import { termsOfServiceRoute } from './modules/auth/routes/terms-of-service.ts'
 
 const routeTree = rootRoute.addChildren([
   loginRoute,
   registerRoute,
   dashboardRoute,
+  privacyPolicyRoute,
+  termsOfServiceRoute,
   clientRoute.addChildren([clientDetailsRoute]),
   vehicleRoute.addChildren([vehicleDetailsRoute]),
   serviceOrderRoute.addChildren([serviceOrderDetailsRoute]),

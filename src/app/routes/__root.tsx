@@ -5,7 +5,10 @@ import { Layout } from "../../shared/components/Layout";
 export const rootRoute = createRootRoute({
   component: () => {
     const location = useLocation();
-    const isAuthPage = location.pathname === '/login' || location.pathname === '/register';
+    const isAuthPage = location.pathname === '/login' || 
+                      location.pathname === '/register' ||
+                      location.pathname === '/privacy-policy' ||
+                      location.pathname === '/terms-of-service';
     
     if (isAuthPage) {
       return (

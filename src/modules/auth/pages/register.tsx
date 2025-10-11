@@ -18,6 +18,7 @@ function Register() {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [acceptTerms, setAcceptTerms] = useState(false);
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -26,6 +27,11 @@ function Register() {
     // Validações
     if (!name.trim() || !email.trim() || !password.trim() || !confirmPassword.trim()) {
       setError("Por favor, preencha todos os campos");
+      return;
+    }
+
+    if (!acceptTerms) {
+      setError("Você deve aceitar os Termos de Uso e Política de Privacidade para continuar");
       return;
     }
 
@@ -162,11 +168,50 @@ function Register() {
               </div>
             </div>
 
+            {/* Aceite dos Termos e Políticas */}
+            <div className="space-y-3">
+              <div className="flex items-start gap-3 p-4 border border-gray-200 rounded-lg bg-gray-50">
+                <div className="flex items-center h-5">
+                  <input
+                    id="acceptTerms"
+                    type="checkbox"
+                    checked={acceptTerms}
+                    onChange={(e) => setAcceptTerms(e.target.checked)}
+                    className="h-4 w-4 text-orange-600 focus:ring-orange-500 border-gray-300 rounded"
+                    required
+                  />
+                </div>
+                <div className="text-sm">
+                  <label htmlFor="acceptTerms" className="font-medium text-gray-900 cursor-pointer">
+                    Aceito os termos e políticas
+                  </label>
+                  <p className="text-gray-600 mt-1">
+                    Li e concordo com os{" "}
+                    <Link 
+                      to={"/terms-of-service"} 
+                      className="text-orange-600 hover:text-orange-700 font-semibold underline"
+                      target="_blank"
+                    >
+                      Termos de Uso
+                    </Link>{" "}
+                    e{" "}
+                    <Link 
+                      to={"/privacy-policy"} 
+                      className="text-orange-600 hover:text-orange-700 font-semibold underline"
+                      target="_blank"
+                    >
+                      Política de Privacidade
+                    </Link>
+                  </p>
+                </div>
+              </div>
+            </div>
+
             {/* Botão de cadastro */}
             <button
               type="submit"
-              disabled={register.isPending}
-              className="w-full bg-gradient-to-r from-orange-600 to-orange-700 hover:from-orange-700 hover:to-orange-800 disabled:from-gray-400 disabled:to-gray-500 text-white font-semibold py-3 px-4 rounded-lg transition-all duration-200 flex items-center justify-center gap-2"
+              disabled={register.isPending || !acceptTerms}
+              className="w-full bg-gradient-to-r from-orange-600 to-orange-700 hover:from-orange-700 hover:to-orange-800 disabled:from-gray-400 disabled:to-gray-500 disabled:cursor-not-allowed text-white font-semibold py-3 px-4 rounded-lg transition-all duration-200 flex items-center justify-center gap-2"
             >
               {register.isPending ? (
                 <>
@@ -191,20 +236,6 @@ function Register() {
                 >
                   Fazer login
                 </Link>
-              </p>
-            </div>
-
-            {/* Termos de uso */}
-            <div className="text-center pt-4 border-t border-orange-200">
-              <p className="text-xs text-gray-500">
-                Ao criar uma conta, você concorda com nossos{" "}
-                <a href="#" className="text-orange-600 hover:text-orange-700 font-medium">
-                  Termos de Uso
-                </a>{" "}
-                e{" "}
-                <a href="#" className="text-orange-600 hover:text-orange-700 font-medium">
-                  Política de Privacidade
-                </a>
               </p>
             </div>
           </form>
