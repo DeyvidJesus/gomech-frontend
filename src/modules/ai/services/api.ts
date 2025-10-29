@@ -3,7 +3,7 @@ import axios from "axios";
 
 const chatApi = axios.create({
   // baseURL: "http://localhost:5080",
-  baseURL: "https://api.gomech.com.br",
+  baseURL: "https://api.go-mech.com.br",
   timeout: 120000,
   headers: {
     'Content-Type': 'application/json',
