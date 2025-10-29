@@ -3,7 +3,7 @@ import axios from "axios";
 
 const api = axios.create({
   // baseURL: "http://localhost:5080",
-  baseURL: "https://clear-ellene-deyvidgondim-8b8a208e.koyeb.app",
+  baseURL: "https://api.gomech.com.br",
   timeout: 30000,
   headers: {
     "Content-Type": "application/json",
