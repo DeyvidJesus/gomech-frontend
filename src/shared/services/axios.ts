@@ -3,7 +3,7 @@ import axios from "axios";
 
 const api = axios.create({
   // baseURL: "http://localhost:5080",
-  baseURL: "https://api.go-mech.com.br",
+  baseURL: "https://api.go-mech.com",
   timeout: 30000,
   headers: {
     "Content-Type": "application/json",
