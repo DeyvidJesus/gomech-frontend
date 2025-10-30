@@ -1,19 +1,53 @@
 import { useAuth } from "../../modules/auth/hooks/useAuth";
 import Sidebar from "./Sidebar";
 import { Outlet, useLocation } from "@tanstack/react-router";
-import ChatBot from "../../modules/ai/components/ChatBot/ChatBot";
 import ProtectedRoute from "../../modules/auth/components/ProtectedRoute";
-import { useState } from "react";
+import { lazy, Suspense, useEffect, useState } from "react";
+
+const ChatBot = lazy(() => import("../../modules/ai/components/ChatBot/ChatBot"));
 
 export function Layout() {
   const location = useLocation();
   const { data } = useAuth();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [shouldLoadChatBot, setShouldLoadChatBot] = useState(false);
 
   const hideChatBotRoutes = ["/login", "/cadastro"];
 
   const shouldShowChatBot =
     data && !hideChatBotRoutes.includes(location.pathname);
+
+  useEffect(() => {
+    if (!shouldShowChatBot || shouldLoadChatBot) {
+      return;
+    }
+
+    if (typeof window === "undefined") {
+      setShouldLoadChatBot(true);
+      return;
+    }
+
+    const { requestIdleCallback, cancelIdleCallback } = window as Window & {
+      requestIdleCallback?: (cb: IdleRequestCallback) => number;
+      cancelIdleCallback?: (handle: number) => void;
+    };
+
+    if (typeof requestIdleCallback === "function") {
+      const idleCallbackId = requestIdleCallback(() => setShouldLoadChatBot(true));
+
+      return () => {
+        if (typeof cancelIdleCallback === "function") {
+          cancelIdleCallback(idleCallbackId);
+        }
+      };
+    }
+
+    const timeoutId = window.setTimeout(() => {
+      setShouldLoadChatBot(true);
+    }, 200);
+
+    return () => window.clearTimeout(timeoutId);
+  }, [shouldLoadChatBot, shouldShowChatBot]);
 
   const toggleSidebar = () => {
     setIsSidebarOpen(!isSidebarOpen);
@@ -26,7 +60,11 @@ export function Layout() {
   return (
     <ProtectedRoute>
       <div className="bg-gray-50 text-gray-900 min-h-screen flex flex-col">
-        {shouldShowChatBot && <ChatBot />}
+        {shouldShowChatBot && shouldLoadChatBot && (
+          <Suspense fallback={null}>
+            <ChatBot />
+          </Suspense>
+        )}
         
         {/* Header com botão de menu para mobile */}
         <header className="lg:hidden bg-[var(--sidebar-bg)] shadow-sm px-4 py-3 flex items-center justify-between">
