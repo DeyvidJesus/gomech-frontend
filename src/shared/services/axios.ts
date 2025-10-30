@@ -47,8 +47,7 @@ api.interceptors.response.use(
       localStorage.removeItem("user");
       redirect({ to: "/login" });
     } else if (error.response?.status === 403) {
-      console.error("Acesso negado:", error.response.data);
-      alert("Você não tem permissão para realizar esta ação");
+      console.error("Acesso negado:", error);
       redirect({ to: "/" });
     }
 
