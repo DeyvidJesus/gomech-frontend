@@ -51,7 +51,7 @@ if (rootElement && !rootElement.innerHTML) {
         <AppProviders>
           <RouterProvider router={router} />
         </AppProviders>
-      </StrictMode>,
+      </StrictMode>
       <Analytics />
     </>
   )
