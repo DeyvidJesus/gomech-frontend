@@ -22,12 +22,8 @@ export function EditVehicleModal({ vehicle, onClose }: EditVehicleModalProps) {
   const [error, setError] = useState<string | null>(null);
 
   const mutation = useMutation({
-    mutationFn: (data: Partial<Vehicle>) => {
-      console.log('Atualizando veículo:', vehicle.id, 'com dados:', data); // Para debug
-      return vehiclesApi.update(vehicle.id, data);
-    },
-    onSuccess: (response) => {
-      console.log('Veículo atualizado com sucesso:', response.data); // Para debug
+    mutationFn: (data: Partial<Vehicle>) => vehiclesApi.update(vehicle.id, data),
+    onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["vehicles"] });
       queryClient.invalidateQueries({ queryKey: ["vehicle", vehicle.id] });
       queryClient.invalidateQueries({ queryKey: ["clients"] }); // Atualizar clientes também

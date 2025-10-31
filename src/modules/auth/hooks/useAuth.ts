@@ -1,28 +1,19 @@
-import { useQuery } from "@tanstack/react-query";
-import type { AuthResponse } from "../types/user";
+import { useQuery } from '@tanstack/react-query'
+
+import type { AuthResponse } from '../types/user'
+import { loadPersistedAuth, setCachedAuth } from '../utils/authCache'
 
 export function useAuth() {
   return useQuery<AuthResponse | null>({
-    queryKey: ["auth"],
-    queryFn: async () => {
-      const stored = localStorage.getItem("tanstack-query-persist-client");
-      if (stored) {
-        try {
-          const cache = JSON.parse(stored);
-          const authData = cache.clientState?.queries?.find(
-            (q: any) => q.queryKey[0] === "auth"
-          )?.state?.data;
-          if (authData) {
-            return authData;
-          }
-        } catch (error) {
-          console.error("Erro ao parsear cache do TanStack Query:", error);
-        }
-      }
-      
-      return null;
-    },
+    queryKey: ['auth'],
+    queryFn: async () => loadPersistedAuth(),
+    initialData: () => loadPersistedAuth(),
     staleTime: Infinity,
     gcTime: Infinity,
-  });
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: false,
+    onSuccess: data => {
+      setCachedAuth(data ?? null)
+    },
+  })
 }

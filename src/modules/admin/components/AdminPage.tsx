@@ -244,9 +244,7 @@ export default function AdminPage() {
             </div>
           )}
 
-          {activeTab === 'system' && (
-            <SystemSettings onSave={(settings) => console.log('Configurações salvas:', settings)} />
-          )}
+          {activeTab === 'system' && <SystemSettings onSave={() => undefined} />}
 
           {activeTab === 'reports' && (
             <div className="bg-white rounded-lg shadow-sm border p-4 sm:p-6">

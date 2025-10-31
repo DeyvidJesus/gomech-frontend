@@ -1,9 +1,9 @@
-import { rootRoute } from "../../../app/routes/__root"
-import { createRoute } from "@tanstack/react-router"
-import Register from "../pages/register"
+import { createRoute, lazyRouteComponent } from '@tanstack/react-router'
+
+import { rootRoute } from '../../../app/routes/__root'
 
 export const registerRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/register',
-  component: Register
+  component: lazyRouteComponent(() => import('../pages/register')),
 })

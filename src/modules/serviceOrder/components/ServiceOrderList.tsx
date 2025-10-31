@@ -236,11 +236,9 @@ export default function ServiceOrderList() {
                   </tr>
                 </thead>
                 <tbody>
-                  {filteredOrders.map((order) => { 
-                    console.log('ORDER', order) 
-                  return (
-                    <tr 
-                      key={order.id} 
+                  {filteredOrders.map(order => (
+                    <tr
+                      key={order.id}
                       className="border-b border-gray-100 hover:bg-gray-50 transition-colors"
                     >
                       <td className="py-3 px-4">
@@ -300,7 +298,7 @@ export default function ServiceOrderList() {
                         </div>
                       </td>
                     </tr>
-                  )})}
+                  ))}
                 </tbody>
               </table>
             </div>

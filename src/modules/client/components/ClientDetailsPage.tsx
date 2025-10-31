@@ -20,8 +20,6 @@ export function ClientDetailsPage() {
     enabled: !!clientId,
   });
 
-  console.log(client);
-
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-48 sm:h-64">

@@ -1,9 +1,9 @@
-import { createRoute } from "@tanstack/react-router";
-import { rootRoute } from "../../../app/routes/__root";
-import ServiceOrderList from "../components/ServiceOrderList";
+import { createRoute, lazyRouteComponent } from '@tanstack/react-router'
+
+import { rootRoute } from '../../../app/routes/__root'
 
 export const serviceOrderRoute = createRoute({
   getParentRoute: () => rootRoute,
-  path: "/service-orders",
-  component: ServiceOrderList
-});
+  path: '/service-orders',
+  component: lazyRouteComponent(() => import('../components/ServiceOrderList')),
+})
