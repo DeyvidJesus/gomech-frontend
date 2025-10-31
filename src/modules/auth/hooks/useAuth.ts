@@ -1,10 +1,10 @@
 import { useQuery } from '@tanstack/react-query'
 
 import type { AuthResponse } from '../types/user'
-import { loadPersistedAuth, setCachedAuth } from '../utils/authCache'
+import { loadPersistedAuth } from '../utils/authCache'
 
 export function useAuth() {
-  return useQuery<AuthResponse | null>({
+  return useQuery<AuthResponse | null, Error>({
     queryKey: ['auth'],
     queryFn: async () => loadPersistedAuth(),
     initialData: () => loadPersistedAuth(),
@@ -12,8 +12,5 @@ export function useAuth() {
     gcTime: Infinity,
     refetchOnWindowFocus: false,
     refetchOnReconnect: false,
-    onSuccess: data => {
-      setCachedAuth(data ?? null)
-    },
   })
 }
