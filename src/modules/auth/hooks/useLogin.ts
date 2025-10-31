@@ -1,6 +1,8 @@
-import { useMutation, useQueryClient } from "@tanstack/react-query";
-import type { AuthResponse } from "../types/user";
-import { authApi } from "../services/api";
+import { useMutation, useQueryClient } from '@tanstack/react-query'
+
+import type { AuthResponse } from '../types/user'
+import { authApi } from '../services/api'
+import { setCachedAuth, setStoredToken } from '../utils/authCache'
 
 export function useLogin() {
   const queryClient = useQueryClient();
@@ -13,9 +15,10 @@ export function useLogin() {
       return res.data;
     },
     onSuccess: (data) => {
-      localStorage.setItem("token", data.token);
-      
-      queryClient.setQueryData(["auth"], data); 
+      setStoredToken(data.token)
+      setCachedAuth(data)
+
+      queryClient.setQueryData(['auth'], data)
     },
-  });
+  })
 }

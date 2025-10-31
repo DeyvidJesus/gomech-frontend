@@ -1,11 +1,13 @@
-import { useQueryClient } from "@tanstack/react-query";
+import { useQueryClient } from '@tanstack/react-query'
+
+import { clearStoredAuth } from '../utils/authCache'
 
 export function useLogout() {
-  const queryClient = useQueryClient();
+  const queryClient = useQueryClient()
   return () => {
-    localStorage.removeItem("token");
-    
-    queryClient.removeQueries({ queryKey: ["auth"] });
-    queryClient.clear();
-  };
+    clearStoredAuth()
+
+    queryClient.removeQueries({ queryKey: ['auth'] })
+    queryClient.clear()
+  }
 }

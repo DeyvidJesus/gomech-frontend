@@ -1,60 +1,60 @@
-import type { SessionData } from "../../../shared/types/sessionData";
-import axios from "axios";
+import axios from 'axios'
+
+import {
+  clearStoredAuth,
+  getCachedAuth,
+  getStoredToken,
+  loadPersistedAuth,
+} from '../../auth/utils/authCache'
 
 const chatApi = axios.create({
   // baseURL: "http://localhost:5080",
-  baseURL: "https://clear-ellene-deyvidgondim-8b8a208e.koyeb.app",
+  baseURL: 'https://api.go-mech.com',
   timeout: 120000,
   headers: {
     'Content-Type': 'application/json',
   },
-});
+})
 
 chatApi.interceptors.request.use(
-  (config) => {
-    const token = localStorage.getItem("token");
+  config => {
+    const token = getStoredToken()
 
     if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
-    } else {
-      const sessionDataString = localStorage.getItem("REACT_QUERY_OFFLINE_CACHE");
-      const sessionData: SessionData | null = sessionDataString ? JSON.parse(sessionDataString) : null;
-      const fallbackToken = sessionData?.clientState?.queries?.find(
-        (q: any) => q.queryKey[0] === "auth"
-      )?.state?.data?.token;
-      if (fallbackToken) {
-        config.headers.Authorization = `Bearer ${fallbackToken}`;
-      }
+      config.headers.Authorization = `Bearer ${token}`
+      return config
     }
 
-    return config;
+    const auth = getCachedAuth() ?? loadPersistedAuth()
+    if (auth?.token) {
+      config.headers.Authorization = `Bearer ${auth.token}`
+    }
+
+    return config
   },
-  (error) => {
-    return Promise.reject(error);
-  }
-);
+  error => Promise.reject(error),
+)
 
 chatApi.interceptors.response.use(
-  (response) => response,
-  (error) => {
+  response => response,
+  error => {
     if (error.response?.status === 401) {
-      localStorage.removeItem('token');
-      localStorage.removeItem('user');
-      window.location.href = '/login';
+      clearStoredAuth()
+      window.location.href = '/login'
     } else if (error.response?.status === 403) {
-      console.error('Acesso negado:', error.response.data);
-      alert('Você não tem permissão para realizar esta ação');
+      console.error('Acesso negado:', error.response.data)
+      alert('Você não tem permissão para realizar esta ação')
     }
 
-    return Promise.reject(error);
-  }
-);
+    return Promise.reject(error)
+  },
+)
 
 interface ChatRequest {
-  prompt: string;
-  includeChart?: boolean;
-  threadId?: string;
-  userId?: number;
+  prompt: string
+  includeChart?: boolean
+  threadId?: string
+  userId?: number
 }
 
 export const aiService = {

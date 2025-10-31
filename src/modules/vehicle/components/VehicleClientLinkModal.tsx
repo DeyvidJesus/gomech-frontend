@@ -21,12 +21,9 @@ export default function VehicleClientLinkModal({ vehicle, onClose }: VehicleClie
   });
 
   const mutation = useMutation({
-    mutationFn: (clientId: number | undefined) => {
-      console.log('Vinculando veículo', vehicle.id, 'ao cliente', clientId);
-      return vehiclesApi.update(vehicle.id, { clientId: clientId });
-    },
-    onSuccess: (response) => {
-      console.log('Vinculação atualizada com sucesso:', response.data);
+    mutationFn: (clientId: number | undefined) =>
+      vehiclesApi.update(vehicle.id, { clientId: clientId }),
+    onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["vehicles"] });
       queryClient.invalidateQueries({ queryKey: ["vehicle", vehicle.id] });
       queryClient.invalidateQueries({ queryKey: ["clients"] });

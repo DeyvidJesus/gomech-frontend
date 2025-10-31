@@ -1,6 +1,5 @@
 import { Layout } from "./shared/components/Layout";
 
-
 function App() {
   return (
     <Layout />

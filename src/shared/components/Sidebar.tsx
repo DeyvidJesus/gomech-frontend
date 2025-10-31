@@ -1,43 +1,33 @@
-import RoleGuard from "../../modules/auth/components/RoleGuard";
-import { useAuth } from "../../modules/auth/hooks/useAuth";
-import { useLogout } from "../../modules/auth/hooks/useLogout";
-import { useNavigate } from "@tanstack/react-router";
-import { useEffect } from "react";
+import { Link, useNavigate } from '@tanstack/react-router'
+
+import RoleGuard from '../../modules/auth/components/RoleGuard'
+import { useAuth } from '../../modules/auth/hooks/useAuth'
+import { useLogout } from '../../modules/auth/hooks/useLogout'
 
 interface SidebarProps {
-  isOpen: boolean;
-  onClose: () => void;
+  isOpen: boolean
+  onClose: () => void
+  isDesktop: boolean
 }
 
-export default function Sidebar({ isOpen, onClose }: SidebarProps) {
-  const { data } = useAuth();
-  const { email, role } = data || {};
-  const logout = useLogout();
-  const navigate = useNavigate();
+
+export default function Sidebar({ isOpen, onClose, isDesktop }: SidebarProps) {
+  const { data } = useAuth()
+  const { email, role } = data || {}
+  const logout = useLogout()
+  const navigate = useNavigate()
 
   const handleLogout = () => {
-    logout();
-    navigate({ to: '/login' });
-    onClose();
-  };
+    logout()
+    navigate({ to: '/login' })
+    onClose()
+  }
 
   const handleLinkClick = () => {
-    if (window.innerWidth < 1024) {
-      onClose();
+    if (!isDesktop) {
+      onClose()
     }
-  };
-
-  useEffect(() => {
-    if (isOpen) {
-      document.body.style.overflow = 'hidden';
-    } else {
-      document.body.style.overflow = 'unset';
-    }
-
-    return () => {
-      document.body.style.overflow = 'unset';
-    };
-  }, [isOpen]);
+  }
 
   return (
     <>
@@ -50,16 +40,18 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
       )}
 
       {/* Sidebar/Drawer */}
-      <aside className={`
-        fixed lg:static top-0 left-0 z-50
-        w-full max-w-[280px] lg:max-w-[220px]
-        bg-[var(--sidebar-bg)] text-[var(--sidebar-text)]
-        h-full lg:h-[calc(100vh-28px)]
-        lg:m-3.5 lg:rounded
-        flex flex-col
-        transform transition-transform duration-300 ease-in-out
-        ${isOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
-      `}>
+      <aside
+        className={`
+          fixed lg:static top-0 left-0 z-50
+          w-full max-w-[280px] lg:max-w-[220px]
+          bg-[var(--sidebar-bg)] text-[var(--sidebar-text)]
+          h-full lg:h-[calc(100vh-28px)]
+          lg:m-3.5 lg:rounded
+          flex flex-col
+          transform transition-transform duration-300 ease-in-out
+          ${isOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
+        `}
+      >
         {/* Header com logo e botão de fechar */}
         <div className="flex items-center justify-between p-4 lg:justify-center">
           <img src="/logo_black.png" alt="GoMech" className="w-16 h-16 lg:w-20 lg:h-20" />
@@ -89,22 +81,52 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
 
         <nav className="flex flex-col flex-1 p-3">
           <div className="text-[var(--sidebar-text)] bg-[var(--sidebar-button-bg)] rounded-sm overflow-hidden hover:bg-[#242424e1] my-0.5">
-            <a className="no-underline text-[var(--sidebar-text)] block p-3 transition-all duration-200 ease-in-out hover:bg-[#242424e1] font-medium" href="/" onClick={handleLinkClick}>Dashboard</a>
+            <Link
+              className="no-underline text-[var(--sidebar-text)] block p-3 transition-all duration-200 ease-in-out hover:bg-[#242424e1] font-medium"
+              to="/"
+              onClick={handleLinkClick}
+            >
+              Dashboard
+            </Link>
           </div>
           <div className="text-[var(--sidebar-text)] bg-[var(--sidebar-button-bg)] rounded-sm overflow-hidden hover:bg-[#242424e1] my-0.5">
-            <a className="no-underline text-[var(--sidebar-text)] block p-3 transition-all duration-200 ease-in-out hover:bg-[#242424e1] font-medium" href="/clients" onClick={handleLinkClick}>Clientes</a>
+            <Link
+              className="no-underline text-[var(--sidebar-text)] block p-3 transition-all duration-200 ease-in-out hover:bg-[#242424e1] font-medium"
+              to="/clients"
+              onClick={handleLinkClick}
+            >
+              Clientes
+            </Link>
           </div>
           <div className="text-[var(--sidebar-text)] bg-[var(--sidebar-button-bg)] rounded-sm overflow-hidden hover:bg-[#242424e1] my-0.5">
-            <a className="no-underline text-[var(--sidebar-text)] block p-3 transition-all duration-200 ease-in-out hover:bg-[#242424e1] font-medium" href="/vehicles" onClick={handleLinkClick}>Veículos</a>
+            <Link
+              className="no-underline text-[var(--sidebar-text)] block p-3 transition-all duration-200 ease-in-out hover:bg-[#242424e1] font-medium"
+              to="/vehicles"
+              onClick={handleLinkClick}
+            >
+              Veículos
+            </Link>
           </div>
           <div className="text-[var(--sidebar-text)] bg-[var(--sidebar-button-bg)] rounded-sm overflow-hidden hover:bg-[#242424e1] my-0.5">
-            <a className="no-underline text-[var(--sidebar-text)] block p-3 transition-all duration-200 ease-in-out hover:bg-[#242424e1] font-medium" href="/service-orders" onClick={handleLinkClick}>Ordens de Serviço</a>
+            <Link
+              className="no-underline text-[var(--sidebar-text)] block p-3 transition-all duration-200 ease-in-out hover:bg-[#242424e1] font-medium"
+              to="/service-orders"
+              onClick={handleLinkClick}
+            >
+              Ordens de Serviço
+            </Link>
           </div>
 
           {/* Menus administrativos apenas para ADMIN */}
           <RoleGuard roles={['ADMIN']}>
             <div className="text-[var(--sidebar-text)] bg-[var(--sidebar-button-bg)] rounded-sm overflow-hidden hover:bg-[#242424e1] my-0.5">
-              <a className="no-underline text-[var(--sidebar-text)] block p-3 transition-all duration-200 ease-in-out hover:bg-[#242424e1] font-medium" href="/admin" onClick={handleLinkClick}>Administração</a>
+              <Link
+                className="no-underline text-[var(--sidebar-text)] block p-3 transition-all duration-200 ease-in-out hover:bg-[#242424e1] font-medium"
+                to="/admin"
+                onClick={handleLinkClick}
+              >
+                Administração
+              </Link>
             </div>
           </RoleGuard>
 
@@ -121,5 +143,5 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
         </nav>
       </aside>
     </>
-  );
+  )
 }

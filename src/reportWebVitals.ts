@@ -1,10 +1,13 @@
-const reportWebVitals = (onPerfEntry?: () => void) => {
-  if (onPerfEntry && onPerfEntry instanceof Function) {
-    import('web-vitals').then(({ onCLS, onINP, onFCP, onLCP, onTTFB }) => {
+import type { ReportCallback } from 'web-vitals'
+
+const reportWebVitals = (onPerfEntry?: ReportCallback) => {
+  if (onPerfEntry && typeof onPerfEntry === 'function') {
+    import('web-vitals').then(({ onCLS, onFID, onLCP, onINP, onFCP, onTTFB }) => {
       onCLS(onPerfEntry)
+      onFID(onPerfEntry)
+      onLCP(onPerfEntry)
       onINP(onPerfEntry)
       onFCP(onPerfEntry)
-      onLCP(onPerfEntry)
       onTTFB(onPerfEntry)
     })
   }

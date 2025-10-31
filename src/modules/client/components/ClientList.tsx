@@ -82,8 +82,6 @@ export function ClientList() {
     );
   }
 
-  console.log(clients)
-
   return (
     <div className="space-y-4 sm:space-y-6">
       {/* Header */}

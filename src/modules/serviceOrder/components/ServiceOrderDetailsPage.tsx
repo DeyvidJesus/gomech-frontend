@@ -23,8 +23,6 @@ export default function ServiceOrderDetailsPage() {
     enabled: !!serviceOrderId,
   });
 
-  console.log('serviceOrder', serviceOrder);
-
   // Buscar itens da OS
   const { data: items = [] } = useQuery({
     queryKey: ["serviceOrderItems", serviceOrderId],

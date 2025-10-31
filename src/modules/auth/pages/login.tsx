@@ -6,7 +6,7 @@ import { useAuth } from "../hooks/useAuth";
 export default function LoginPage() {
   const login = useLogin();
   const navigate = useNavigate();
-  const { data } = useAuth();
+  const { data }: any = useAuth();
   const [error, setError] = useState<string | null>(null);
 
   if (data?.token) {
@@ -20,7 +20,7 @@ export default function LoginPage() {
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
-    
+
     if (!email.trim() || !password.trim()) {
       setError("Por favor, preencha todos os campos");
       return;
@@ -40,13 +40,13 @@ export default function LoginPage() {
   return (
     <div className="min-h-screen flex">
       {/* Lado esquerdo - Imagem de fundo */}
-      <div 
+      <div
         className="hidden lg:flex lg:w-1/2 bg-cover bg-center bg-no-repeat relative"
-        style={{ backgroundImage: 'url(/login_bg.jpg)' }}
+        style={{ backgroundImage: 'url(/login_bg.webp)' }}
       >
         {/* Overlay escuro para melhor contraste */}
         <div className="absolute inset-0 bg-[#242424cb]"></div>
-        
+
         {/* Conteúdo sobre a imagem */}
         <div className="relative z-10 flex flex-col justify-center items-center text-white p-12">
           <div className="text-center">

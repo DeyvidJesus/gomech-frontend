@@ -31,12 +31,8 @@ export function AddVehicleModal({ onClose }: AddVehicleModalProps) {
   const [error, setError] = useState<string | null>(null);
 
   const mutation = useMutation({
-    mutationFn: (data: Partial<Vehicle>) => {
-      console.log('Enviando dados do veículo:', data); // Para debug
-      return vehiclesApi.create(data as Vehicle);
-    },
-    onSuccess: (response) => {
-      console.log('Veículo criado com sucesso:', response.data); // Para debug
+    mutationFn: (data: Partial<Vehicle>) => vehiclesApi.create(data as Vehicle),
+    onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["vehicles"] });
       queryClient.invalidateQueries({ queryKey: ["clients"] }); // Atualizar clientes também
       onClose();

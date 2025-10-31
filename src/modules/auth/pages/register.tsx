@@ -6,7 +6,7 @@ import { useAuth } from "../hooks/useAuth";
 function Register() {
   const register = useRegister();
   const navigate = useNavigate();
-  const { data } = useAuth();
+  const { data }: any = useAuth();
   const [error, setError] = useState<string | null>(null);
   const [confirmPassword, setConfirmPassword] = useState("");
 
@@ -245,7 +245,7 @@ function Register() {
       {/* Lado direito - Benefícios e imagem */}
       <div 
         className="hidden lg:flex lg:w-1/2 bg-cover bg-center bg-no-repeat relative"
-        style={{ backgroundImage: 'url(/login_bg.jpg)' }}
+        style={{ backgroundImage: 'url(/login_bg.webp)' }}
       >
         {/* Overlay com gradiente laranja */}
         <div className="absolute inset-0 bg-gradient-to-br from-orange-600 to-orange-800"></div>
