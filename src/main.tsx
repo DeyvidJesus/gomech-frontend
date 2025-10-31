@@ -20,6 +20,7 @@ import { vehicleDetailsRoute } from './modules/vehicle/routes/vehicleDetailsRout
 import { serviceOrderRoute } from './modules/serviceOrder/routes/serviceOrderRoute.ts'
 import { serviceOrderDetailsRoute } from './modules/serviceOrder/routes/serviceOrderDetailsRoute.ts'
 import { adminRoute } from './modules/admin/routes/adminRoute.ts'
+import { Analytics } from "@vercel/analytics/react"
 
 const routeTree = rootRoute.addChildren([
   loginRoute,
@@ -43,11 +44,14 @@ const rootElement = document.getElementById('app')
 if (rootElement && !rootElement.innerHTML) {
   const root = ReactDOM.createRoot(rootElement)
   root.render(
-    <StrictMode>
-      <AppProviders>
-        <RouterProvider router={router} />
-      </AppProviders>
-    </StrictMode>,
+    <>
+      <StrictMode>
+        <AppProviders>
+          <RouterProvider router={router} />
+        </AppProviders>
+      </StrictMode>,
+      <Analytics />
+    </>
   )
 }
 
