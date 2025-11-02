@@ -73,12 +73,12 @@ export default function AdminPage() {
               <div className="flex items-center gap-3">
                 <div className="w-8 h-8 sm:w-10 sm:h-10 bg-orangeWheel-100 rounded-full flex items-center justify-center flex-shrink-0">
                   <span className="text-orangeWheel-600 font-semibold text-sm sm:text-base">
-                    {authData?.name?.charAt(0).toUpperCase()}
+                    {authData?.user.name?.charAt(0).toUpperCase()}
                   </span>
                 </div>
                 <div className="min-w-0 flex-1">
-                  <p className="font-medium text-gray-900 text-sm sm:text-base truncate">Bem-vindo, {authData?.name}</p>
-                  <p className="text-xs sm:text-sm text-gray-500">Função: {authData?.role}</p>
+                  <p className="font-medium text-gray-900 text-sm sm:text-base truncate">Bem-vindo, {authData?.user.name}</p>
+                  <p className="text-xs sm:text-sm text-gray-500">Função: {authData?.user.role}</p>
                 </div>
               </div>
             </div>

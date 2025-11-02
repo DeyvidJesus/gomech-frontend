@@ -1,15 +1,15 @@
 import api from "../../../shared/services/axios";
-import type { AuthResponse } from "../types/user";
+import type {
+  AuthResponse,
+  LoginRequest,
+  RegisterRequest,
+  RegisterResponse,
+  RefreshTokenResponse,
+} from "../types/user";
 
 export const authApi = {
-  login: (email: string, password: string) =>
-    api.post<{ token: string, email: string, role: 'USER' | 'ADMIN', name: string, id: number }>("/auth/login", { email, password }),
-
-  register: (name: string, email: string, password: string, roleId: number) =>
-    api.post<{ token: string, email: string, role: 'USER' | 'ADMIN', name: string, id: number }>("/auth/register", { name, email, password, roleId }),
-};
-
-export const loginApi = {
-  login: (email: string, password: string) =>
-    api.post<AuthResponse>("/auth/login", { email, password }),
+  login: (payload: LoginRequest) => api.post<AuthResponse>("/auth/login", payload),
+  register: (payload: RegisterRequest) => api.post<RegisterResponse>("/auth/register", payload),
+  refresh: (refreshToken: string) =>
+    api.post<RefreshTokenResponse>("/auth/refresh", { refreshToken }),
 };

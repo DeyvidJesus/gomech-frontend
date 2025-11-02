@@ -1,7 +1,9 @@
-import { useRegister } from "../hooks/useRegister";
-import { useNavigate, Link } from "@tanstack/react-router";
 import { useState } from "react";
+import { Link, useNavigate } from "@tanstack/react-router";
+
+import { useRegister } from "../hooks/useRegister";
 import { useAuth } from "../hooks/useAuth";
+import type { RegisterRequest, UserRole } from "../types/user";
 
 function Register() {
   const register = useRegister();
@@ -9,8 +11,12 @@ function Register() {
   const { data }: any = useAuth();
   const [error, setError] = useState<string | null>(null);
   const [confirmPassword, setConfirmPassword] = useState("");
+  const [role, setRole] = useState<UserRole>("USER");
+  const [mfaEnabled, setMfaEnabled] = useState(false);
+  const [mfaSecret, setMfaSecret] = useState<string | null>(null);
+  const [allowAutoRedirect, setAllowAutoRedirect] = useState(true);
 
-  if (data?.token) {
+  if (data?.accessToken && allowAutoRedirect) {
     navigate({ to: "/" });
     return null;
   }
@@ -26,7 +32,7 @@ function Register() {
     
     // Validações
     if (!name.trim() || !email.trim() || !password.trim() || !confirmPassword.trim()) {
-      setError("Por favor, preencha todos os campos");
+      setError("Por favor, preencha todos os campos obrigatórios");
       return;
     }
 
@@ -45,15 +51,27 @@ function Register() {
       return;
     }
 
-    register.mutate(
-      { name, email, password },
-      {
-        onSuccess: () => navigate({ to: "/" }),
-        onError: (err: any) => {
-          setError(err?.response?.data?.message || "Erro ao criar conta. Tente novamente.");
-        },
-      }
-    );
+    const payload: RegisterRequest = {
+      name,
+      email,
+      password,
+      role,
+      ...(mfaEnabled ? { mfaEnabled: true } : {}),
+    };
+
+    register.mutate(payload, {
+      onSuccess: (response) => {
+        if (payload.mfaEnabled && response.mfaSetupSecret) {
+          setAllowAutoRedirect(false);
+          setMfaSecret(response.mfaSetupSecret);
+        } else {
+          navigate({ to: "/" });
+        }
+      },
+      onError: (err: any) => {
+        setError(err?.response?.data?.message || "Erro ao criar conta. Tente novamente.");
+      },
+    });
   }
 
   return (
@@ -61,6 +79,29 @@ function Register() {
       {/* Lado esquerdo - Formulário de cadastro */}
       <div className="w-full lg:w-1/2 flex items-center justify-center p-8 bg-gradient-to-br from-orange-50 to-orange-100">
         <div className="w-full max-w-md">
+          {mfaSecret && (
+            <div className="mb-6 bg-white border border-orange-200 rounded-lg p-4 shadow-sm">
+              <h3 className="text-lg font-semibold text-orange-600 mb-2">Configuração MFA</h3>
+              <p className="text-sm text-gray-600 mb-3">
+                Escaneie o código abaixo no seu autenticador TOTP ou utilize a chave para concluir a configuração de múltiplos
+                fatores.
+              </p>
+              <div className="bg-gray-100 rounded-md px-3 py-2 font-mono text-sm text-gray-800 break-all border border-gray-200">
+                {mfaSecret}
+              </div>
+              <button
+                type="button"
+                onClick={() => {
+                  setAllowAutoRedirect(true);
+                  navigate({ to: "/" });
+                }}
+                className="mt-4 w-full bg-orangeWheel-500 hover:bg-orangeWheel-600 text-white font-semibold py-2.5 rounded-lg transition-colors"
+              >
+                Acessar painel
+              </button>
+            </div>
+          )}
+
           {/* Logo para telas menores */}
           <div className="lg:hidden text-center mb-8">
             <h1 className="text-3xl font-bold text-orange-600 mb-2">GoMech</h1>
@@ -152,6 +193,46 @@ function Register() {
                 />
               </div>
             </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label htmlFor="role" className="block text-sm font-semibold text-gray-700 mb-2">
+                  Perfil de acesso
+                </label>
+                <select
+                  id="role"
+                  value={role}
+                  onChange={(event) => setRole(event.target.value as UserRole)}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-colors text-gray-900 bg-white"
+                >
+                  <option value="USER">Usuário padrão</option>
+                  <option value="ADMIN">Administrador</option>
+                </select>
+              </div>
+
+              <div className="flex items-center md:items-end gap-3 p-4 border border-gray-200 rounded-lg bg-white">
+                <input
+                  id="mfaEnabled"
+                  type="checkbox"
+                  checked={mfaEnabled}
+                  onChange={(event) => setMfaEnabled(event.target.checked)}
+                  className="h-5 w-5 text-orange-600 focus:ring-orange-500 border-gray-300 rounded"
+                />
+                <label htmlFor="mfaEnabled" className="text-sm text-gray-700 cursor-pointer">
+                  Ativar MFA (recomendado para administradores)
+                </label>
+              </div>
+            </div>
+
+            {mfaEnabled && (
+              <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 text-sm text-blue-700">
+                <p className="font-medium mb-1">Como funciona?</p>
+                <p>
+                  Ative esta opção para exigir um código temporário gerado por aplicativo autenticador (Google Authenticator,
+                  Authy, etc.) em cada login.
+                </p>
+              </div>
+            )}
 
             {/* Informações de segurança */}
             <div className="bg-orange-50 border border-orange-200 rounded-lg p-3">

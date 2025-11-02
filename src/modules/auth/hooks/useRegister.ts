@@ -1,21 +1,25 @@
-import { useMutation } from "@tanstack/react-query";
-import axios from "axios";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import type { AxiosError } from "axios";
 
-interface RegisterInput {
-  name: string;
-  email: string;
-  password: string;
-  role?: "ADMIN" | "USER"; // opcional, dependendo da lógica do backend
+import { authApi } from "../services/api";
+import type { RegisterRequest, RegisterResponse } from "../types/user";
+import { setCachedAuth } from "../utils/authCache";
+
+interface RegisterError {
+  message?: string;
 }
 
 export function useRegister() {
-  return useMutation({
-    mutationFn: async (data: RegisterInput) => {
-      const res = await axios.post("/auth/register", {
-        ...data,
-        role: "USER",
-      });
-      return res.data;
+  const queryClient = useQueryClient();
+
+  return useMutation<RegisterResponse, AxiosError<RegisterError>, RegisterRequest>({
+    mutationFn: async (payload) => {
+      const response = await authApi.register(payload);
+      return response.data;
+    },
+    onSuccess: (data) => {
+      setCachedAuth(data);
+      queryClient.setQueryData(["auth"], data);
     },
   });
 }

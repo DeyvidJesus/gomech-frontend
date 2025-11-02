@@ -6,6 +6,7 @@ import { useState } from "react";
 import { EditClientModal } from "./EditClientModal";
 import { CreateClientModal } from "./CreateClientModal";
 import { useNavigate } from "@tanstack/react-router";
+import { ClientImportModal } from "./ClientImportModal";
 
 export function ClientList() {
   const queryClient = useQueryClient();
@@ -20,11 +21,18 @@ export function ClientList() {
   const [selectedClient, setSelectedClient] = useState<Client | null>(null);
   const [showEdit, setShowEdit] = useState(false);
   const [showCreate, setShowCreate] = useState(false);
+  const [showImport, setShowImport] = useState(false);
+  const [isExporting, setIsExporting] = useState(false);
   const navigate = useNavigate();
 
   // Mutations para deletar
   const deleteMutation = useMutation({
     mutationFn: (id: number) => clientsApi.delete(id),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["clients"] }),
+  });
+
+  const importMutation = useMutation({
+    mutationFn: (file: File) => clientsApi.upload(file),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["clients"] }),
   });
 
@@ -58,6 +66,47 @@ export function ClientList() {
 
   const handleCloseCreate = () => {
     setShowCreate(false);
+  };
+
+  const handleImportClients = async (file: File) => {
+    await importMutation.mutateAsync(file);
+  };
+
+  const handleExport = async (format: "csv" | "xlsx") => {
+    try {
+      setIsExporting(true);
+      const response = await clientsApi.export(format);
+      const disposition = response.headers["content-disposition"] ?? response.headers["Content-Disposition"];
+      let filename = `clientes_${new Date().toISOString().slice(0, 10)}.${format}`;
+
+      if (disposition) {
+        const filenameMatch = /filename\*=UTF-8''([^;]+)|filename="?([^";]+)"?/i.exec(disposition);
+        const rawFilename = filenameMatch?.[1] ?? filenameMatch?.[2];
+        if (rawFilename) {
+          filename = decodeURIComponent(rawFilename.replace(/"/g, ""));
+        }
+      }
+
+      const blob = new Blob([response.data], {
+        type:
+          format === "csv"
+            ? "text/csv;charset=utf-8"
+            : "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+      });
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = filename;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+    } catch (exportError) {
+      console.error("Erro ao exportar clientes", exportError);
+      window.alert("Não foi possível exportar os clientes. Tente novamente mais tarde.");
+    } finally {
+      setIsExporting(false);
+    }
   };
 
   // Estados de carregamento e erro
@@ -94,14 +143,38 @@ export function ClientList() {
             </h1>
             <p className="text-gray-600 text-sm sm:text-base">Gerencie todos os clientes da sua oficina</p>
           </div>
-          <button
-            onClick={handleAdd}
-            className="bg-orangeWheel-500 hover:bg-orangeWheel-600 text-white font-semibold px-4 sm:px-6 py-2.5 sm:py-3 rounded-lg shadow-md transition-all duration-200 hover:shadow-lg flex items-center justify-center gap-2 w-full sm:w-auto"
-          >
-            <span className="text-lg">+</span>
-            <span className="hidden xs:inline">Novo Cliente</span>
-            <span className="xs:hidden">Novo</span>
-          </button>
+          <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:items-center">
+            <button
+              onClick={() => setShowImport(true)}
+              className="bg-white text-orangeWheel-600 border border-orangeWheel-200 hover:border-orangeWheel-300 font-semibold px-4 sm:px-5 py-2.5 rounded-lg shadow-sm transition-all duration-200 flex items-center justify-center gap-2"
+            >
+              ⬆️ Importar
+            </button>
+            <div className="flex items-center gap-2">
+              <button
+                disabled={isExporting}
+                onClick={() => void handleExport("csv")}
+                className="bg-white text-orangeWheel-600 border border-orangeWheel-200 hover:border-orangeWheel-300 font-semibold px-4 sm:px-5 py-2.5 rounded-lg shadow-sm transition-all duration-200 flex items-center justify-center gap-2 disabled:cursor-not-allowed"
+              >
+                {isExporting ? "Exportando..." : "CSV"}
+              </button>
+              <button
+                disabled={isExporting}
+                onClick={() => void handleExport("xlsx")}
+                className="bg-white text-orangeWheel-600 border border-orangeWheel-200 hover:border-orangeWheel-300 font-semibold px-4 sm:px-5 py-2.5 rounded-lg shadow-sm transition-all duration-200 flex items-center justify-center gap-2 disabled:cursor-not-allowed"
+              >
+                XLSX
+              </button>
+            </div>
+            <button
+              onClick={handleAdd}
+              className="bg-orangeWheel-500 hover:bg-orangeWheel-600 text-white font-semibold px-4 sm:px-6 py-2.5 sm:py-3 rounded-lg shadow-md transition-all duration-200 hover:shadow-lg flex items-center justify-center gap-2 w-full sm:w-auto"
+            >
+              <span className="text-lg">+</span>
+              <span className="hidden xs:inline">Novo Cliente</span>
+              <span className="xs:hidden">Novo</span>
+            </button>
+          </div>
         </div>
       </div>
 
@@ -302,12 +375,19 @@ export function ClientList() {
         </>
       )}
 
-      {showEdit && selectedClient && (
-        <EditClientModal client={selectedClient} onClose={handleCloseEdit} />
-      )}
-      {showCreate && (
-        <CreateClientModal onClose={handleCloseCreate} />
-      )}
-    </div>
+  {showEdit && selectedClient && (
+    <EditClientModal client={selectedClient} onClose={handleCloseEdit} />
+  )}
+  {showCreate && (
+    <CreateClientModal onClose={handleCloseCreate} />
+  )}
+  {showImport && (
+    <ClientImportModal
+      isOpen={showImport}
+      onClose={() => setShowImport(false)}
+      onUpload={handleImportClients}
+    />
+  )}
+</div>
   );
 }

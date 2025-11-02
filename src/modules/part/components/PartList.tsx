@@ -1,0 +1,285 @@
+import { useMemo, useState } from "react";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+
+import RoleGuard from "../../auth/components/RoleGuard";
+import { partsApi } from "../services/api";
+import type { Part, PartCreateDTO, PartUpdateDTO } from "../types/part";
+import { PartFormModal } from "./PartFormModal";
+import { PartImportModal } from "./PartImportModal";
+
+export default function PartList() {
+  const queryClient = useQueryClient();
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [isImportModalOpen, setIsImportModalOpen] = useState(false);
+  const [selectedPart, setSelectedPart] = useState<Part | null>(null);
+  const [search, setSearch] = useState("");
+
+  const {
+    data: parts = [],
+    isLoading,
+    error,
+  } = useQuery<Part[]>({
+    queryKey: ["parts"],
+    queryFn: partsApi.getAll,
+  });
+
+  const createMutation = useMutation({
+    mutationFn: (payload: PartCreateDTO) => partsApi.create(payload),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["parts"] });
+    },
+  });
+
+  const updateMutation = useMutation({
+    mutationFn: ({ id, data }: { id: number; data: PartUpdateDTO }) => partsApi.update(id, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["parts"] });
+    },
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: (id: number) => partsApi.delete(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["parts"] });
+    },
+  });
+
+  const importMutation = useMutation({
+    mutationFn: (file: File) => partsApi.upload(file),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["parts"] });
+    },
+  });
+
+  const filteredParts = useMemo(() => {
+    if (!search.trim()) {
+      return parts;
+    }
+
+    const term = search.toLowerCase();
+    return parts.filter(part =>
+      [part.name, part.sku, part.manufacturer, part.description]
+        .filter(Boolean)
+        .some(value => value?.toLowerCase().includes(term)),
+    );
+  }, [parts, search]);
+
+  const totalParts = parts.length;
+  const criticalParts = parts.filter(part => {
+    const stock = part.stockQuantity ?? 0;
+    const minimum = part.minimumStock ?? 0;
+    return stock <= minimum;
+  }).length;
+  const totalStockValue = parts.reduce((sum, part) => {
+    const cost = part.cost ?? 0;
+    const quantity = part.stockQuantity ?? 0;
+    return sum + cost * quantity;
+  }, 0);
+
+  const handleDelete = (part: Part) => {
+    const confirmation = window.confirm(
+      `Tem certeza que deseja remover a peça "${part.name}"? Essa ação não pode ser desfeita.`,
+    );
+
+    if (!confirmation) {
+      return;
+    }
+
+    deleteMutation.mutate(part.id);
+  };
+
+  const handleImport = async (file: File) => {
+    await importMutation.mutateAsync(file);
+  };
+
+  if (isLoading) {
+    return (
+      <div className="flex h-64 items-center justify-center">
+        <div className="text-center">
+          <div className="mx-auto mb-4 h-12 w-12 animate-spin rounded-full border-4 border-orangeWheel-500 border-t-transparent" />
+          <p className="text-sm text-gray-600">Carregando catálogo de peças...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="rounded-lg border border-red-200 bg-red-50 p-6 text-center">
+        <p className="text-lg font-semibold text-red-600">Não foi possível carregar as peças</p>
+        <p className="text-sm text-red-500">Tente novamente mais tarde.</p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-6">
+      <div className="rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
+        <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+          <div>
+            <h1 className="flex items-center gap-2 text-2xl font-bold text-orangeWheel-500">
+              <span>🧰</span>
+              Catálogo de Peças
+            </h1>
+            <p className="text-sm text-gray-500">Gerencie os itens disponíveis para ordens de serviço e estoque.</p>
+          </div>
+
+          <div className="flex flex-col gap-2 md:flex-row md:items-center">
+            <input
+              type="text"
+              value={search}
+              onChange={event => setSearch(event.target.value)}
+              placeholder="Buscar por nome, SKU ou fabricante"
+              className="w-full rounded-lg border border-gray-300 px-4 py-2 text-sm focus:border-orangeWheel-500 focus:outline-none focus:ring-2 focus:ring-orangeWheel-200 md:w-64"
+            />
+
+            <RoleGuard roles={['ADMIN']}>
+              <div className="flex gap-2">
+                <button
+                  type="button"
+                  onClick={() => setIsImportModalOpen(true)}
+                  className="flex items-center gap-2 rounded-lg border border-orangeWheel-200 bg-orangeWheel-50 px-4 py-2 text-sm font-medium text-orangeWheel-600 transition-colors hover:bg-orangeWheel-100"
+                >
+                  ⬆️ Importar
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setIsCreateModalOpen(true)}
+                  className="flex items-center gap-2 rounded-lg bg-orangeWheel-500 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-orangeWheel-600"
+                >
+                  ➕ Nova peça
+                </button>
+              </div>
+            </RoleGuard>
+          </div>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+        <div className="rounded-lg border border-gray-200 bg-white p-4 shadow-sm">
+          <p className="text-sm text-gray-500">Peças cadastradas</p>
+          <p className="text-2xl font-bold text-gray-900">{totalParts}</p>
+        </div>
+        <div className="rounded-lg border border-gray-200 bg-white p-4 shadow-sm">
+          <p className="text-sm text-gray-500">Itens críticos</p>
+          <p className="text-2xl font-bold text-red-500">{criticalParts}</p>
+        </div>
+        <div className="rounded-lg border border-gray-200 bg-white p-4 shadow-sm">
+          <p className="text-sm text-gray-500">Valor em estoque (custo)</p>
+          <p className="text-2xl font-bold text-gray-900">
+            {totalStockValue.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}
+          </p>
+        </div>
+      </div>
+
+      <div className="overflow-hidden rounded-lg border border-gray-200 bg-white shadow-sm">
+        <div className="overflow-x-auto">
+          <table className="min-w-full divide-y divide-gray-200">
+            <thead className="bg-gray-50">
+              <tr>
+                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">Peça</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">SKU</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">Fabricante</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">Estoque</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">Custo</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">Preço</th>
+                <th className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wider text-gray-500">Ações</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-gray-200 bg-white">
+              {filteredParts.map(part => {
+                const stockQuantity = part.stockQuantity ?? 0;
+                const minimumStock = part.minimumStock ?? 0;
+                const isCritical = stockQuantity <= minimumStock;
+                return (
+                  <tr key={part.id} className={isCritical ? "bg-red-50" : ""}>
+                    <td className="px-4 py-3">
+                      <div className="flex flex-col">
+                        <span className="font-semibold text-gray-900">{part.name}</span>
+                        {part.description && <span className="text-xs text-gray-500">{part.description}</span>}
+                      </div>
+                    </td>
+                    <td className="px-4 py-3 text-sm text-gray-600">{part.sku}</td>
+                    <td className="px-4 py-3 text-sm text-gray-600">{part.manufacturer ?? "-"}</td>
+                    <td className="px-4 py-3 text-sm text-gray-600">
+                      <div className="flex items-center gap-2">
+                        <span>{stockQuantity}</span>
+                        <span className="text-xs text-gray-400">mín: {minimumStock}</span>
+                      </div>
+                    </td>
+                    <td className="px-4 py-3 text-sm text-gray-600">
+                      {(part.cost ?? 0).toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}
+                    </td>
+                    <td className="px-4 py-3 text-sm text-gray-600">
+                      {(part.price ?? 0).toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}
+                    </td>
+                    <td className="px-4 py-3 text-right">
+                      <RoleGuard roles={['ADMIN']}>
+                        <div className="flex justify-end gap-2">
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setSelectedPart(part);
+                              setIsEditModalOpen(true);
+                            }}
+                            className="rounded-md border border-gray-200 px-3 py-1 text-xs font-medium text-gray-600 transition-colors hover:bg-gray-100"
+                          >
+                            Editar
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => handleDelete(part)}
+                            className="rounded-md border border-red-200 px-3 py-1 text-xs font-medium text-red-600 transition-colors hover:bg-red-50"
+                          >
+                            Remover
+                          </button>
+                        </div>
+                      </RoleGuard>
+                    </td>
+                  </tr>
+                );
+              })}
+
+              {filteredParts.length === 0 && (
+                <tr>
+                  <td colSpan={7} className="px-4 py-10 text-center text-sm text-gray-500">
+                    Nenhuma peça encontrada com os filtros aplicados.
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <PartFormModal
+        isOpen={isCreateModalOpen}
+        onClose={() => setIsCreateModalOpen(false)}
+        onSubmit={async data => {
+          await createMutation.mutateAsync(data);
+        }}
+        title="Cadastrar nova peça"
+        isSubmitting={createMutation.isPending}
+      />
+
+      <PartFormModal
+        isOpen={isEditModalOpen}
+        onClose={() => setIsEditModalOpen(false)}
+        onSubmit={async data => {
+          if (!selectedPart) return;
+          await updateMutation.mutateAsync({ id: selectedPart.id, data });
+        }}
+        title="Editar peça"
+        initialData={selectedPart}
+        isSubmitting={updateMutation.isPending}
+      />
+
+      <PartImportModal
+        isOpen={isImportModalOpen}
+        onClose={() => setIsImportModalOpen(false)}
+        onUpload={handleImport}
+      />
+    </div>
+  );
+}
