@@ -2,7 +2,7 @@ import { useAuth } from "./useAuth";
 
 export function useRole() {
   const { data: auth } = useAuth();
-  const role = auth?.role;
+  const role = auth?.user.role;
 
   return {
     role,

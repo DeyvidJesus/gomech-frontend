@@ -216,7 +216,7 @@ export default function ChatModal({ isOpen, onClose }: ChatModalProps) {
       setIsLoadingContext(false);
       const response = await aiService.chat({
         prompt: prompt,
-        userId: authData?.id,
+        userId: authData?.user?.id,
       });
 
       const botMessage: Message = {

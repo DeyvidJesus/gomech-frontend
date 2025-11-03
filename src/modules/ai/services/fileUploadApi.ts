@@ -3,7 +3,7 @@ import axios from 'axios'
 import {
   clearStoredAuth,
   getCachedAuth,
-  getStoredToken,
+  getStoredAccessToken,
   loadPersistedAuth,
 } from '../../auth/utils/authCache'
 
@@ -17,7 +17,7 @@ const fileUploadApi = axios.create({
 
 fileUploadApi.interceptors.request.use(
   config => {
-    const token = getStoredToken()
+    const token = getStoredAccessToken()
 
     if (token) {
       config.headers.Authorization = `Bearer ${token}`
@@ -25,8 +25,8 @@ fileUploadApi.interceptors.request.use(
     }
 
     const auth = getCachedAuth() ?? loadPersistedAuth()
-    if (auth?.token) {
-      config.headers.Authorization = `Bearer ${auth.token}`
+    if (auth?.accessToken) {
+      config.headers.Authorization = `Bearer ${auth.accessToken}`
     }
 
     return config

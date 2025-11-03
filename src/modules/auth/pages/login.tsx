@@ -1,15 +1,19 @@
-import { useLogin } from "../hooks/useLogin";
-import { useNavigate, Link } from "@tanstack/react-router";
 import { useState } from "react";
+import { Link, useNavigate } from "@tanstack/react-router";
+
+import { useLogin } from "../hooks/useLogin";
 import { useAuth } from "../hooks/useAuth";
+import type { LoginRequest } from "../types/user";
 
 export default function LoginPage() {
   const login = useLogin();
   const navigate = useNavigate();
   const { data }: any = useAuth();
   const [error, setError] = useState<string | null>(null);
+  const [isMfaRequired, setIsMfaRequired] = useState(false);
+  const [mfaCode, setMfaCode] = useState("");
 
-  if (data?.token) {
+  if (data?.accessToken) {
     navigate({ to: "/" });
     return null;
   }
@@ -22,19 +26,36 @@ export default function LoginPage() {
     setError(null);
 
     if (!email.trim() || !password.trim()) {
-      setError("Por favor, preencha todos os campos");
+      setError("Por favor, preencha todos os campos obrigatórios");
       return;
     }
 
-    login.mutate(
-      { email, password },
-      {
-        onSuccess: () => navigate({ to: "/" }),
-        onError: (err: any) => {
-          setError(err?.response?.data?.message || "Erro ao fazer login. Verifique suas credenciais.");
-        },
-      }
-    );
+    if (isMfaRequired && !mfaCode.trim()) {
+      setError("Informe o código de verificação");
+      return;
+    }
+
+    const payload: LoginRequest = {
+      email,
+      password,
+      ...(isMfaRequired && mfaCode.trim() ? { mfaCode: mfaCode.trim() } : {}),
+    };
+
+    login.mutate(payload, {
+      onSuccess: () => {
+        setMfaCode("");
+        setIsMfaRequired(false);
+        navigate({ to: "/" });
+      },
+      onError: (err: any) => {
+        const message = err?.response?.data?.message || "Erro ao fazer login. Verifique suas credenciais.";
+        setError(message);
+
+        if (err?.response?.status === 401 && err?.response?.data?.mfaRequired) {
+          setIsMfaRequired(true);
+        }
+      },
+    });
   }
 
   return (
@@ -130,6 +151,28 @@ export default function LoginPage() {
                 required
               />
             </div>
+
+            {/* Campo MFA */}
+            {isMfaRequired && (
+              <div>
+                <label htmlFor="mfaCode" className="block text-sm font-semibold text-gray-700 mb-2">
+                  Código MFA
+                </label>
+                <input
+                  id="mfaCode"
+                  type="text"
+                  inputMode="numeric"
+                  placeholder="Informe o código do autenticador"
+                  value={mfaCode}
+                  onChange={(e) => setMfaCode(e.target.value)}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-colors text-gray-900 placeholder-gray-500"
+                  required
+                />
+                <p className="text-xs text-gray-500 mt-1">
+                  Digite o código gerado pelo seu aplicativo autenticador.
+                </p>
+              </div>
+            )}
 
             {/* Botão de login */}
             <button

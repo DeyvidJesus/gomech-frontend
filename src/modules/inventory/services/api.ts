@@ -1,0 +1,93 @@
+import api from "../../../shared/services/axios";
+import type {
+  InventoryAvailability,
+  InventoryHistoryEntry,
+  InventoryItem,
+  InventoryItemCreateDTO,
+  InventoryItemUpdateDTO,
+  InventoryMovement,
+  InventoryMovementFilters,
+  InventoryMovementResponse,
+  InventoryRecommendation,
+  InventoryItemResponse,
+  InventoryAvailabilityResponse,
+  InventoryHistoryEntryResponse,
+  RecommendationPipeline,
+} from "../types/inventory";
+import {
+  normalizeInventoryAvailability,
+  normalizeInventoryHistoryEntry,
+  normalizeInventoryItem,
+  normalizeInventoryMovement,
+} from "../types/inventory";
+
+export const inventoryApi = {
+  getItems: async (): Promise<InventoryItem[]> => {
+    const response = await api.get<InventoryItemResponse[]>("/inventory/items");
+    return response.data.map(normalizeInventoryItem);
+  },
+  getItemById: async (id: number): Promise<InventoryItem> => {
+    const response = await api.get<InventoryItemResponse>(`/inventory/items/${id}`);
+    return normalizeInventoryItem(response.data);
+  },
+  createItem: async (payload: InventoryItemCreateDTO): Promise<InventoryItem> => {
+    const response = await api.post<InventoryItemResponse>("/inventory/items", payload);
+    return normalizeInventoryItem(response.data);
+  },
+  updateItem: async (id: number, payload: InventoryItemUpdateDTO): Promise<InventoryItem> => {
+    const response = await api.put<InventoryItemResponse>(`/inventory/items/${id}`, payload);
+    return normalizeInventoryItem(response.data);
+  },
+  deleteItem: (id: number) => api.delete(`/inventory/items/${id}`),
+
+  registerEntry: async (payload: { partId: number; quantity: number; cost?: number; notes?: string }) => {
+    const response = await api.post<InventoryMovementResponse>("/inventory/movements/entry", payload);
+    return normalizeInventoryMovement(response.data);
+  },
+  reserveStock: async (payload: { partId: number; serviceOrderId: number; quantity: number }) => {
+    const response = await api.post<InventoryMovementResponse>("/inventory/movements/reservations", payload);
+    return normalizeInventoryMovement(response.data);
+  },
+  consumeStock: async (payload: { reservationId: number; quantity: number; notes?: string }) => {
+    const response = await api.post<InventoryMovementResponse>("/inventory/movements/consumptions", payload);
+    return normalizeInventoryMovement(response.data);
+  },
+  cancelReservation: async (payload: { reservationId: number; reason?: string }) => {
+    const response = await api.post<InventoryMovementResponse>("/inventory/movements/reservations/cancel", payload);
+    return normalizeInventoryMovement(response.data);
+  },
+  registerReturn: async (payload: { partId: number; serviceOrderId?: number; quantity: number; notes?: string }) => {
+    const response = await api.post<InventoryMovementResponse>("/inventory/movements/returns", payload);
+    return normalizeInventoryMovement(response.data);
+  },
+  listMovements: async (filters?: InventoryMovementFilters): Promise<InventoryMovement[]> => {
+    const response = await api.get<InventoryMovementResponse[]>("/inventory/movements", { params: filters });
+    return response.data.map(normalizeInventoryMovement);
+  },
+
+  getRecommendations: (params?: { vehicleId?: number; serviceOrderId?: number; limit?: number; pipelineId?: string }) =>
+    api.get<InventoryRecommendation[]>("/inventory/recommendations", { params }),
+  getRecommendationPipelines: () => api.get<RecommendationPipeline[]>("/inventory/recommendations/pipelines"),
+
+  getCriticalPartsReport: () => api.get<InventoryRecommendation[]>("/inventory/reports/critical-parts"),
+  getPartAvailability: async (partId: number): Promise<InventoryAvailability> => {
+    const response = await api.get<InventoryAvailabilityResponse>(`/inventory/availability/parts/${partId}`);
+    return normalizeInventoryAvailability(response.data);
+  },
+  getVehicleAvailability: async (vehicleId: number): Promise<InventoryAvailability> => {
+    const response = await api.get<InventoryAvailabilityResponse>(`/inventory/availability/vehicles/${vehicleId}`);
+    return normalizeInventoryAvailability(response.data);
+  },
+  getClientAvailability: async (clientId: number): Promise<InventoryAvailability> => {
+    const response = await api.get<InventoryAvailabilityResponse>(`/inventory/availability/clients/${clientId}`);
+    return normalizeInventoryAvailability(response.data);
+  },
+  getVehicleHistory: async (vehicleId: number): Promise<InventoryHistoryEntry[]> => {
+    const response = await api.get<InventoryHistoryEntryResponse[]>(`/inventory/history/vehicles/${vehicleId}`);
+    return response.data.map(normalizeInventoryHistoryEntry);
+  },
+  getClientHistory: async (clientId: number): Promise<InventoryHistoryEntry[]> => {
+    const response = await api.get<InventoryHistoryEntryResponse[]>(`/inventory/history/clients/${clientId}`);
+    return response.data.map(normalizeInventoryHistoryEntry);
+  },
+};

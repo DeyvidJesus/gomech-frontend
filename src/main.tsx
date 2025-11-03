@@ -16,6 +16,10 @@ import { Analytics } from "@vercel/analytics/react"
 import { serviceOrderRoute } from './modules/serviceOrder/routes/serviceOrderRoute.ts'
 import { vehicleDetailsRoute } from './modules/vehicle/routes/vehicleDetailsRoute.ts'
 import { vehicleRoute } from './modules/vehicle/routes/vehicleRoute.ts'
+import { partRoute } from './modules/part/routes/partRoute.ts'
+import { inventoryRoute } from './modules/inventory/routes/inventoryRoute.ts'
+import { analyticsRoute } from './modules/analytics/routes/analyticsRoute.ts'
+import { auditRoute } from './modules/audit/routes/auditRoute.ts'
 import reportWebVitals from './reportWebVitals.ts'
 
 import './styles.css'
@@ -30,6 +34,10 @@ const routeTree = rootRoute.addChildren([
   termsOfServiceRoute,
   clientRoute.addChildren([clientDetailsRoute]),
   vehicleRoute.addChildren([vehicleDetailsRoute]),
+  partRoute,
+  inventoryRoute,
+  analyticsRoute,
+  auditRoute,
   serviceOrderRoute.addChildren([serviceOrderDetailsRoute]),
   adminRoute
 ])

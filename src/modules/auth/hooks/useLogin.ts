@@ -1,23 +1,25 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query'
+import type { AxiosError } from 'axios'
 
-import type { AuthResponse } from '../types/user'
+import type { AuthResponse, LoginRequest } from '../types/user'
 import { authApi } from '../services/api'
-import { setCachedAuth, setStoredToken } from '../utils/authCache'
+import { setCachedAuth } from '../utils/authCache'
+
+interface LoginError {
+  message?: string
+  mfaRequired?: boolean
+}
 
 export function useLogin() {
-  const queryClient = useQueryClient();
+  const queryClient = useQueryClient()
 
-  return useMutation<AuthResponse, Error, { email: string; password: string }>({
-    mutationFn: async (credentials) => {
-      const { email, password } = credentials;
-      const res = await authApi.login(email, password);
-      if (res.status === 404) throw new Error("Login inválido");
-      return res.data;
+  return useMutation<AuthResponse, AxiosError<LoginError>, LoginRequest>({
+    mutationFn: async credentials => {
+      const response = await authApi.login(credentials)
+      return response.data
     },
-    onSuccess: (data) => {
-      setStoredToken(data.token)
+    onSuccess: data => {
       setCachedAuth(data)
-
       queryClient.setQueryData(['auth'], data)
     },
   })

@@ -39,9 +39,12 @@ export default function ProtectedRoute({
     return null;
   }
 
-  if (requiredRole && data?.role !== requiredRole && data?.role !== 'ADMIN') {
-    return <>{fallback}</>;
+  if (requiredRole) {
+    const userRole = data.user.role;
+    if (userRole !== requiredRole && userRole !== 'ADMIN') {
+      return <>{fallback}</>;
+    }
   }
 
   return <>{children}</>;
-} 
+}

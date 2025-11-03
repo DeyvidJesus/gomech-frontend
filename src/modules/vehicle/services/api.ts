@@ -9,4 +9,16 @@ export const vehiclesApi = {
   update: (id: number, data: Partial<Vehicle>) =>
     api.put<Vehicle>(`/vehicles/${id}`, data),
   delete: (id: number) => api.delete(`/vehicles/${id}`),
+  upload: (file: File) => {
+    const formData = new FormData();
+    formData.append("file", file);
+    return api.post<Vehicle[]>("/vehicles/upload", formData, {
+      headers: { "Content-Type": "multipart/form-data" },
+    });
+  },
+  export: (format: "csv" | "xlsx") =>
+    api.get<Blob>(`/vehicles/export`, {
+      params: { format },
+      responseType: "blob",
+    }),
 };
