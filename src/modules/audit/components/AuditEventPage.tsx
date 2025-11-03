@@ -17,9 +17,10 @@ export default function AuditEventPage() {
 }
 
 function AuditEventContent() {
+  const defaultMetadataExample = '{\n  "approvedBy": "admin@go-mech.com"\n}';
   const [action, setAction] = useState("OS_APPROVAL");
   const [referenceId, setReferenceId] = useState("");
-  const [metadataText, setMetadataText] = useState("{\n  \"approvedBy\": \"admin@go-mech.com\"\n}");
+  const [metadataText, setMetadataText] = useState(defaultMetadataExample);
   const [error, setError] = useState<string | null>(null);
   const [lastEvent, setLastEvent] = useState<AuditEventResponse | null>(null);
 
@@ -85,7 +86,7 @@ function AuditEventContent() {
             value={metadataText}
             onChange={event => setMetadataText(event.target.value)}
             className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 font-mono text-sm focus:border-orangeWheel-500 focus:outline-none focus:ring-2 focus:ring-orangeWheel-200"
-            placeholder="{\n  \"approvedBy\": \"admin@go-mech.com\"\n}"
+            placeholder={defaultMetadataExample}
           />
         </div>
         <button
