@@ -12,7 +12,13 @@ import {
 } from '../../modules/auth/utils/authCache'
 import type { RefreshTokenResponse } from '../../modules/auth/types/user'
 
-const baseURL = import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:8080'
+const inferredProductionBaseURL =
+  typeof window !== 'undefined' && window.location.hostname.endsWith('go-mech.com')
+    ? `${window.location.protocol}//api.go-mech.com`
+    : undefined
+
+const baseURL =
+  import.meta.env.VITE_API_BASE_URL ?? inferredProductionBaseURL ?? 'http://localhost:8080'
 
 const api = axios.create({
   baseURL,
