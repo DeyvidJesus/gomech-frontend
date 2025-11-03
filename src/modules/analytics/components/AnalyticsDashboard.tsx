@@ -17,8 +17,9 @@ export default function AnalyticsDashboard() {
 }
 
 function AnalyticsDashboardContent() {
+  const defaultPayloadExample = '{\n  "range": "30d"\n}';
   const [metric, setMetric] = useState("inventory.trends");
-  const [payloadText, setPayloadText] = useState("{\n  \"range\": \"30d\"\n}");
+  const [payloadText, setPayloadText] = useState(defaultPayloadExample);
   const [error, setError] = useState<string | null>(null);
   const [result, setResult] = useState<AnalyticsResponse | null>(null);
 
@@ -77,7 +78,7 @@ function AnalyticsDashboardContent() {
               value={payloadText}
               onChange={event => setPayloadText(event.target.value)}
               className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 font-mono text-sm focus:border-orangeWheel-500 focus:outline-none focus:ring-2 focus:ring-orangeWheel-200"
-              placeholder="{\n  \"range\": \"30d\"\n}"
+              placeholder={defaultPayloadExample}
             />
           </div>
         </div>

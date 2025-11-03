@@ -361,7 +361,13 @@ function InventoryDashboardContent() {
                   title="Entrada de estoque"
                   description="Atualize o estoque com novas peças recebidas."
                   isLoading={entryMutation.isPending}
-                  onSubmit={async ({ partId, quantity, cost, notes }) => {
+                  onSubmit={async payload => {
+                    const { partId, quantity, cost, notes } = payload as {
+                      partId: number;
+                      quantity: number;
+                      cost?: number;
+                      notes?: string;
+                    };
                     await entryMutation.mutateAsync({ partId, quantity, cost, notes });
                     void refetchMovements();
                   }}
@@ -371,7 +377,12 @@ function InventoryDashboardContent() {
                   title="Reserva para OS"
                   description="Reserve peças para uma ordem de serviço."
                   isLoading={reserveMutation.isPending}
-                  onSubmit={async ({ partId, quantity, serviceOrderId }) => {
+                  onSubmit={async payload => {
+                    const { partId, quantity, serviceOrderId } = payload as {
+                      partId: number;
+                      quantity: number;
+                      serviceOrderId: number;
+                    };
                     await reserveMutation.mutateAsync({ partId, quantity, serviceOrderId });
                     void refetchMovements();
                   }}
@@ -381,7 +392,12 @@ function InventoryDashboardContent() {
                   title="Consumo de reserva"
                   description="Confirme o consumo das peças reservadas."
                   isLoading={consumeMutation.isPending}
-                  onSubmit={async ({ reservationId, quantity, notes }) => {
+                  onSubmit={async payload => {
+                    const { reservationId, quantity, notes } = payload as {
+                      reservationId: number;
+                      quantity: number;
+                      notes?: string;
+                    };
                     await consumeMutation.mutateAsync({ reservationId, quantity, notes });
                     void refetchMovements();
                   }}
@@ -391,7 +407,11 @@ function InventoryDashboardContent() {
                   title="Cancelar reserva"
                   description="Libere peças reservadas para outras OS."
                   isLoading={cancelReservationMutation.isPending}
-                  onSubmit={async ({ reservationId, reason }) => {
+                  onSubmit={async payload => {
+                    const { reservationId, reason } = payload as {
+                      reservationId: number;
+                      reason?: string;
+                    };
                     await cancelReservationMutation.mutateAsync({ reservationId, reason });
                     void refetchMovements();
                   }}
@@ -401,7 +421,13 @@ function InventoryDashboardContent() {
                   title="Devolução"
                   description="Registre a devolução de peças ao estoque."
                   isLoading={returnMutation.isPending}
-                  onSubmit={async ({ partId, quantity, serviceOrderId, notes }) => {
+                  onSubmit={async payload => {
+                    const { partId, quantity, serviceOrderId, notes } = payload as {
+                      partId: number;
+                      quantity: number;
+                      serviceOrderId?: number;
+                      notes?: string;
+                    };
                     await returnMutation.mutateAsync({ partId, quantity, serviceOrderId, notes });
                     void refetchMovements();
                   }}
