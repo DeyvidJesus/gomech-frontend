@@ -11,6 +11,7 @@ import { clientsApi } from "../../client/services/api";
 import { VehicleImportModal } from "./VehicleImportModal";
 import axios from "../../../shared/services/axios";
 import { ImportInstructionsModal } from "../../../shared/components/ImportInstructionsModal";
+import { PageTutorial } from "@/modules/tutorial/components/PageTutorial";
 
 export function VehicleList() {
   const queryClient = useQueryClient();
@@ -168,18 +169,47 @@ export function VehicleList() {
     );
   }
 
+  const tutorial = (
+    <PageTutorial
+      tutorialKey="vehicles-management"
+      title="Tour pela gestão de veículos"
+      description="Conheça as ações principais para cadastrar, importar e vincular veículos aos clientes."
+      steps={[
+        {
+          title: 'Cadastro rápido',
+          description: 'Clique em "Novo veículo" para registrar dados completos e associá-lo a um cliente.',
+          icon: '🚗',
+        },
+        {
+          title: 'Importação em massa',
+          description: 'Use o modelo disponível, importe planilhas e consulte o botão Ajuda para orientações.',
+          icon: '📥',
+        },
+        {
+          title: 'Ações da lista',
+          description: 'Edite, visualize ou exclua veículos e utilize os filtros para encontrar rapidamente o que precisa.',
+          icon: '🛠️',
+        },
+      ]}
+    />
+  );
+
   if (error) {
     return (
-      <div className="bg-red-50 border border-red-200 rounded-lg p-4 sm:p-6 text-center">
-        <div className="text-red-600 text-4xl sm:text-5xl mb-4">⚠️</div>
-        <h3 className="text-red-800 text-lg sm:text-xl font-semibold mb-2">Erro ao carregar veículos</h3>
-        <p className="text-red-600 text-sm sm:text-base">Ocorreu um problema ao buscar os dados. Tente novamente mais tarde.</p>
+      <div className="space-y-4 sm:space-y-6">
+        {tutorial}
+        <div className="bg-red-50 border border-red-200 rounded-lg p-4 sm:p-6 text-center">
+          <div className="text-red-600 text-4xl sm:text-5xl mb-4">⚠️</div>
+          <h3 className="text-red-800 text-lg sm:text-xl font-semibold mb-2">Erro ao carregar veículos</h3>
+          <p className="text-red-600 text-sm sm:text-base">Ocorreu um problema ao buscar os dados. Tente novamente mais tarde.</p>
+        </div>
       </div>
     );
   }
 
   return (
     <div className="space-y-4 sm:space-y-6">
+      {tutorial}
       {/* Header */}
       <div className="bg-white rounded-lg p-4 sm:p-6 shadow-sm border border-gray-200">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">

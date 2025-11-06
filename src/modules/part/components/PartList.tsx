@@ -7,6 +7,7 @@ import { partsApi } from "../services/api";
 import type { Part, PartCreateDTO, PartUpdateDTO } from "../types/part";
 import { PartFormModal } from "./PartFormModal";
 import { PartImportModal } from "./PartImportModal";
+import { PageTutorial } from "@/modules/tutorial/components/PageTutorial";
 
 export default function PartList() {
   const queryClient = useQueryClient();
@@ -107,9 +108,35 @@ export default function PartList() {
     }
   };
 
+  const tutorial = (
+    <PageTutorial
+      tutorialKey="parts-catalog"
+      title="Domine o catálogo de peças"
+      description="Veja como manter o catálogo organizado para alimentar o estoque e as ordens de serviço."
+      steps={[
+        {
+          title: 'Busca e filtros',
+          description: 'Utilize o campo de busca para localizar peças por nome, SKU, fabricante ou descrição.',
+          icon: '🔍',
+        },
+        {
+          title: 'Cadastro e importação',
+          description: 'Cadastre peças manualmente ou importe planilhas usando o modelo disponível.',
+          icon: '📦',
+        },
+        {
+          title: 'Gestão avançada',
+          description: 'Defina preços, estoque mínimo e ative/desative peças conforme sua estratégia.',
+          icon: '⚙️',
+        },
+      ]}
+    />
+  );
+
   if (isLoading) {
     return (
       <div className="flex h-64 items-center justify-center">
+        {tutorial}
         <div className="text-center">
           <div className="mx-auto mb-4 h-12 w-12 animate-spin rounded-full border-4 border-orangeWheel-500 border-t-transparent" />
           <p className="text-sm text-gray-600">Carregando catálogo de peças...</p>
@@ -120,15 +147,19 @@ export default function PartList() {
 
   if (error) {
     return (
-      <div className="rounded-lg border border-red-200 bg-red-50 p-6 text-center">
-        <p className="text-lg font-semibold text-red-600">Não foi possível carregar as peças</p>
-        <p className="text-sm text-red-500">Tente novamente mais tarde.</p>
+      <div className="space-y-4">
+        {tutorial}
+        <div className="rounded-lg border border-red-200 bg-red-50 p-6 text-center">
+          <p className="text-lg font-semibold text-red-600">Não foi possível carregar as peças</p>
+          <p className="text-sm text-red-500">Tente novamente mais tarde.</p>
+        </div>
       </div>
     );
   }
 
   return (
     <div className="space-y-6">
+      {tutorial}
       <div className="rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
         <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
           <div>

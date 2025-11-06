@@ -5,6 +5,7 @@ import ProtectedRoute from "../../auth/components/ProtectedRoute";
 import RoleGuard from "../../auth/components/RoleGuard";
 import { analyticsApi } from "../services/api";
 import type { AnalyticsInsight, AnalyticsResponse } from "../types/analytics";
+import { PageTutorial } from "@/modules/tutorial/components/PageTutorial";
 
 const metricCatalog = [
   {
@@ -88,6 +89,28 @@ function AnalyticsDashboardContent() {
 
   return (
     <div className="space-y-6">
+      <PageTutorial
+        tutorialKey="analytics-dashboard"
+        title="Como gerar insights analíticos"
+        description="Saiba como consultar métricas, enviar payloads personalizados e acompanhar resultados automáticos."
+        steps={[
+          {
+            title: 'Escolha da métrica',
+            description: 'Selecione a métrica desejada e visualize exemplos de payload para começar rapidamente.',
+            icon: '📊',
+          },
+          {
+            title: 'Envio de payload',
+            description: 'Edite o JSON conforme necessidade e clique em "Gerar relatório" para solicitar ao serviço analítico.',
+            icon: '📝',
+          },
+          {
+            title: 'Insights automáticos',
+            description: 'Atualize a seção de insights para ver recomendações agrupadas por categoria.',
+            icon: '💡',
+          },
+        ]}
+      />
       <header className="rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
         <h1 className="text-2xl font-bold text-orangeWheel-500">Analytics Operacional</h1>
         <p className="mt-2 text-sm text-gray-500">

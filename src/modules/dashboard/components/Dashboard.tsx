@@ -9,6 +9,7 @@ import ChartCard from './ChartCard'
 import ServiceOrderChart from './ServiceOrderChart'
 import RevenueChart from './RevenueChart'
 import { calculateRevenueSummary, formatCurrency } from '../utils/chartUtils'
+import { PageTutorial } from '@/modules/tutorial/components/PageTutorial'
 
 export default function Dashboard() {
   return (
@@ -62,6 +63,31 @@ function DashboardContent() {
 
   return (
     <div className="p-3 sm:p-4 md:p-6 lg:p-8 bg-gray-50 min-h-screen rounded-lg">
+      <PageTutorial
+        tutorialKey="dashboard-overview"
+        title="Como navegar pelo painel principal"
+        description="Entenda em poucos passos como acompanhar os indicadores diários da sua oficina."
+        steps={[
+          {
+            title: 'Cartões de resumo',
+            description:
+              'Veja o total de clientes, veículos e ordens de serviço. Clique em cada cartão para abrir a tela correspondente.',
+            icon: '📊',
+          },
+          {
+            title: 'Indicadores de serviço',
+            description:
+              'Monitore ordens pendentes, em andamento e concluídas para priorizar o atendimento da equipe.',
+            icon: '🛠️',
+          },
+          {
+            title: 'Gráficos comparativos',
+            description:
+              'Analise tendências de faturamento e evolução das ordens de serviço para apoiar suas decisões.',
+            icon: '📈',
+          },
+        ]}
+      />
       {/* Welcome Message */}
       <div className="mb-4 sm:mb-6 md:mb-8">
         <h1 className="text-orangeWheel-500 text-xl sm:text-2xl md:text-3xl mb-2 font-bold">
