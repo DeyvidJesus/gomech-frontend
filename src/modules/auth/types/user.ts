@@ -1,5 +1,11 @@
 export type UserRole = 'ADMIN' | 'USER'
 
+export interface Organization {
+  id: number
+  name: string
+  slug: string
+}
+
 export interface AuthTokens {
   accessToken: string
   refreshToken: string
@@ -11,6 +17,7 @@ export interface AuthResponse extends AuthTokens {
   email: string
   role: UserRole
   mfaEnabled?: boolean
+  organization?: Organization
 }
 
 export interface LoginRequest {

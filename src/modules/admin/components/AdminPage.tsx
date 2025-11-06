@@ -10,10 +10,11 @@ import SystemSettings from "./SystemSettings";
 import VehicleClientStats from "./VehicleClientStats";
 import AnalyticsPanel from "./AnalyticsPanel";
 import AuditPanel from "./AuditPanel";
+import { OrganizationManagement } from "../../organization/components/OrganizationManagement";
 
 export default function AdminPage() {
   const { data: authData } = useAuth();
-  const [activeTab, setActiveTab] = useState<'overview' | 'users' | 'system' | 'analytics' | 'audit'>('overview');
+  const [activeTab, setActiveTab] = useState<'overview' | 'users' | 'organizations' | 'system' | 'analytics' | 'audit'>('overview');
 
   const { data: clients = [], isLoading: clientsLoading } = useQuery({
     queryKey: ["clients"],
@@ -49,6 +50,7 @@ export default function AdminPage() {
   const tabs = [
     { id: 'overview', label: 'Visão Geral', icon: '📊' },
     { id: 'users', label: 'Usuários', icon: '👥' },
+    { id: 'organizations', label: 'Organizações', icon: '🏢' },
     { id: 'system', label: 'Sistema', icon: '⚙️' },
     { id: 'analytics', label: 'Analytics', icon: '📈' },
     { id: 'audit', label: 'Auditoria', icon: '🔒' }
@@ -245,6 +247,8 @@ export default function AdminPage() {
               </div>
             </div>
           )}
+
+          {activeTab === 'organizations' && <OrganizationManagement />}
 
           {activeTab === 'system' && <SystemSettings onSave={() => undefined} />}
 
