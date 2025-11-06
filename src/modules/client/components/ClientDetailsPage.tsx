@@ -76,8 +76,8 @@ export function ClientDetailsPage() {
       {/* Breadcrumbs */}
       <Breadcrumbs
         items={[
-          { label: "Clientes", path: "/clients" },
-          { label: client.name, path: `/clients/${client.id}` }
+          { label: "Clientes", to: "/clients" },
+          { label: client.name }
         ]}
       />
 

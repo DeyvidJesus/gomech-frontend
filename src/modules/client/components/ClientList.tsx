@@ -5,7 +5,7 @@ import type { Client } from "../types/client";
 import { useState } from "react";
 import { EditClientModal } from "./EditClientModal";
 import { CreateClientModal } from "./CreateClientModal";
-import { useNavigate, Link } from "@tanstack/react-router";
+import { useNavigate } from "@tanstack/react-router";
 import { ClientImportModal } from "./ClientImportModal";
 import { Pagination } from "../../../shared/components/Pagination";
 import type { PageResponse } from "../../../shared/types/pagination";

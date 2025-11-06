@@ -5,7 +5,7 @@ import { useState } from "react";
 import { EditVehicleModal } from "./EditVehicleModal";
 import { AddVehicleModal } from "./AddVehicleModal";
 import VehicleClientLinkModal from "./VehicleClientLinkModal";
-import { useNavigate, Link } from "@tanstack/react-router";
+import { useNavigate } from "@tanstack/react-router";
 import type { Client } from "../../client/types/client";
 import { clientsApi } from "../../client/services/api";
 import { VehicleImportModal } from "./VehicleImportModal";

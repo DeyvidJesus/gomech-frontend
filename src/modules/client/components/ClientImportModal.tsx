@@ -1,5 +1,4 @@
 import { useState } from "react";
-import { Link } from "@tanstack/react-router";
 import Modal from "../../../shared/components/Modal";
 import Button from "../../../shared/components/Button";
 
@@ -87,12 +86,14 @@ export function ClientImportModal({ isOpen, onClose, onUpload }: ClientImportMod
             <p className="text-sm text-blue-700 mb-3">
               Acesse nossa página de ajuda para baixar templates e ver instruções detalhadas.
             </p>
-            <Link
-              to="/help/import"
+            <a
+              href="https://gomech.com/ajuda/importacao"
+              target="_blank"
+              rel="noreferrer"
               className="inline-flex items-center gap-2 text-sm font-semibold text-blue-600 hover:text-blue-700 underline"
             >
               📋 Ver instruções e baixar templates
-            </Link>
+            </a>
           </div>
         </div>
       </div>
