@@ -17,7 +17,6 @@ interface AddServiceOrderItemModalProps {
 export default function AddServiceOrderItemModal({ isOpen, serviceOrderId, onClose }: AddServiceOrderItemModalProps) {
   const queryClient = useQueryClient();
   const [error, setError] = useState<string | null>(null);
-  const [partMode, setPartMode] = useState<'select' | 'create'>('select');
   const [showPartForm, setShowPartForm] = useState(false);
 
   const [form, setForm] = useState<ServiceOrderItemCreateDTO>({
@@ -56,7 +55,6 @@ export default function AddServiceOrderItemModal({ isOpen, serviceOrderId, onClo
       // Seleciona automaticamente a peça recém-criada
       setForm({ ...form, partId: newPartData.id });
       setShowPartForm(false);
-      setPartMode('select');
     },
     onError: (error: any) => {
       setError(error?.response?.data?.message || "Erro ao criar peça. Tente novamente.");
@@ -228,7 +226,6 @@ export default function AddServiceOrderItemModal({ isOpen, serviceOrderId, onClo
                   type="button"
                   onClick={() => {
                     setShowPartForm(!showPartForm);
-                    setPartMode(showPartForm ? 'select' : 'create');
                   }}
                   className="text-sm text-orange-600 hover:text-orange-700 font-medium"
                 >

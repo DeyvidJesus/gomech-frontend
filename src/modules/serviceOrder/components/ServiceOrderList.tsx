@@ -5,6 +5,7 @@ import { serviceOrdersApi } from "../services/api";
 import type { ServiceOrder, ServiceOrderStatus } from "../types/serviceOrder";
 import { statusDisplayMapping } from "../types/serviceOrder";
 import CreateServiceOrderModal from "./CreateServiceOrderModal";
+import { PageTutorial } from "@/modules/tutorial/components/PageTutorial";
 
 export default function ServiceOrderList() {
   const navigate = useNavigate();
@@ -61,9 +62,35 @@ export default function ServiceOrderList() {
     return statusDisplayMapping[status] || status;
   };
 
+  const tutorial = (
+    <PageTutorial
+      tutorialKey="service-orders"
+      title="Como acompanhar as ordens de serviço"
+      description="Veja como filtrar, criar e gerenciar as ordens da oficina."
+      steps={[
+        {
+          title: 'Resumo da fila',
+          description: 'Os cartões mostram totais por status para priorizar o atendimento.',
+          icon: '📊',
+        },
+        {
+          title: 'Criação de OS',
+          description: 'Use o botão "Nova OS" para iniciar rapidamente uma ordem e vincular cliente e veículo.',
+          icon: '➕',
+        },
+        {
+          title: 'Filtros e ações',
+          description: 'Filtre por status, abra detalhes, edite ou cancele cada ordem diretamente na lista.',
+          icon: '⚙️',
+        },
+      ]}
+    />
+  );
+
   if (error) {
     return (
       <div className="p-4 sm:p-6 lg:p-8">
+        {tutorial}
         <div className="bg-red-50 border border-red-200 rounded-lg p-6 text-center">
           <span className="text-4xl mb-4 block">⚠️</span>
           <h2 className="text-xl font-semibold text-red-800 mb-2">Erro ao carregar ordens de serviço</h2>
@@ -83,6 +110,7 @@ export default function ServiceOrderList() {
 
   return (
     <div className="p-4 sm:p-6 lg:p-8 bg-gray-50 min-h-screen">
+      {tutorial}
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 sm:gap-8 mb-6 sm:mb-8">
         <div className="flex items-center gap-3 sm:gap-4">

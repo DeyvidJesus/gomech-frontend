@@ -23,6 +23,7 @@ import type {
   RecommendationPipeline,
 } from "../types/inventory";
 import { InventoryItemModal } from "./InventoryItemModal";
+import { PageTutorial } from "@/modules/tutorial/components/PageTutorial";
 
 const tabs = [
   { id: "parts", label: "Peças" },
@@ -372,8 +373,34 @@ function InventoryDashboardContent() {
     setHistoryData(newState);
   };
 
+  const tutorial = (
+    <PageTutorial
+      tutorialKey="inventory-dashboard"
+      title="Explore o hub de estoque"
+      description="Controle peças, itens e movimentações para manter o estoque sempre atualizado."
+      steps={[
+        {
+          title: 'Abas temáticas',
+          description: 'Navegue entre Peças, Itens, Movimentações e Recomendações para acessar cada módulo rapidamente.',
+          icon: '🗂️',
+        },
+        {
+          title: 'Cadastro e importação',
+          description: 'Crie itens manualmente ou importe planilhas para acelerar o cadastro em massa.',
+          icon: '📥',
+        },
+        {
+          title: 'Integração com OS',
+          description: 'Registre entradas, reservas e consumo para manter o estoque sincronizado com as ordens de serviço.',
+          icon: '🔄',
+        },
+      ]}
+    />
+  );
+
   return (
     <div className="space-y-6 flex">
+      {tutorial}
       <header className="rounded-lg border border-gray-200 bg-white p-6 shadow-sm fixed w-full max-w-[calc(100%-270px)]">
         <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
           <div>

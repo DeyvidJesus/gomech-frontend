@@ -5,12 +5,13 @@ import type { Client } from "../types/client";
 import { useState } from "react";
 import { EditClientModal } from "./EditClientModal";
 import { CreateClientModal } from "./CreateClientModal";
-import { useNavigate, Link } from "@tanstack/react-router";
+import { useNavigate } from "@tanstack/react-router";
 import { ClientImportModal } from "./ClientImportModal";
 import { Pagination } from "../../../shared/components/Pagination";
 import type { PageResponse } from "../../../shared/types/pagination";
 import axios from "../../../shared/services/axios";
 import { ImportInstructionsModal } from "../../../shared/components/ImportInstructionsModal";
+import { PageTutorial } from "@/modules/tutorial/components/PageTutorial";
 
 export function ClientList() {
   const queryClient = useQueryClient();
@@ -163,18 +164,49 @@ export function ClientList() {
   };
 
   // Estado de erro
+  const tutorial = (
+    <PageTutorial
+      tutorialKey="clients-management"
+      title="Comece pela gestão de clientes"
+      description="Aprenda os pontos principais para cadastrar, importar e acompanhar seus clientes."
+      steps={[
+        {
+          title: 'Cadastro individual',
+          description: 'Use o botão "Novo cliente" para registrar dados completos com poucos cliques.',
+          icon: '➕',
+        },
+        {
+          title: 'Importação em massa',
+          description:
+            'Baixe o modelo, preencha sua planilha e utilize Ajuda e Importar para trazer vários clientes de uma vez.',
+          icon: '📥',
+        },
+        {
+          title: 'Lista organizada',
+          description:
+            'Use paginação, pesquisa e ações rápidas para localizar, editar ou remover cadastros rapidamente.',
+          icon: '🔍',
+        },
+      ]}
+    />
+  );
+
   if (error) {
     return (
-      <div className="bg-red-50 border border-red-200 rounded-lg p-4 sm:p-6 text-center">
-        <div className="text-red-600 text-4xl sm:text-5xl mb-4">⚠️</div>
-        <h3 className="text-red-800 text-lg sm:text-xl font-semibold mb-2">Erro ao carregar clientes</h3>
-        <p className="text-red-600 text-sm sm:text-base">Ocorreu um problema ao buscar os dados. Tente novamente mais tarde.</p>
+      <div className="space-y-4 sm:space-y-6">
+        {tutorial}
+        <div className="bg-red-50 border border-red-200 rounded-lg p-4 sm:p-6 text-center">
+          <div className="text-red-600 text-4xl sm:text-5xl mb-4">⚠️</div>
+          <h3 className="text-red-800 text-lg sm:text-xl font-semibold mb-2">Erro ao carregar clientes</h3>
+          <p className="text-red-600 text-sm sm:text-base">Ocorreu um problema ao buscar os dados. Tente novamente mais tarde.</p>
+        </div>
       </div>
     );
   }
 
   return (
     <div className="space-y-4 sm:space-y-6">
+      {tutorial}
       {/* Header */}
       <div className="bg-white rounded-lg p-4 sm:p-6 shadow-sm border border-gray-200">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
@@ -461,36 +493,36 @@ export function ClientList() {
         />
       )}
 
-  {showEdit && selectedClient && (
-    <EditClientModal
-      isOpen={showEdit}
-      client={selectedClient}
-      onClose={handleCloseEdit}
-    />
-  )}
-  {showCreate && (
-    <CreateClientModal
-      isOpen={showCreate}
-      onClose={handleCloseCreate}
-    />
-  )}
-  {showImport && (
-    <ClientImportModal
-      isOpen={showImport}
-      onClose={() => setShowImport(false)}
-      onUpload={handleImportClients}
-    />
-  )}
+      {showEdit && selectedClient && (
+        <EditClientModal
+          isOpen={showEdit}
+          client={selectedClient}
+          onClose={handleCloseEdit}
+        />
+      )}
+      {showCreate && (
+        <CreateClientModal
+          isOpen={showCreate}
+          onClose={handleCloseCreate}
+        />
+      )}
+      {showImport && (
+        <ClientImportModal
+          isOpen={showImport}
+          onClose={() => setShowImport(false)}
+          onUpload={handleImportClients}
+        />
+      )}
 
-  {showInstructions && (
-    <ImportInstructionsModal
-      isOpen={showInstructions}
-      onClose={() => setShowInstructions(false)}
-      type="clients"
-      onDownloadTemplate={downloadTemplate}
-      isDownloading={downloadingTemplate}
-    />
-  )}
+      {showInstructions && (
+        <ImportInstructionsModal
+          isOpen={showInstructions}
+          onClose={() => setShowInstructions(false)}
+          type="clients"
+          onDownloadTemplate={downloadTemplate}
+          isDownloading={downloadingTemplate}
+        />
+      )}
     </div>
   );
 }

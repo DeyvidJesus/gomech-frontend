@@ -5,6 +5,7 @@ import type { Client } from "../types/client";
 import { useState } from "react";
 import { EditClientModal } from "./EditClientModal";
 import Breadcrumbs from "../../../shared/components/Breadcrumbs";
+import { PageTutorial } from "@/modules/tutorial/components/PageTutorial";
 
 export function ClientDetailsPage() {
   const { id } = useParams({ from: "/clients/$id" });
@@ -50,11 +51,33 @@ export function ClientDetailsPage() {
 
   return (
     <div className="space-y-4 sm:space-y-6">
+      <PageTutorial
+        tutorialKey="client-details"
+        title="Detalhes completos do cliente"
+        description="Revise informações de contato, dados pessoais e histórico relacionado ao cliente."
+        steps={[
+          {
+            title: 'Dados principais',
+            description: 'Os cartões exibem telefone, endereço e documentos para validar o cadastro.',
+            icon: '👤',
+          },
+          {
+            title: 'Observações e histórico',
+            description: 'Utilize o campo de observações para registrar informações relevantes de atendimento.',
+            icon: '📝',
+          },
+          {
+            title: 'Veículos vinculados',
+            description: 'Confira rapidamente os veículos associados e acesse cada ficha detalhada.',
+            icon: '🚗',
+          },
+        ]}
+      />
       {/* Breadcrumbs */}
       <Breadcrumbs
         items={[
-          { label: "Clientes", path: "/clients" },
-          { label: client.name, path: `/clients/${client.id}` }
+          { label: "Clientes", to: "/clients" },
+          { label: client.name }
         ]}
       />
 

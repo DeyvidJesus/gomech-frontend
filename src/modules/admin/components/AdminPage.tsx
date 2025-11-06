@@ -10,6 +10,7 @@ import SystemSettings from "./SystemSettings";
 import VehicleClientStats from "./VehicleClientStats";
 import AnalyticsPanel from "./AnalyticsPanel";
 import AuditPanel from "./AuditPanel";
+import { PageTutorial } from "@/modules/tutorial/components/PageTutorial";
 import { OrganizationManagement } from "../../organization/components/OrganizationManagement";
 
 export default function AdminPage() {
@@ -60,6 +61,28 @@ export default function AdminPage() {
     <ProtectedRoute>
       <RoleGuard roles={['ADMIN']}>
         <div className="p-4 sm:p-6 lg:p-8 bg-gray-50 min-h-screen">
+          <PageTutorial
+            tutorialKey="admin-hub"
+            title="Navegue pelo painel administrativo"
+            description="Centralize configurações do sistema, usuários e indicadores estratégicos em um só lugar."
+            steps={[
+              {
+                title: 'Visão geral',
+                description: 'Acompanhe os números chave de clientes, veículos e ordens para tomar decisões rápidas.',
+                icon: '📈',
+              },
+              {
+                title: 'Configurações do sistema',
+                description: 'Acesse a aba Sistema para ajustar integrações, parâmetros e preferências globais.',
+                icon: '⚙️',
+              },
+              {
+                title: 'Auditoria e analytics',
+                description: 'Use as abas Analytics e Auditoria para gerar relatórios e acompanhar atividades críticas.',
+                icon: '🔒',
+              },
+            ]}
+          />
           {/* Header */}
           <div className="mb-6 sm:mb-8">
             <div className="flex flex-col sm:flex-row sm:items-center gap-4 mb-4">

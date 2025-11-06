@@ -8,6 +8,7 @@ import { clientsApi } from "../../client/services/api";
 import type { Client } from "../../client/types/client";
 import Breadcrumbs from "../../../shared/components/Breadcrumbs";
 import { VehicleServiceHistory } from "./VehicleServiceHistory";
+import { PageTutorial } from "@/modules/tutorial/components/PageTutorial";
 
 export function VehicleDetailsPage() {
   const { id } = useParams({ from: "/vehicles/$id" });
@@ -62,6 +63,28 @@ export function VehicleDetailsPage() {
 
   return (
     <div className="space-y-4 sm:space-y-6">
+      <PageTutorial
+        tutorialKey="vehicle-details"
+        title="Visão completa do veículo"
+        description="Acompanhe dados técnicos, vínculo com o cliente e o histórico de ordens de serviço."
+        steps={[
+          {
+            title: 'Ficha técnica',
+            description: 'Confira placa, chassi, quilometragem e demais dados necessários para o atendimento.',
+            icon: '📋',
+          },
+          {
+            title: 'Informações do proprietário',
+            description: 'Acesse rapidamente os dados do cliente e navegue para o perfil completo quando necessário.',
+            icon: '👤',
+          },
+          {
+            title: 'Histórico de serviços',
+            description: 'Use a linha do tempo para entender manutenções anteriores e planejar próximos passos.',
+            icon: '🛠️',
+          },
+        ]}
+      />
       {/* Breadcrumbs */}
       <Breadcrumbs
         items={[

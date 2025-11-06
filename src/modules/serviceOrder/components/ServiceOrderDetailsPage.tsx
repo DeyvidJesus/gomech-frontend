@@ -7,6 +7,7 @@ import type { ServiceOrderItem, ServiceOrderStatus } from "../types/serviceOrder
 import { statusDisplayMapping } from "../types/serviceOrder";
 import EditServiceOrderModal from "./EditServiceOrderModal";
 import AddServiceOrderItemModal from "./Item/AddServiceOrderItemModal";
+import { PageTutorial } from "@/modules/tutorial/components/PageTutorial";
 
 export default function ServiceOrderDetailsPage() {
   const navigate = useNavigate();
@@ -167,6 +168,28 @@ export default function ServiceOrderDetailsPage() {
 
   return (
     <div className="p-4 sm:p-6 lg:p-8 bg-gray-50 min-h-screen">
+      <PageTutorial
+        tutorialKey="service-order-details"
+        title="Guia da ordem de serviço"
+        description="Use esta visão para controlar status, itens aplicados e comunicação com o cliente."
+        steps={[
+          {
+            title: 'Status e cronologia',
+            description: 'Atualize o estágio da OS e visualize datas estimadas diretamente no cabeçalho.',
+            icon: '⏱️',
+          },
+          {
+            title: 'Itens e mão de obra',
+            description: 'Adicione, aplique ou remova serviços, peças e materiais acompanhando custos automaticamente.',
+            icon: '🧰',
+          },
+          {
+            title: 'Integração com estoque',
+            description: 'Marque itens como aplicados para consumir estoque e reservar peças necessárias.',
+            icon: '📦',
+          },
+        ]}
+      />
       {/* Breadcrumbs */}
       <div className="mb-4">
         <Breadcrumbs
