@@ -48,15 +48,18 @@ export interface ServiceOrder {
 
 export interface ServiceOrderItem {
   id: number;
-  serviceOrderId?: number; // referência simplificada
-  partId?: number; // referência à Part (ManyToOne)
+  serviceOrderId?: number;
+  partId?: number;
+  partName?: string;
+  partSku?: string;
   description: string;
   itemType: ServiceOrderItemType;
   quantity: number;
   unitPrice: number;
   totalPrice: number;
   productCode?: string;
-  inventoryItemId?: number; // referência ao InventoryItem (ManyToOne)
+  inventoryItemId?: number;
+  inventoryLocation?: string;
   requiresStock: boolean;
   stockReserved: boolean;
   observations?: string;
@@ -113,8 +116,25 @@ export interface ServiceOrderResponseDTO extends ServiceOrder {
   daysPastDue?: number; // campo calculado
 }
 
-export interface ServiceOrderItemResponseDTO extends ServiceOrderItem {
-  // campos calculados se necessário
+export interface ServiceOrderItemResponseDTO {
+  id: number;
+  description: string;
+  itemType: ServiceOrderItemType;
+  quantity: number;
+  unitPrice: number;
+  totalPrice: number;
+  productCode?: string;
+  partId?: number;
+  partName?: string;
+  partSku?: string;
+  inventoryItemId?: number;
+  inventoryLocation?: string;
+  requiresStock?: boolean;
+  stockReserved?: boolean;
+  applied?: boolean;
+  observations?: string;
+  createdAt: string;
+  updatedAt: string;
 }
 
 // --------------------- Filtros e relatórios ---------------------

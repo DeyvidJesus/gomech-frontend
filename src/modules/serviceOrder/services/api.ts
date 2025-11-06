@@ -1,8 +1,11 @@
 import api from "../../../shared/services/axios";
 import type { ServiceOrderResponseDTO, ServiceOrderCreateDTO, ServiceOrderUpdateDTO, ServiceOrderStatus, ServiceOrderItemResponseDTO, ServiceOrderItemCreateDTO } from "../types/serviceOrder";
+import type { PageResponse, PaginationParams } from "../../../shared/types/pagination";
 
 export const serviceOrdersApi = {
   getAll: () => api.get<ServiceOrderResponseDTO[]>("/service-orders"),
+  getAllPaginated: (params: PaginationParams) =>
+    api.get<PageResponse<ServiceOrderResponseDTO>>("/service-orders/paginated", { params }),
   getById: (id: number) => api.get<ServiceOrderResponseDTO>(`/service-orders/${id}`),
   getByOrderNumber: (orderNumber: string) =>
     api.get<ServiceOrderResponseDTO>(`/service-orders/order-number/${orderNumber}`),
@@ -45,8 +48,8 @@ export const serviceOrderItemsApi = {
   unapply: (itemId: number) =>
     api.put<ServiceOrderItemResponseDTO>(`/service-orders/items/${itemId}/unapply`),
 
-  reserveStock: (itemId: number) =>
-    api.put<ServiceOrderItemResponseDTO>(`/service-orders/items/${itemId}/reserve-stock`),
-  releaseStock: (itemId: number) =>
-    api.put<ServiceOrderItemResponseDTO>(`/service-orders/items/${itemId}/release-stock`),
+  consumeStock: (itemId: number) =>
+    api.put<ServiceOrderItemResponseDTO>(`/service-orders/items/${itemId}/consume-stock`),
+  returnStock: (itemId: number) =>
+    api.put<ServiceOrderItemResponseDTO>(`/service-orders/items/${itemId}/return-stock`),
 };

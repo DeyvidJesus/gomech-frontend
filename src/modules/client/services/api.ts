@@ -1,8 +1,11 @@
 import api from "../../../shared/services/axios";
 import type { Client } from "../types/client";
+import type { PageResponse, PaginationParams } from "../../../shared/types/pagination";
 
 export const clientsApi = {
   getAll: () => api.get<Client[]>("/clients"),
+  getAllPaginated: (params: PaginationParams) =>
+    api.get<PageResponse<Client>>("/clients/paginated", { params }),
   getById: (id: number) => api.get<Client>(`/clients/${id}`),
   create: (data: Client) => api.post<Client>("/clients", data),
   update: (id: number, data: Partial<Client>) => api.put<Client>(`/clients/${id}`, data),

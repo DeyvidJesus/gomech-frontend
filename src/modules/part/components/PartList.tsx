@@ -2,6 +2,7 @@ import { useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 import RoleGuard from "../../auth/components/RoleGuard";
+import { ImportInstructionsModal } from "../../../shared/components/ImportInstructionsModal";
 import { partsApi } from "../services/api";
 import type { Part, PartCreateDTO, PartUpdateDTO } from "../types/part";
 import { PartFormModal } from "./PartFormModal";
@@ -12,8 +13,10 @@ export default function PartList() {
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isImportModalOpen, setIsImportModalOpen] = useState(false);
+  const [isInstructionsModalOpen, setIsInstructionsModalOpen] = useState(false);
   const [selectedPart, setSelectedPart] = useState<Part | null>(null);
   const [search, setSearch] = useState("");
+  const [downloadingTemplate, setDownloadingTemplate] = useState<string | null>(null);
 
   const {
     data: parts = [],
@@ -83,6 +86,27 @@ export default function PartList() {
     await importMutation.mutateAsync(file);
   };
 
+  const downloadTemplate = async (format: "xlsx" | "csv") => {
+    try {
+      setDownloadingTemplate(format);
+      const response = await partsApi.downloadTemplate(format);
+      const blob = new Blob([response.data]);
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = `template_pecas.${format}`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error("Erro ao baixar template:", error);
+      alert("Erro ao baixar template. Tente novamente.");
+    } finally {
+      setDownloadingTemplate(null);
+    }
+  };
+
   if (isLoading) {
     return (
       <div className="flex h-64 items-center justify-center">
@@ -108,10 +132,20 @@ export default function PartList() {
       <div className="rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
         <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
           <div>
-            <h1 className="flex items-center gap-2 text-2xl font-bold text-orangeWheel-500">
-              <span>🧰</span>
-              Catálogo de Peças
-            </h1>
+            <div className="flex items-center gap-3">
+              <h1 className="flex items-center gap-2 text-2xl font-bold text-orangeWheel-500">
+                <span>🧰</span>
+                Catálogo de Peças
+              </h1>
+              <button
+                type="button"
+                onClick={() => setIsInstructionsModalOpen(true)}
+                className="flex items-center gap-1 rounded-lg border border-blue-300 bg-blue-50 px-3 py-1 text-xs font-medium text-blue-600 transition-colors hover:bg-blue-100"
+                title="Ajuda para importação em massa"
+              >
+                ℹ️ Ajuda
+              </button>
+            </div>
             <p className="text-sm text-gray-500">Gerencie os itens disponíveis para ordens de serviço e estoque.</p>
           </div>
 
@@ -145,6 +179,47 @@ export default function PartList() {
           </div>
         </div>
       </div>
+
+      <RoleGuard roles={['ADMIN']}>
+        <div className="rounded-lg border border-blue-200 bg-blue-50 p-4 shadow-sm">
+          <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+            <div>
+              <h3 className="flex items-center gap-2 text-sm font-semibold text-blue-800">
+                <span>📋</span>
+                Cadastro em Massa de Peças
+              </h3>
+              <p className="text-xs text-blue-600 mt-1">
+                Importe várias peças de uma vez usando planilhas Excel ou CSV
+              </p>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              <button
+                type="button"
+                onClick={() => downloadTemplate("xlsx")}
+                disabled={!!downloadingTemplate}
+                className="flex items-center gap-2 rounded-lg border border-green-300 bg-green-50 px-4 py-2 text-sm font-medium text-green-700 transition-colors hover:bg-green-100 disabled:opacity-50"
+              >
+                📥 Baixar Template Excel
+              </button>
+              <button
+                type="button"
+                onClick={() => downloadTemplate("csv")}
+                disabled={!!downloadingTemplate}
+                className="flex items-center gap-2 rounded-lg border border-green-300 bg-green-50 px-4 py-2 text-sm font-medium text-green-700 transition-colors hover:bg-green-100 disabled:opacity-50"
+              >
+                📥 Baixar Template CSV
+              </button>
+              <button
+                type="button"
+                onClick={() => setIsInstructionsModalOpen(true)}
+                className="flex items-center gap-2 rounded-lg border border-blue-300 bg-blue-100 px-4 py-2 text-sm font-medium text-blue-700 transition-colors hover:bg-blue-200"
+              >
+                📖 Ver Instruções
+              </button>
+            </div>
+          </div>
+        </div>
+      </RoleGuard>
 
       <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
         <div className="rounded-lg border border-gray-200 bg-white p-4 shadow-sm">
@@ -253,6 +328,14 @@ export default function PartList() {
         isOpen={isImportModalOpen}
         onClose={() => setIsImportModalOpen(false)}
         onUpload={handleImport}
+      />
+
+      <ImportInstructionsModal
+        type="parts"
+        isOpen={isInstructionsModalOpen}
+        onClose={() => setIsInstructionsModalOpen(false)}
+        onDownloadTemplate={downloadTemplate}
+        isDownloading={downloadingTemplate}
       />
     </div>
   );

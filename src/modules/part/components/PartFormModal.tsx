@@ -1,4 +1,6 @@
 import { useState, useEffect } from "react";
+import Modal from "../../../shared/components/Modal";
+import Button from "../../../shared/components/Button";
 
 import type { PartCreateDTO, Part } from "../types/part";
 
@@ -13,7 +15,7 @@ interface PartFormModalProps {
 
 const emptyPart: PartCreateDTO = {
   name: "",
-  sku: "",
+  sku: "", // Será gerado pelo backend
   manufacturer: "",
   description: "",
   active: true,
@@ -37,7 +39,7 @@ export function PartFormModal({
       if (initialData) {
         setFormData({
           name: initialData.name,
-          sku: initialData.sku,
+          sku: initialData.sku, // Mantém SKU no modo edição
           manufacturer: initialData.manufacturer ?? "",
           description: initialData.description ?? "",
           active: initialData.active,
@@ -68,8 +70,8 @@ export function PartFormModal({
     event.preventDefault();
     setError(null);
 
-    if (!formData.name.trim() || !formData.sku.trim()) {
-      setError("Informe o nome e o SKU da peça");
+    if (!formData.name.trim()) {
+      setError("Informe o nome da peça");
       return;
     }
 
@@ -79,13 +81,20 @@ export function PartFormModal({
     }
 
     try {
-      await onSubmit({
+      const payload = {
         ...formData,
         name: formData.name.trim(),
-        sku: formData.sku.trim(),
         manufacturer: formData.manufacturer?.trim() || undefined,
         description: formData.description?.trim() || undefined,
-      });
+      };
+      
+      if (initialData) {
+        payload.sku = formData.sku.trim();
+      } else {
+        (payload as Partial<typeof payload>).sku = undefined;
+      }
+      
+      await onSubmit(payload);
       onClose();
     } catch (submitError: any) {
       setError(submitError?.response?.data?.message || "Não foi possível salvar a peça");
@@ -93,29 +102,37 @@ export function PartFormModal({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4">
-      <div className="w-full max-w-2xl rounded-lg bg-white p-6 shadow-xl">
-        <div className="mb-4 flex items-start justify-between">
-          <div>
-            <h2 className="text-xl font-semibold text-gray-900">{title}</h2>
-            <p className="text-sm text-gray-500">Preencha os dados obrigatórios para controlar o catálogo de peças.</p>
-          </div>
-          <button
-            type="button"
-            className="rounded-md p-2 text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-600"
-            onClick={onClose}
+    <Modal
+      isOpen={isOpen}
+      onClose={onClose}
+      title={title}
+      description="Preencha os dados obrigatórios para controlar o catálogo de peças."
+      size="lg"
+      headerStyle="default"
+      footer={
+        <div className="flex flex-col-reverse sm:flex-row justify-end gap-3">
+          <Button variant="outline" onClick={onClose} type="button">
+            Cancelar
+          </Button>
+          <Button
+            variant="primary"
+            type="submit"
+            form="part-form"
+            isLoading={isSubmitting}
+            leftIcon={!isSubmitting && "💾"}
           >
-            ✕
-          </button>
+            {isSubmitting ? "Salvando..." : "Salvar"}
+          </Button>
         </div>
+      }
+    >
+      {error && (
+        <div className="mb-4 rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+          {error}
+        </div>
+      )}
 
-        {error && (
-          <div className="mb-4 rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
-            {error}
-          </div>
-        )}
-
-        <form onSubmit={handleSubmit} className="space-y-4">
+      <form id="part-form" onSubmit={handleSubmit} className="space-y-4">
           <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
             <div className="flex flex-col">
               <label className="text-sm font-medium text-gray-700">Nome*</label>
@@ -128,16 +145,20 @@ export function PartFormModal({
               />
             </div>
 
-            <div className="flex flex-col">
-              <label className="text-sm font-medium text-gray-700">SKU*</label>
-              <input
-                className="mt-1 rounded-lg border border-gray-300 px-3 py-2 text-sm uppercase focus:border-orangeWheel-500 focus:outline-none focus:ring-2 focus:ring-orangeWheel-200"
-                value={formData.sku}
-                onChange={event => handleChange("sku", event.target.value)}
-                placeholder="SKU-1234"
-                required
-              />
-            </div>
+            {initialData && (
+              <div className="flex flex-col">
+                <label className="text-sm font-medium text-gray-700">SKU</label>
+                <input
+                  className="mt-1 rounded-lg border border-gray-300 px-3 py-2 text-sm uppercase bg-gray-100 focus:border-orangeWheel-500 focus:outline-none focus:ring-2 focus:ring-orangeWheel-200"
+                  value={formData.sku}
+                  disabled
+                  placeholder="Gerado automaticamente"
+                />
+                <span className="mt-1 text-xs text-gray-500">
+                  O SKU é gerado automaticamente pelo sistema.
+                </span>
+              </div>
+            )}
           </div>
 
           <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
@@ -189,32 +210,7 @@ export function PartFormModal({
               />
             </div>
           </div>
-
-          <div className="flex justify-end gap-3 pt-4">
-            <button
-              type="button"
-              onClick={onClose}
-              className="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-600 transition-colors hover:bg-gray-100"
-            >
-              Cancelar
-            </button>
-            <button
-              type="submit"
-              disabled={isSubmitting}
-              className="flex items-center gap-2 rounded-lg bg-orangeWheel-500 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-orangeWheel-600 disabled:cursor-not-allowed disabled:bg-gray-400"
-            >
-              {isSubmitting ? (
-                <>
-                  <span className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
-                  Salvando...
-                </>
-              ) : (
-                <>💾 Salvar</>
-              )}
-            </button>
-          </div>
         </form>
-      </div>
-    </div>
+    </Modal>
   );
 }

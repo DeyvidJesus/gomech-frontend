@@ -1,14 +1,17 @@
 import { useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { serviceOrdersApi } from "../services/api";
+import Modal from "../../../shared/components/Modal";
+import Button from "../../../shared/components/Button";
 import type { ServiceOrder, ServiceOrderUpdateDTO } from "../types/serviceOrder";
 
 interface EditServiceOrderModalProps {
+  isOpen: boolean;
   serviceOrder: ServiceOrder;
   onClose: () => void;
 }
 
-export default function EditServiceOrderModal({ serviceOrder, onClose }: EditServiceOrderModalProps) {
+export default function EditServiceOrderModal({ isOpen, serviceOrder, onClose }: EditServiceOrderModalProps) {
   const queryClient = useQueryClient();
   const [error, setError] = useState<string | null>(null);
 
@@ -64,28 +67,31 @@ export default function EditServiceOrderModal({ serviceOrder, onClose }: EditSer
   const totalCost = ((form.laborCost || 0) + (form.partsCost || 0)) - (form.discount || 0);
 
   return (
-    <div className="fixed inset-0 bg-[#242424cb] flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-lg shadow-lg w-full max-w-4xl max-h-[95vh] overflow-y-auto">
-        {/* Header */}
-        <div className="bg-orange-600 text-white p-4 sm:p-6 rounded-t-lg">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <span className="text-2xl sm:text-3xl">✏️</span>
-              <div>
-                <h2 className="text-xl sm:text-2xl font-bold">Editar Ordem de Serviço</h2>
-                <p className="text-orange-100 text-sm sm:text-base">OS #{serviceOrder.orderNumber}</p>
-              </div>
-            </div>
-            <button
-              onClick={onClose}
-              className="text-orange-100 hover:text-white p-2 rounded-lg hover:bg-orange-700 transition-colors"
-            >
-              ✕
-            </button>
-          </div>
+    <Modal
+      isOpen={isOpen}
+      onClose={onClose}
+      title={`Editar Ordem de Serviço #${serviceOrder.orderNumber}`}
+      description="Atualize as informações da ordem de serviço."
+      size="xl"
+      headerStyle="default"
+      footer={
+        <div className="flex flex-col-reverse sm:flex-row gap-3 justify-end">
+          <Button variant="outline" onClick={onClose} type="button">
+            Cancelar
+          </Button>
+          <Button
+            variant="primary"
+            type="submit"
+            form="edit-service-order-form"
+            isLoading={mutation.isPending}
+            leftIcon={!mutation.isPending && "💾"}
+          >
+            {mutation.isPending ? "Salvando..." : "Salvar Alterações"}
+          </Button>
         </div>
-
-        <form onSubmit={handleSubmit} className="p-4 sm:p-6 space-y-4 sm:space-y-6">
+      }
+    >
+      <form id="edit-service-order-form" onSubmit={handleSubmit} className="space-y-4 sm:space-y-6">
           {error && (
             <div className="bg-red-50 border border-red-200 rounded-lg p-4 text-red-700 text-sm">
               {error}
@@ -292,43 +298,14 @@ export default function EditServiceOrderModal({ serviceOrder, onClose }: EditSer
                 )}
                 <div className="flex justify-between font-bold text-base sm:text-lg border-t pt-2">
                   <span>Total Final:</span>
-                  <span className="text-orange-600">
+                  <span className="text-orangeWheel-600">
                     R$ {totalCost.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                   </span>
                 </div>
               </div>
             </div>
           )}
-
-          {/* Buttons */}
-          <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-end pt-4 sm:pt-6 border-t">
-            <button
-              type="button"
-              onClick={onClose}
-              className="px-4 sm:px-6 py-2 sm:py-3 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors text-sm sm:text-base order-2 sm:order-1"
-            >
-              Cancelar
-            </button>
-            <button
-              type="submit"
-              disabled={mutation.isPending}
-              className="px-4 sm:px-6 py-2 sm:py-3 bg-orange-600 hover:bg-orange-700 text-white rounded-lg transition-colors disabled:opacity-50 flex items-center gap-2 justify-center text-sm sm:text-base order-1 sm:order-2"
-            >
-              {mutation.isPending ? (
-                <>
-                  <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                  Salvando...
-                </>
-              ) : (
-                <>
-                  <span>💾</span>
-                  Salvar Alterações
-                </>
-              )}
-            </button>
-          </div>
         </form>
-      </div>
-    </div>
+      </Modal>
   );
 }

@@ -1,4 +1,6 @@
 import { useState } from "react";
+import Modal from "../../../shared/components/Modal";
+import Button from "../../../shared/components/Button";
 
 interface PartImportModalProps {
   isOpen: boolean;
@@ -10,10 +12,6 @@ export function PartImportModal({ isOpen, onClose, onUpload }: PartImportModalPr
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [isUploading, setIsUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-
-  if (!isOpen) {
-    return null;
-  }
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     setError(null);
@@ -54,83 +52,69 @@ export function PartImportModal({ isOpen, onClose, onUpload }: PartImportModalPr
     }
   };
 
+  if (!isOpen) {
+    return null;
+  }
+
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4">
-      <div className="w-full max-w-lg rounded-lg bg-white p-6 shadow-xl">
-        <div className="mb-4 flex items-start justify-between">
-          <div>
-            <h2 className="text-xl font-semibold text-gray-900">Importar catálogo</h2>
-            <p className="text-sm text-gray-500">Faça upload de um arquivo CSV ou XLSX com os dados das peças.</p>
-          </div>
-          <button
-            type="button"
-            onClick={onClose}
-            className="rounded-md p-2 text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-600"
-          >
-            ✕
-          </button>
-        </div>
-
-        {error && (
-          <div className="mb-4 rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
-            {error}
-          </div>
-        )}
-
-        <div className="space-y-4">
-          <div className="rounded-lg border border-dashed border-gray-300 bg-gray-50 p-6 text-center">
-            <input
-              type="file"
-              accept=".csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel"
-              className="hidden"
-              id="parts-import-input"
-              onChange={handleFileChange}
-            />
-            <label
-              htmlFor="parts-import-input"
-              className="inline-flex cursor-pointer items-center gap-2 rounded-lg bg-white px-4 py-2 text-sm font-medium text-orangeWheel-600 shadow-sm transition-colors hover:bg-orangeWheel-50"
-            >
-              📁 Selecionar arquivo
-            </label>
-            {selectedFile ? (
-              <p className="mt-2 text-sm text-gray-600">
-                Arquivo selecionado: <span className="font-medium">{selectedFile.name}</span>
-              </p>
-            ) : (
-              <p className="mt-2 text-sm text-gray-500">Nenhum arquivo selecionado</p>
-            )}
-          </div>
-
-          <div className="rounded-md bg-blue-50 px-3 py-2 text-sm text-blue-700">
-            Utilize o modelo disponível no backend para manter o padrão de colunas e garanta que o cabeçalho esteja na primeira linha.
-          </div>
-        </div>
-
-        <div className="mt-6 flex justify-end gap-3">
-          <button
-            type="button"
-            onClick={onClose}
-            className="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-600 transition-colors hover:bg-gray-100"
-          >
+    <Modal
+      isOpen={isOpen}
+      onClose={onClose}
+      title="Importar catálogo"
+      description="Faça upload de um arquivo CSV ou XLSX com os dados das peças."
+      size="md"
+      headerStyle="default"
+      footer={
+        <div className="flex flex-col-reverse sm:flex-row justify-end gap-3">
+          <Button variant="outline" onClick={onClose} type="button">
             Cancelar
-          </button>
-          <button
-            type="button"
+          </Button>
+          <Button
+            variant="primary"
             onClick={handleUpload}
-            disabled={isUploading || !selectedFile}
-            className="inline-flex items-center gap-2 rounded-lg bg-orangeWheel-500 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-orangeWheel-600 disabled:cursor-not-allowed disabled:bg-gray-400"
+            isLoading={isUploading}
+            disabled={!selectedFile}
+            leftIcon={!isUploading && "⬆️"}
           >
-            {isUploading ? (
-              <>
-                <span className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
-                Importando...
-              </>
-            ) : (
-              <>⬆️ Importar</>
-            )}
-          </button>
+            {isUploading ? "Importando..." : "Importar"}
+          </Button>
+        </div>
+      }
+    >
+      {error && (
+        <div className="mb-4 rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+          {error}
+        </div>
+      )}
+
+      <div className="space-y-4">
+        <div className="rounded-lg border border-dashed border-gray-300 bg-gray-50 p-6 text-center">
+          <input
+            type="file"
+            accept=".csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel"
+            className="hidden"
+            id="parts-import-input"
+            onChange={handleFileChange}
+          />
+          <label
+            htmlFor="parts-import-input"
+            className="inline-flex cursor-pointer items-center gap-2 rounded-lg bg-white px-4 py-2 text-sm font-medium text-orangeWheel-600 shadow-sm transition-colors hover:bg-orangeWheel-50"
+          >
+            📁 Selecionar arquivo
+          </label>
+          {selectedFile ? (
+            <p className="mt-2 text-sm text-gray-600">
+              Arquivo selecionado: <span className="font-medium">{selectedFile.name}</span>
+            </p>
+          ) : (
+            <p className="mt-2 text-sm text-gray-500">Nenhum arquivo selecionado</p>
+          )}
+        </div>
+
+        <div className="rounded-md bg-blue-50 px-3 py-2 text-sm text-blue-700">
+          Utilize o modelo disponível no backend para manter o padrão de colunas e garanta que o cabeçalho esteja na primeira linha.
         </div>
       </div>
-    </div>
+    </Modal>
   );
 }

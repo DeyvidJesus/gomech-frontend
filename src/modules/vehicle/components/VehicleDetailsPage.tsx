@@ -3,28 +3,17 @@ import { useNavigate, useParams } from "@tanstack/react-router";
 import { vehiclesApi } from "../services/api";
 import type { Vehicle } from "../types/vehicle";
 import { useState } from "react";
-// import { serviceOrdersApi } from '../../serviceOrder/services/api';
 import { EditVehicleModal } from "./EditVehicleModal";
 import { clientsApi } from "../../client/services/api";
 import type { Client } from "../../client/types/client";
+import Breadcrumbs from "../../../shared/components/Breadcrumbs";
+import { VehicleServiceHistory } from "./VehicleServiceHistory";
 
 export function VehicleDetailsPage() {
   const { id } = useParams({ from: "/vehicles/$id" });
   const navigate = useNavigate();
   const vehicleId = Number(id);
   const [showEdit, setShowEdit] = useState(false);
-
-  // const {
-  //   data: vehicleServiceOrders = [],
-  //   isLoading: vehicleOrdersLoading
-  // } = useQuery({
-  //   queryKey: ["serviceOrders", vehicleId],
-  //   queryFn: async () => {
-  //     const res = await serviceOrdersApi.getByVehicleId(vehicleId);
-  //     return res.data;
-  //   },
-  //   enabled: !!vehicleId,
-  // });
 
   const { data: clients } = useQuery<Client[]>({
     queryKey: ["clients"],
@@ -73,6 +62,14 @@ export function VehicleDetailsPage() {
 
   return (
     <div className="space-y-4 sm:space-y-6">
+      {/* Breadcrumbs */}
+      <Breadcrumbs
+        items={[
+          { label: "Veículos", to: "/vehicles" },
+          { label: `${vehicle.brand} ${vehicle.model}`, to: `/vehicles/${vehicle.id}` }
+        ]}
+      />
+
       {/* Header */}
       <div className="bg-white rounded-lg p-4 sm:p-6 shadow-sm border border-gray-200">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
@@ -216,58 +213,7 @@ export function VehicleDetailsPage() {
       </div>
 
       {/* Histórico de Serviços */}
-      <div className="bg-white rounded-lg p-4 sm:p-6 shadow-sm border border-gray-200">
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-4">
-          <h2 className="text-lg sm:text-xl font-semibold text-gray-800 flex items-center gap-2">
-            <span className="text-base sm:text-lg">🔧</span>
-            Histórico de Serviços
-          </h2>
-          <button
-            className="bg-orangeWheel-500 hover:bg-orangeWheel-600 text-white font-semibold px-4 py-2 rounded-lg transition-colors text-sm w-full sm:w-auto"
-            onClick={() => alert('Funcionalidade de adicionar serviço será implementada')}
-          >
-            + Nova Ordem de Serviço
-          </button>
-        </div>
-
-        {/* {vehicleOrdersLoading ? (
-          <div className="text-center py-6 sm:py-8">
-            <div className="animate-spin rounded-full h-6 w-6 sm:h-8 sm:w-8 border-b-2 border-orangeWheel-500 mb-4 mx-auto"></div>
-            <p className="text-gray-600 text-sm sm:text-base">Carregando histórico de serviços...</p>
-          </div>
-        ) : vehicleServiceOrders.length === 0 ? (
-          <div className="text-center py-6 sm:py-8">
-            <div className="text-gray-400 text-3xl sm:text-4xl mb-4">🔧</div>
-            <p className="text-gray-500 text-sm sm:text-base">Nenhum serviço registrado para este veículo</p>
-            <p className="text-xs sm:text-sm text-gray-400 mt-2">O histórico de manutenções aparecerá aqui</p>
-          </div>
-        ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead className="bg-gray-50">
-                <tr>
-                  <th className="px-4 py-2 text-left text-xs font-semibold text-gray-600 uppercase">OS</th>
-                  <th className="px-4 py-2 text-left text-xs font-semibold text-gray-600 uppercase">Status</th>
-                  <th className="px-4 py-2 text-left text-xs font-semibold text-gray-600 uppercase">Valor</th>
-                  <th className="px-4 py-2 text-left text-xs font-semibold text-gray-600 uppercase">Data</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-200">
-                {vehicleServiceOrders.map(order => (
-                  <tr key={order.id} className="hover:bg-gray-50">
-                    <td className="px-4 py-2 font-semibold text-gray-900"><Link params={{ id: order.id.toString() }} to={"/service-orders/$id"}>#{order.orderNumber}</Link></td>
-                    <td className="px-4 py-2">
-                      <span className="px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-800">{order.status}</span>
-                    </td>
-                    <td className="px-4 py-2 font-medium text-gray-900">R$ {order.totalCost.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</td>
-                    <td className="px-4 py-2 text-gray-900">{new Date(order.createdAt).toLocaleDateString('pt-BR')}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )} */}
-      </div>
+      <VehicleServiceHistory vehicleId={vehicleId} />
 
       {/* Informações do Sistema */}
       <div className="bg-white rounded-lg p-6 shadow-sm border border-gray-200">
@@ -305,6 +251,7 @@ export function VehicleDetailsPage() {
       {/* Modal de Edição */}
       {showEdit && (
         <EditVehicleModal
+          isOpen={showEdit}
           vehicle={vehicle}
           onClose={() => setShowEdit(false)}
         />

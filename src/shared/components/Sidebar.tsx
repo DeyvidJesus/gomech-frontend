@@ -42,7 +42,7 @@ export default function Sidebar({ isOpen, onClose, isDesktop }: SidebarProps) {
       {/* Sidebar/Drawer */}
       <aside
         className={`
-          fixed lg:static top-0 left-0 z-50
+          fixed top-0 left-0 z-50
           w-full max-w-[280px] lg:max-w-[220px]
           bg-[var(--sidebar-bg)] text-[var(--sidebar-text)]
           h-full lg:h-[calc(100vh-28px)]
@@ -119,19 +119,10 @@ export default function Sidebar({ isOpen, onClose, isDesktop }: SidebarProps) {
           <div className="text-[var(--sidebar-text)] bg-[var(--sidebar-button-bg)] rounded-sm overflow-hidden hover:bg-[#242424e1] my-0.5">
             <Link
               className="no-underline text-[var(--sidebar-text)] block p-3 transition-all duration-200 ease-in-out hover:bg-[#242424e1] font-medium"
-              to="/parts"
-              onClick={handleLinkClick}
-            >
-              Peças
-            </Link>
-          </div>
-          <div className="text-[var(--sidebar-text)] bg-[var(--sidebar-button-bg)] rounded-sm overflow-hidden hover:bg-[#242424e1] my-0.5">
-            <Link
-              className="no-underline text-[var(--sidebar-text)] block p-3 transition-all duration-200 ease-in-out hover:bg-[#242424e1] font-medium"
               to="/inventory"
               onClick={handleLinkClick}
             >
-              Estoque
+              Estoque e Peças
             </Link>
           </div>
 

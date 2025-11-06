@@ -28,4 +28,6 @@ export const partsApi = {
     });
     return response.data.map(normalizePart);
   },
+  downloadTemplate: (format: "xlsx" | "csv" = "xlsx") =>
+    api.get(`/parts/template?format=${format}`, { responseType: "blob" }),
 };

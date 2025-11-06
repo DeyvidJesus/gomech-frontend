@@ -13,7 +13,6 @@ import AuditPanel from "./AuditPanel";
 
 export default function AdminPage() {
   const { data: authData } = useAuth();
-  // const { canCreate, canEdit, canDelete } = useRole(); // Não utilizado no momento
   const [activeTab, setActiveTab] = useState<'overview' | 'users' | 'system' | 'analytics' | 'audit'>('overview');
 
   const { data: clients = [], isLoading: clientsLoading } = useQuery({

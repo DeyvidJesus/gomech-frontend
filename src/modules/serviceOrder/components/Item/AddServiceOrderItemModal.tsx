@@ -1,17 +1,24 @@
 import { useState } from "react";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { serviceOrderItemsApi } from "../../services/api";
+import { partsApi } from "../../../part/services/api";
+import Modal from "../../../../shared/components/Modal";
+import Button from "../../../../shared/components/Button";
 import type { ServiceOrderItemCreateDTO } from "../../types/serviceOrder";
+import type { PartCreateDTO } from "../../../part/types/part";
 import { itemTypeDisplayMapping } from "../../types/serviceOrder";
 
 interface AddServiceOrderItemModalProps {
+  isOpen: boolean;
   serviceOrderId: number;
   onClose: () => void;
 }
 
-export default function AddServiceOrderItemModal({ serviceOrderId, onClose }: AddServiceOrderItemModalProps) {
+export default function AddServiceOrderItemModal({ isOpen, serviceOrderId, onClose }: AddServiceOrderItemModalProps) {
   const queryClient = useQueryClient();
   const [error, setError] = useState<string | null>(null);
+  const [partMode, setPartMode] = useState<'select' | 'create'>('select');
+  const [showPartForm, setShowPartForm] = useState(false);
 
   const [form, setForm] = useState<ServiceOrderItemCreateDTO>({
     itemType: 'SERVICE',
@@ -23,6 +30,37 @@ export default function AddServiceOrderItemModal({ serviceOrderId, onClose }: Ad
     observations: '',
     inventoryItemId: undefined,
     partId: undefined,
+  });
+
+  const [newPart, setNewPart] = useState<PartCreateDTO>({
+    name: '',
+    sku: '', // Será gerado pelo backend
+    manufacturer: '',
+    description: '',
+    active: true,
+    unitCost: 0,
+    unitPrice: 0,
+  });
+
+  // Buscar lista de peças
+  const { data: partsData = [] } = useQuery({
+    queryKey: ["parts"],
+    queryFn: partsApi.getAll,
+  });
+
+  // Mutation para criar nova peça
+  const createPartMutation = useMutation({
+    mutationFn: partsApi.create,
+    onSuccess: (newPartData) => {
+      queryClient.invalidateQueries({ queryKey: ["parts"] });
+      // Seleciona automaticamente a peça recém-criada
+      setForm({ ...form, partId: newPartData.id });
+      setShowPartForm(false);
+      setPartMode('select');
+    },
+    onError: (error: any) => {
+      setError(error?.response?.data?.message || "Erro ao criar peça. Tente novamente.");
+    },
   });
 
   const mutation = useMutation({
@@ -45,6 +83,46 @@ export default function AddServiceOrderItemModal({ serviceOrderId, onClose }: Ad
       ...form, 
       [name]: type === 'checkbox' ? checked : name === 'quantity' || name === 'unitPrice' ? Number(value) : value 
     });
+  };
+
+  const handlePartChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    const { name, value } = e.target;
+    setNewPart({ 
+      ...newPart, 
+      [name]: name === 'unitCost' || name === 'unitPrice' ? Number(value) : value 
+    });
+  };
+
+  const handleCreatePart = (e: React.FormEvent) => {
+    e.preventDefault();
+    setError(null);
+
+    if (!newPart.name.trim()) {
+      setError("Nome da peça é obrigatório");
+      return;
+    }
+
+    if (newPart.unitCost && newPart.unitCost < 0) {
+      setError("Custo unitário deve ser positivo");
+      return;
+    }
+
+    if (newPart.unitPrice && newPart.unitPrice < 0) {
+      setError("Preço unitário deve ser positivo");
+      return;
+    }
+
+    const payload = {
+      ...newPart,
+      name: newPart.name.trim(),
+      manufacturer: newPart.manufacturer?.trim() || undefined,
+      description: newPart.description?.trim() || undefined,
+    };
+    
+    // Não envia SKU, será gerado pelo backend
+    (payload as Partial<typeof payload>).sku = undefined;
+
+    createPartMutation.mutate(payload);
   };
 
   const totalPrice = (form.quantity || 1) * (form.unitPrice || 0);
@@ -73,28 +151,31 @@ export default function AddServiceOrderItemModal({ serviceOrderId, onClose }: Ad
   };
 
   return (
-    <div className="fixed inset-0 bg-[#242424cb] flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-lg shadow-lg w-full max-w-2xl max-h-[95vh] overflow-y-auto">
-        {/* Header */}
-        <div className="bg-orange-600 text-white p-4 sm:p-6 rounded-t-lg">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <span className="text-2xl sm:text-3xl">🔧</span>
-              <div>
-                <h2 className="text-xl sm:text-2xl font-bold">Adicionar Item</h2>
-                <p className="text-orange-100 text-sm sm:text-base">Adicionar item à ordem de serviço</p>
-              </div>
-            </div>
-            <button
-              onClick={onClose}
-              className="text-orange-100 hover:text-white p-2 rounded-lg hover:bg-orange-700 transition-colors"
-            >
-              ✕
-            </button>
-          </div>
+    <Modal
+      isOpen={isOpen}
+      onClose={onClose}
+      title="Adicionar Item"
+      description="Adicionar item à ordem de serviço."
+      size="xl"
+      headerStyle="default"
+      footer={
+        <div className="flex flex-col-reverse sm:flex-row gap-3 justify-end">
+          <Button variant="outline" onClick={onClose} type="button">
+            Cancelar
+          </Button>
+          <Button
+            variant="primary"
+            type="submit"
+            form="add-service-order-item-form"
+            isLoading={mutation.isPending}
+            leftIcon={!mutation.isPending && "✅"}
+          >
+            {mutation.isPending ? "Adicionando..." : "Adicionar Item"}
+          </Button>
         </div>
-
-        <form onSubmit={handleSubmit} className="p-4 sm:p-6 space-y-4 sm:space-y-6">
+      }
+    >
+      <form id="add-service-order-item-form" onSubmit={handleSubmit} className="space-y-4 sm:space-y-6">
           {error && (
             <div className="bg-red-50 border border-red-200 rounded-lg p-4 text-red-700 text-sm">
               {error}
@@ -135,6 +216,127 @@ export default function AddServiceOrderItemModal({ serviceOrderId, onClose }: Ad
               />
             </div>
           </div>
+
+          {/* Seleção ou criação de peça (apenas se itemType for PART) */}
+          {form.itemType === 'PART' && (
+            <div className="bg-orange-50 border border-orange-200 rounded-lg p-4">
+              <div className="flex items-center justify-between mb-4">
+                <label className="block text-sm font-medium text-gray-700">
+                  Peça
+                </label>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowPartForm(!showPartForm);
+                    setPartMode(showPartForm ? 'select' : 'create');
+                  }}
+                  className="text-sm text-orange-600 hover:text-orange-700 font-medium"
+                >
+                  {showPartForm ? '← Selecionar peça existente' : '+ Criar nova peça'}
+                </button>
+              </div>
+
+              {!showPartForm ? (
+                <div>
+                  <select
+                    name="partId"
+                    value={form.partId || ''}
+                    onChange={(e) => setForm({ ...form, partId: Number(e.target.value) })}
+                    className="w-full border border-gray-300 rounded-lg px-3 sm:px-4 py-2 sm:py-3 focus:outline-none focus:ring-2 focus:ring-orange-500 text-sm sm:text-base"
+                  >
+                    <option value="">Selecione uma peça</option>
+                    {(Array.isArray(partsData) ? partsData : []).map((part: any) => (
+                      <option key={part.id} value={part.id}>
+                        {part.name} - {part.sku} {part.unitPrice ? `(R$ ${part.unitPrice.toFixed(2)})` : ''}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div>
+                      <label className="block text-xs font-medium text-gray-700 mb-1">
+                        Nome da peça *
+                      </label>
+                      <input
+                        type="text"
+                        name="name"
+                        value={newPart.name}
+                        onChange={handlePartChange}
+                        className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500"
+                        placeholder="Ex: Pastilha de freio"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-medium text-gray-700 mb-1">
+                        Fabricante
+                      </label>
+                      <input
+                        type="text"
+                        name="manufacturer"
+                        value={newPart.manufacturer}
+                        onChange={handlePartChange}
+                        className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500"
+                        placeholder="Ex: Bosch"
+                      />
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="block text-xs font-medium text-gray-700 mb-1">
+                        Custo (R$)
+                      </label>
+                      <input
+                        type="number"
+                        step="0.01"
+                        name="unitCost"
+                        value={newPart.unitCost || 0}
+                        onChange={handlePartChange}
+                        className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-medium text-gray-700 mb-1">
+                        Preço (R$)
+                      </label>
+                      <input
+                        type="number"
+                        step="0.01"
+                        name="unitPrice"
+                        value={newPart.unitPrice || 0}
+                        onChange={handlePartChange}
+                        className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500"
+                      />
+                    </div>
+                  </div>
+                  <div>
+                    <label className="block text-xs font-medium text-gray-700 mb-1">
+                      Descrição
+                    </label>
+                    <textarea
+                      name="description"
+                      value={newPart.description}
+                      onChange={handlePartChange}
+                      rows={2}
+                      className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500"
+                      placeholder="Informações adicionais"
+                    />
+                  </div>
+                  <Button
+                    variant="primary"
+                    onClick={handleCreatePart}
+                    isLoading={createPartMutation.isPending}
+                    leftIcon={!createPartMutation.isPending && "✅"}
+                    className="w-full"
+                    size="md"
+                  >
+                    {createPartMutation.isPending ? "Criando peça..." : "Criar e usar peça"}
+                  </Button>
+                </div>
+              )}
+            </div>
+          )}
 
           {/* Descrição */}
           <div>
@@ -194,7 +396,7 @@ export default function AddServiceOrderItemModal({ serviceOrderId, onClose }: Ad
               type="checkbox"
               id="requiresStock"
               name="requiresStock"
-              checked={form.requiresStock}
+              checked={form.requiresStock ?? false}
               onChange={handleChange}
               className="w-4 h-4 text-orange-600 bg-gray-100 border-gray-300 rounded focus:ring-orange-500"
             />
@@ -236,42 +438,13 @@ export default function AddServiceOrderItemModal({ serviceOrderId, onClose }: Ad
               </div>
               <div className="flex justify-between font-bold text-base sm:text-lg border-t pt-2">
                 <span>Total:</span>
-                <span className="text-orange-600">
+                <span className="text-orangeWheel-600">
                   R$ {totalPrice.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                 </span>
               </div>
             </div>
           </div>
-
-          {/* Buttons */}
-          <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-end pt-4 sm:pt-6 border-t">
-            <button
-              type="button"
-              onClick={onClose}
-              className="px-4 sm:px-6 py-2 sm:py-3 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors text-sm sm:text-base order-2 sm:order-1"
-            >
-              Cancelar
-            </button>
-            <button
-              type="submit"
-              disabled={mutation.isPending}
-              className="px-4 sm:px-6 py-2 sm:py-3 bg-orange-600 hover:bg-orange-700 text-white rounded-lg transition-colors disabled:opacity-50 flex items-center gap-2 justify-center text-sm sm:text-base order-1 sm:order-2"
-            >
-              {mutation.isPending ? (
-                <>
-                  <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                  Adicionando...
-                </>
-              ) : (
-                <>
-                  <span>✅</span>
-                  Adicionar Item
-                </>
-              )}
-            </button>
-          </div>
         </form>
-      </div>
-    </div>
+      </Modal>
   );
 }

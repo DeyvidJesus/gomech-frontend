@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useNavigate, useParams, Link } from "@tanstack/react-router";
 import { serviceOrdersApi, serviceOrderItemsApi } from "../services/api";
+import Breadcrumbs from "../../../shared/components/Breadcrumbs";
 import type { ServiceOrderItem, ServiceOrderStatus } from "../types/serviceOrder";
 import { statusDisplayMapping } from "../types/serviceOrder";
 import EditServiceOrderModal from "./EditServiceOrderModal";
@@ -57,6 +58,11 @@ export default function ServiceOrderDetailsPage() {
       queryClient.invalidateQueries({ queryKey: ["serviceOrderItems", serviceOrderId] });
       queryClient.invalidateQueries({ queryKey: ["serviceOrder", serviceOrderId] });
     },
+    onError: (error: any) => {
+      const errorMessage = error?.response?.data?.message || error?.message || "Erro ao deletar item";
+      alert(`❌ Erro ao remover item:\n\n${errorMessage}`);
+      console.error("Erro ao deletar item:", error);
+    },
   });
 
   const handleStatusChange = (status: ServiceOrderStatus) => {
@@ -68,6 +74,14 @@ export default function ServiceOrderDetailsPage() {
   };
 
   const handleDeleteItem = (item: ServiceOrderItem) => {
+    console.log("Tentando deletar item:", {
+      id: item.id,
+      description: item.description,
+      applied: item.applied,
+      requiresStock: item.requiresStock,
+      stockReserved: item.stockReserved,
+    });
+    
     const isConfirmed = window.confirm(
       `⚠️ Tem certeza que deseja remover "${item.description}"?\n\nEsta ação não pode ser desfeita.`
     );
@@ -153,6 +167,16 @@ export default function ServiceOrderDetailsPage() {
 
   return (
     <div className="p-4 sm:p-6 lg:p-8 bg-gray-50 min-h-screen">
+      {/* Breadcrumbs */}
+      <div className="mb-4">
+        <Breadcrumbs
+          items={[
+            { label: "Ordens de Serviço", to: "/service-orders" },
+            { label: `OS #${serviceOrder.orderNumber}` },
+          ]}
+        />
+      </div>
+
       {/* Header */}
       <div className="bg-white rounded-lg p-4 sm:p-6 shadow-sm border border-gray-200 mb-4 sm:mb-6">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-4">
@@ -377,7 +401,7 @@ export default function ServiceOrderDetailsPage() {
                       </div>
                       <div className="flex items-center gap-2 justify-end sm:justify-start">
                         <button
-                          onClick={() => handleToggleItem(item)}
+                          onClick={() => handleToggleItem(item as ServiceOrderItem)}
                           className={`px-3 py-1 rounded text-xs sm:text-sm transition-colors whitespace-nowrap ${
                             item.applied
                               ? 'bg-yellow-600 hover:bg-yellow-700 text-white'
@@ -388,7 +412,7 @@ export default function ServiceOrderDetailsPage() {
                           {item.applied ? 'Desaplicar' : 'Aplicar'}
                         </button>
                         <button
-                          onClick={() => handleDeleteItem(item)}
+                          onClick={() => handleDeleteItem(item as ServiceOrderItem)}
                           className="text-red-600 hover:text-red-700 p-2 rounded-lg hover:bg-red-50 transition-colors"
                           disabled={deleteItemMutation.isPending}
                         >
@@ -578,18 +602,16 @@ export default function ServiceOrderDetailsPage() {
       </div>
 
       {/* Modals */}
-      {showEdit && (
-        <EditServiceOrderModal 
-          serviceOrder={serviceOrder}
-          onClose={() => setShowEdit(false)} 
-        />
-      )}
-      {showAddItem && (
-        <AddServiceOrderItemModal
-          serviceOrderId={serviceOrderId}
-          onClose={() => setShowAddItem(false)}
-        />
-      )}
+      <EditServiceOrderModal 
+        isOpen={showEdit}
+        serviceOrder={serviceOrder}
+        onClose={() => setShowEdit(false)} 
+      />
+      <AddServiceOrderItemModal
+        isOpen={showAddItem}
+        serviceOrderId={serviceOrderId}
+        onClose={() => setShowAddItem(false)}
+      />
     </div>
   );
 }

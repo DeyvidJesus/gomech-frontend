@@ -15,6 +15,7 @@ export interface InventoryItemResponse {
   part?: InventoryPartSummary | null
   partId?: number
   partName?: string
+  partSku?: string
   location?: string | null
   quantity?: number | null
   reservedQuantity?: number | null
@@ -29,6 +30,7 @@ export interface InventoryItem {
   id: number
   partId: number
   partName: string
+  partSku?: string
   partCode?: string
   manufacturer?: string
   location: string
@@ -44,8 +46,6 @@ export interface InventoryItem {
 export interface InventoryItemCreateDTO {
   partId: number
   location: string
-  quantity?: number
-  reservedQuantity?: number
   minimumQuantity: number
   unitCost?: number
   salePrice?: number
@@ -109,6 +109,8 @@ export interface InventoryEntryRequest {
   location: string
   quantity: number
   unitCost?: number
+  salePrice?: number
+  referenceCode?: string
   notes?: string
 }
 
@@ -119,61 +121,21 @@ export interface StockReservationRequest {
 }
 
 export interface StockConsumptionRequest {
-  reservationId: number
+  serviceOrderItemId: number
   quantity: number
   notes?: string
 }
 
 export interface StockCancellationRequest {
-  reservationId: number
-  reason?: string
+  serviceOrderItemId: number
+  quantity: number
+  notes?: string
 }
 
 export interface StockReturnRequest {
   serviceOrderItemId: number
   quantity: number
   notes?: string
-}
-
-export interface InventoryMovementResponse {
-  id: number
-  type?: string
-  movementType?: string
-  quantity: number
-  createdAt?: string
-  occurredAt?: string
-  itemId?: number
-  inventoryItemId?: number
-  part?: InventoryPartSummary | null
-  partId?: number
-  partName?: string
-  serviceOrderId?: number
-  serviceOrderItemId?: number
-  vehicleId?: number
-  notes?: string
-  reservationId?: number
-  unitCost?: number | null
-  unitPrice?: number | null
-  balanceAfter?: number | null
-  performedBy?: string | null
-}
-
-export interface InventoryMovement {
-  id: number
-  movementType: string
-  quantity: number
-  occurredAt: string
-  partId?: number
-  partName?: string
-  serviceOrderId?: number
-  serviceOrderItemId?: number
-  vehicleId?: number
-  notes?: string
-  reservationId?: number
-  unitCost?: number
-  unitPrice?: number
-  balanceAfter?: number
-  performedBy?: string
 }
 
 export interface InventoryMovementFilters {
@@ -184,67 +146,73 @@ export interface InventoryMovementFilters {
 }
 
 export interface InventoryRecommendationResponse {
-  id: string
-  part?: InventoryPartSummary | null
   partId?: number
   partName?: string
-  description?: string
-  priorityScore?: number
-  suggestedQuantity?: number
-  confidence?: number | null
+  partSku?: string
+  confidence?: number
   rationale?: string | null
-  fallback?: boolean | null
+  fromFallback?: boolean
+  historicalQuantity?: number
+  lastMovementDate?: string
 }
 
 export interface InventoryRecommendation {
-  id: string
   partId?: number
   partName?: string
-  description?: string
-  priorityScore?: number
-  suggestedQuantity?: number
+  partSku?: string
   confidence?: number
   rationale?: string
-  isFallback?: boolean
+  fromFallback?: boolean
+  historicalQuantity?: number
+  lastMovementDate?: string
 }
 
 export interface CriticalPartReportResponse {
   partId: number
   partName: string
-  currentQuantity: number
+  partSku?: string
+  vehicleModel?: string
+  totalQuantity?: number
+  reservedQuantity?: number
   minimumQuantity: number
-  recommendedAction?: string | null
-  severity: 'CRITICAL' | 'WARNING' | 'STABLE'
-  confidence?: number | null
+  availableQuantity?: number
+  totalConsumed?: number
+  lastMovementDate?: string
 }
 
 export interface CriticalPartReport {
   partId: number
   partName: string
-  currentQuantity: number
+  partSku?: string
+  vehicleModel?: string
+  totalQuantity: number
+  reservedQuantity: number
   minimumQuantity: number
-  recommendedAction?: string
-  severity: 'CRITICAL' | 'WARNING' | 'STABLE'
-  confidence?: number
+  availableQuantity: number
+  totalConsumed: number
+  lastMovementDate?: string
 }
 
 export interface InventoryAvailabilityResponse {
-  totalAvailable?: number | null
-  available?: number | null
-  reserved?: number | null
-  pending?: number | null
-  breakdown?: Array<{ location: string; available: number }>
-  projectedStockoutDate?: string | null
-  coverageDays?: number | null
+  partId?: number
+  partName?: string
+  partSku?: string
+  totalQuantity?: number
+  reservedQuantity?: number
+  minimumQuantity?: number
+  availableQuantity?: number
+  lastMovementDate?: string
 }
 
 export interface InventoryAvailability {
-  totalAvailable: number
-  reserved: number
-  pending: number
-  breakdown?: Array<{ location: string; available: number }>
-  projectedStockoutDate?: string
-  coverageDays?: number
+  partId?: number
+  partName?: string
+  partSku?: string
+  totalQuantity: number
+  reservedQuantity: number
+  minimumQuantity: number
+  availableQuantity: number
+  lastMovementDate?: string
 }
 
 export interface InventoryHistoryEntryResponse {
@@ -283,6 +251,7 @@ export function normalizeInventoryItem(item: InventoryItemResponse): InventoryIt
     id: item.id,
     partId,
     partName: item.part?.name ?? item.partName ?? `Peça ${partId}`,
+    partSku: item.partSku ?? item.part?.code ?? undefined,
     partCode: item.part?.code ?? undefined,
     manufacturer: item.part?.manufacturer ?? undefined,
     location: item.location ?? 'Não especificado',
@@ -320,12 +289,14 @@ export function normalizeInventoryAvailability(
   availability: InventoryAvailabilityResponse,
 ): InventoryAvailability {
   return {
-    totalAvailable: availability.totalAvailable ?? availability.available ?? 0,
-    reserved: availability.reserved ?? 0,
-    pending: availability.pending ?? 0,
-    breakdown: availability.breakdown,
-    projectedStockoutDate: availability.projectedStockoutDate ?? undefined,
-    coverageDays: availability.coverageDays ?? undefined,
+    partId: availability.partId,
+    partName: availability.partName,
+    partSku: availability.partSku,
+    totalQuantity: availability.totalQuantity ?? 0,
+    reservedQuantity: availability.reservedQuantity ?? 0,
+    minimumQuantity: availability.minimumQuantity ?? 0,
+    availableQuantity: availability.availableQuantity ?? 0,
+    lastMovementDate: availability.lastMovementDate,
   }
 }
 
@@ -347,15 +318,14 @@ export function normalizeInventoryRecommendation(
   recommendation: InventoryRecommendationResponse,
 ): InventoryRecommendation {
   return {
-    id: recommendation.id,
-    partId: recommendation.part?.id ?? recommendation.partId,
-    partName: recommendation.part?.name ?? recommendation.partName,
-    description: recommendation.description,
-    priorityScore: recommendation.priorityScore,
-    suggestedQuantity: recommendation.suggestedQuantity,
-    confidence: recommendation.confidence ?? undefined,
+    partId: recommendation.partId,
+    partName: recommendation.partName,
+    partSku: recommendation.partSku,
+    confidence: recommendation.confidence,
     rationale: recommendation.rationale ?? undefined,
-    isFallback: recommendation.fallback ?? undefined,
+    fromFallback: recommendation.fromFallback,
+    historicalQuantity: recommendation.historicalQuantity,
+    lastMovementDate: recommendation.lastMovementDate,
   }
 }
 
@@ -363,10 +333,13 @@ export function normalizeCriticalPartReport(report: CriticalPartReportResponse):
   return {
     partId: report.partId,
     partName: report.partName,
-    currentQuantity: report.currentQuantity,
+    partSku: report.partSku,
+    vehicleModel: report.vehicleModel,
+    totalQuantity: report.totalQuantity ?? 0,
+    reservedQuantity: report.reservedQuantity ?? 0,
     minimumQuantity: report.minimumQuantity,
-    recommendedAction: report.recommendedAction ?? undefined,
-    severity: report.severity,
-    confidence: report.confidence ?? undefined,
+    availableQuantity: report.availableQuantity ?? 0,
+    totalConsumed: report.totalConsumed ?? 0,
+    lastMovementDate: report.lastMovementDate,
   }
 }

@@ -3,14 +3,17 @@ import { clientsApi } from '../../client/services/api';
 import { useMutation, useQueryClient, useQuery } from "@tanstack/react-query";
 import { serviceOrdersApi } from "../services/api";
 import { vehiclesApi } from "../../vehicle/services/api";
+import Modal from "../../../shared/components/Modal";
+import Button from "../../../shared/components/Button";
 import type { ServiceOrderCreateDTO } from "../types/serviceOrder";
 import type { Client } from "../../client/types/client";
 
 interface CreateServiceOrderModalProps {
+  isOpen: boolean;
   onClose: () => void;
 }
 
-export default function CreateServiceOrderModal({ onClose }: CreateServiceOrderModalProps) {
+export default function CreateServiceOrderModal({ isOpen, onClose }: CreateServiceOrderModalProps) {
   const queryClient = useQueryClient();
   const [error, setError] = useState<string | null>(null);
 
@@ -96,28 +99,31 @@ export default function CreateServiceOrderModal({ onClose }: CreateServiceOrderM
   };
 
   return (
-    <div className="fixed inset-0 bg-[#242424cb] flex items-center justify-center z-50 p-3 sm:p-4">
-      <div className="bg-white rounded-lg shadow-lg w-full max-w-4xl max-h-[95vh] flex flex-col">
-        {/* Header */}
-        <div className="bg-orangeWheel-500 text-white p-4 sm:p-6 rounded-t-lg flex-shrink-0">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <span className="text-lg sm:text-2xl lg:text-3xl">📋</span>
-              <div className="min-w-0 flex-1">
-                <h2 className="text-lg sm:text-xl lg:text-2xl font-bold truncate">Nova Ordem de Serviço</h2>
-                <p className="text-orangeWheel-100 text-xs sm:text-sm lg:text-base">Criar uma nova OS</p>
-              </div>
-            </div>
-            <button
-              onClick={onClose}
-              className="text-orangeWheel-100 hover:text-white p-2 rounded-lg hover:bg-orangeWheel-600 transition-colors flex-shrink-0"
-            >
-              ✕
-            </button>
-          </div>
+    <Modal
+      isOpen={isOpen}
+      onClose={onClose}
+      title="Nova Ordem de Serviço"
+      description="Preencha os dados para criar uma nova OS."
+      size="xl"
+      headerStyle="default"
+      footer={
+        <div className="flex flex-col-reverse sm:flex-row gap-3 justify-end">
+          <Button variant="outline" onClick={onClose} type="button">
+            Cancelar
+          </Button>
+          <Button
+            variant="primary"
+            type="submit"
+            form="create-service-order-form"
+            isLoading={mutation.isPending}
+            leftIcon={!mutation.isPending && "✅"}
+          >
+            {mutation.isPending ? "Criando..." : "Criar OS"}
+          </Button>
         </div>
-
-        <form onSubmit={handleSubmit} className="overflow-y-auto flex-1 p-4 sm:p-6 space-y-4 sm:space-y-6">
+      }
+    >
+      <form id="create-service-order-form" onSubmit={handleSubmit} className="space-y-4 sm:space-y-6">
           {error && (
             <div className="bg-red-50 border border-red-200 rounded-lg p-4 text-red-700 text-sm">
               {error}
@@ -335,36 +341,7 @@ export default function CreateServiceOrderModal({ onClose }: CreateServiceOrderM
               </div>
             </div>
           )}
-
-          {/* Buttons */}
-          <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-end pt-4 sm:pt-6 border-t">
-            <button
-              type="button"
-              onClick={onClose}
-              className="px-4 sm:px-6 py-2 sm:py-3 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors text-sm sm:text-base order-2 sm:order-1 w-full sm:w-auto"
-            >
-              Cancelar
-            </button>
-            <button
-              type="submit"
-              disabled={mutation.isPending}
-              className="px-4 sm:px-6 py-2 sm:py-3 bg-orangeWheel-500 hover:bg-orangeWheel-600 text-white rounded-lg transition-colors disabled:opacity-50 flex items-center gap-2 justify-center text-sm sm:text-base order-1 sm:order-2 w-full sm:w-auto"
-            >
-              {mutation.isPending ? (
-                <>
-                  <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                  Criando...
-                </>
-              ) : (
-                <>
-                  <span>✅</span>
-                  Criar OS
-                </>
-              )}
-            </button>
-          </div>
         </form>
-      </div>
-    </div>
+      </Modal>
   );
 }

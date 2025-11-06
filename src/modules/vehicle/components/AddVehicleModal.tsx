@@ -2,13 +2,16 @@ import { useState } from "react";
 import { useMutation, useQueryClient, useQuery } from "@tanstack/react-query";
 import { vehiclesApi } from "../services/api";
 import { clientsApi } from "../../client/services/api";
+import Modal from "../../../shared/components/Modal";
+import Button from "../../../shared/components/Button";
 import type { Vehicle } from "../types/vehicle";
 
 interface AddVehicleModalProps {
+  isOpen: boolean;
   onClose: () => void;
 }
 
-export function AddVehicleModal({ onClose }: AddVehicleModalProps) {
+export function AddVehicleModal({ isOpen, onClose }: AddVehicleModalProps) {
   const queryClient = useQueryClient();
   
   // Buscar clientes para o select
@@ -85,34 +88,31 @@ export function AddVehicleModal({ onClose }: AddVehicleModalProps) {
   };
 
   return (
-    <div className="fixed inset-0 bg-[#242424cb] flex items-center justify-center p-3 sm:p-4 z-50">
-      <div className="bg-white rounded-xl shadow-2xl max-w-md w-full max-h-[95vh] flex flex-col">
-        {/* Header */}
-        <div className="bg-gradient-to-r from-orangeWheel-500 to-orangeWheel-600 p-4 sm:p-6 rounded-t-xl flex-shrink-0">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 sm:w-12 sm:h-12 bg-white bg-opacity-20 rounded-full flex items-center justify-center">
-                <span className="text-base sm:text-lg font-bold text-white">🚗</span>
-              </div>
-              <div>
-                <h2 className="text-lg sm:text-xl font-bold text-white">Novo Veículo</h2>
-                <p className="text-orange-100 text-sm">Cadastrar novo veículo</p>
-              </div>
-            </div>
-            <button
-              onClick={onClose}
-              className="text-white hover:bg-white hover:bg-opacity-20 rounded-lg p-2 transition-colors"
-              title="Fechar"
-            >
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-              </svg>
-            </button>
-          </div>
+    <Modal
+      isOpen={isOpen}
+      onClose={onClose}
+      title="Novo Veículo"
+      description="Cadastrar novo veículo no sistema."
+      size="md"
+      headerStyle="default"
+      footer={
+        <div className="flex flex-col-reverse sm:flex-row gap-3">
+          <Button variant="outline" onClick={onClose} type="button" disabled={mutation.isPending}>
+            Cancelar
+          </Button>
+          <Button
+            variant="primary"
+            type="submit"
+            form="add-vehicle-form"
+            isLoading={mutation.isPending}
+            leftIcon={!mutation.isPending && "✅"}
+          >
+            {mutation.isPending ? "Cadastrando..." : "Cadastrar Veículo"}
+          </Button>
         </div>
-
-        {/* Form */}
-        <form onSubmit={handleSubmit} className="p-4 sm:p-6 space-y-4 overflow-y-auto flex-1">
+      }
+    >
+      <form id="add-vehicle-form" onSubmit={handleSubmit} className="space-y-4">
           {error && (
             <div className="bg-red-50 border border-red-200 rounded-lg p-3">
               <div className="flex items-center gap-2">
@@ -270,43 +270,16 @@ export function AddVehicleModal({ onClose }: AddVehicleModalProps) {
           </div>
 
           {/* Info */}
-          <div className="bg-orange-50 border border-orange-200 rounded-lg p-3">
+          <div className="bg-orangeWheel-50 border border-orangeWheel-200 rounded-lg p-3">
             <div className="flex items-start gap-2">
-              <span className="text-orange-600 mt-0.5">💡</span>
-              <div className="text-orange-800 text-sm">
+              <span className="text-orangeWheel-600 mt-0.5">💡</span>
+              <div className="text-orangeWheel-800 text-sm">
                 <p className="font-medium mb-1">Dica:</p>
                 <p>Você pode vincular o veículo a um proprietário agora ou fazer isso posteriormente através da edição.</p>
               </div>
             </div>
           </div>
-
-          {/* Buttons */}
-          <div className="flex flex-col sm:flex-row gap-3 pt-4 border-t border-gray-200">
-            <button
-              type="button"
-              onClick={onClose}
-              className="flex-1 bg-gray-200 hover:bg-gray-300 text-gray-700 font-semibold py-2.5 rounded-lg transition-colors order-2 sm:order-1"
-              disabled={mutation.isPending}
-            >
-              Cancelar
-            </button>
-            <button
-              type="submit"
-              className="flex-1 bg-orangeWheel-500 hover:bg-orangeWheel-600 text-white font-semibold py-2.5 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed order-1 sm:order-2"
-              disabled={mutation.isPending}
-            >
-              {mutation.isPending ? (
-                <div className="flex items-center justify-center gap-2">
-                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                  Cadastrando...
-                </div>
-              ) : (
-                'Cadastrar Veículo'
-              )}
-            </button>
-          </div>
         </form>
-      </div>
-    </div>
+      </Modal>
   );
 }

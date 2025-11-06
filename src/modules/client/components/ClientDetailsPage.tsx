@@ -4,6 +4,7 @@ import { clientsApi } from "../services/api";
 import type { Client } from "../types/client";
 import { useState } from "react";
 import { EditClientModal } from "./EditClientModal";
+import Breadcrumbs from "../../../shared/components/Breadcrumbs";
 
 export function ClientDetailsPage() {
   const { id } = useParams({ from: "/clients/$id" });
@@ -49,6 +50,14 @@ export function ClientDetailsPage() {
 
   return (
     <div className="space-y-4 sm:space-y-6">
+      {/* Breadcrumbs */}
+      <Breadcrumbs
+        items={[
+          { label: "Clientes", path: "/clients" },
+          { label: client.name, path: `/clients/${client.id}` }
+        ]}
+      />
+
       {/* Header */}
       <div className="bg-white rounded-lg p-4 sm:p-6 shadow-sm border border-gray-200">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
@@ -247,9 +256,10 @@ export function ClientDetailsPage() {
 
       {/* Modal de Edição */}
       {showEdit && (
-        <EditClientModal 
-          client={client} 
-          onClose={() => setShowEdit(false)} 
+        <EditClientModal
+          isOpen={showEdit}
+          client={client}
+          onClose={() => setShowEdit(false)}
         />
       )}
     </div>

@@ -1,4 +1,8 @@
 import { useEffect, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { partsApi } from "../../part/services/api";
+import Modal from "../../../shared/components/Modal";
+import Button from "../../../shared/components/Button";
 
 import type { InventoryItem } from "../types/inventory";
 
@@ -41,6 +45,12 @@ export function InventoryItemModal({
   const [error, setError] = useState<string | null>(null);
 
   const isEditMode = Boolean(initialData);
+
+  // Buscar lista de peças
+  const { data: partsData = [] } = useQuery({
+    queryKey: ["parts"],
+    queryFn: partsApi.getAll,
+  });
 
   useEffect(() => {
     if (isOpen) {
@@ -109,44 +119,59 @@ export function InventoryItemModal({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4">
-      <div className="w-full max-w-xl rounded-lg bg-white p-6 shadow-xl">
-        <div className="mb-4 flex items-start justify-between">
-          <div>
-            <h2 className="text-xl font-semibold text-gray-900">{title}</h2>
-            <p className="text-sm text-gray-500">Concilie o catálogo de peças com o estoque físico.</p>
-          </div>
-          <button
-            type="button"
-            onClick={onClose}
-            className="rounded-md p-2 text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-600"
+    <Modal
+      isOpen={isOpen}
+      onClose={onClose}
+      title={title}
+      description="Concilie o catálogo de peças com o estoque físico."
+      size="md"
+      headerStyle="default"
+      footer={
+        <div className="flex flex-col-reverse sm:flex-row justify-end gap-3">
+          <Button variant="outline" onClick={onClose} type="button">
+            Cancelar
+          </Button>
+          <Button
+            variant="primary"
+            type="submit"
+            form="inventory-item-form"
+            isLoading={isSubmitting}
+            leftIcon={!isSubmitting && "💾"}
           >
-            ✕
-          </button>
+            {isSubmitting ? "Salvando..." : "Salvar"}
+          </Button>
         </div>
+      }
+    >
+      {error && (
+        <div className="mb-4 rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+          {error}
+        </div>
+      )}
 
-        {error && (
-          <div className="mb-4 rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
-            {error}
-          </div>
-        )}
-
-        <form onSubmit={handleSubmit} className="space-y-4">
+      <form id="inventory-item-form" onSubmit={handleSubmit} className="space-y-4">
           <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
             <div className="flex flex-col">
-              <label className="text-sm font-medium text-gray-700">ID da peça</label>
-              <input
-                type="number"
-                min={1}
+              <label className="text-sm font-medium text-gray-700">Peça *</label>
+              <select
                 value={formData.partId}
                 onChange={event => handleChange("partId", Number(event.target.value))}
                 className="mt-1 rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-orangeWheel-500 focus:outline-none focus:ring-2 focus:ring-orangeWheel-200"
                 required
                 disabled={isEditMode}
-              />
-              <span className="mt-1 text-xs text-gray-500">
-                Consulte o ID na listagem de peças cadastradas.
-              </span>
+              >
+                <option value={0}>Selecione uma peça</option>
+                {partsData.map((part) => (
+                  <option key={part.id} value={part.id}>
+                    {part.name} - {part.sku}
+                  </option>
+                ))}
+              </select>
+              {isEditMode && (
+                <span className="mt-1 text-xs text-gray-500">
+                  Não é possível alterar a peça de um item já cadastrado.
+                </span>
+              )}
             </div>
 
             <div className="flex flex-col">
@@ -212,32 +237,7 @@ export function InventoryItemModal({
               />
             </div>
           </div>
-
-          <div className="flex justify-end gap-3 pt-4">
-            <button
-              type="button"
-              onClick={onClose}
-              className="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-600 transition-colors hover:bg-gray-100"
-            >
-              Cancelar
-            </button>
-            <button
-              type="submit"
-              disabled={isSubmitting}
-              className="flex items-center gap-2 rounded-lg bg-orangeWheel-500 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-orangeWheel-600 disabled:cursor-not-allowed disabled:bg-gray-400"
-            >
-              {isSubmitting ? (
-                <>
-                  <span className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
-                  Salvando...
-                </>
-              ) : (
-                <>💾 Salvar</>
-              )}
-            </button>
-          </div>
         </form>
-      </div>
-    </div>
+    </Modal>
   );
 }

@@ -5,35 +5,88 @@ import type { Client } from "../types/client";
 import { useState } from "react";
 import { EditClientModal } from "./EditClientModal";
 import { CreateClientModal } from "./CreateClientModal";
-import { useNavigate } from "@tanstack/react-router";
+import { useNavigate, Link } from "@tanstack/react-router";
 import { ClientImportModal } from "./ClientImportModal";
+import { Pagination } from "../../../shared/components/Pagination";
+import type { PageResponse } from "../../../shared/types/pagination";
+import axios from "../../../shared/services/axios";
+import { ImportInstructionsModal } from "../../../shared/components/ImportInstructionsModal";
 
 export function ClientList() {
   const queryClient = useQueryClient();
-  const { data: clients, isLoading, error } = useQuery<Client[]>({
-    queryKey: ["clients"],
+  const [page, setPage] = useState(0);
+  const [pageSize, setPageSize] = useState(10);
+  
+  // Query separada para estatísticas (não recarrega ao trocar de página)
+  const { data: statsData } = useQuery<PageResponse<Client>>({
+    queryKey: ["clients-stats"],
     queryFn: async () => {
-      const res = await clientsApi.getAll();
+      const res = await clientsApi.getAllPaginated({ page: 0, size: 1 });
+      return res.data;
+    },
+    staleTime: 60000, // Cache por 1 minuto
+  });
+
+  // Query para lista paginada (recarrega ao trocar de página)
+  const { data: clientsPage, isLoading: isLoadingList, error } = useQuery<PageResponse<Client>>({
+    queryKey: ["clients-list", page, pageSize],
+    queryFn: async () => {
+      const res = await clientsApi.getAllPaginated({ page, size: pageSize, sortBy: "name", direction: "ASC" });
       return res.data;
     },
   });
+
+  const clients = clientsPage?.content || [];
+  const totalClients = statsData?.totalElements || clientsPage?.totalElements || 0;
 
   const [selectedClient, setSelectedClient] = useState<Client | null>(null);
   const [showEdit, setShowEdit] = useState(false);
   const [showCreate, setShowCreate] = useState(false);
   const [showImport, setShowImport] = useState(false);
+  const [showInstructions, setShowInstructions] = useState(false);
   const [isExporting, setIsExporting] = useState(false);
+  const [downloadingTemplate, setDownloadingTemplate] = useState<string | null>(null);
   const navigate = useNavigate();
+
+  const downloadTemplate = async (format: "xlsx" | "csv") => {
+    setDownloadingTemplate(format);
+    try {
+      const response = await axios.get(`/clients/template?format=${format}`, {
+        responseType: "blob",
+      });
+
+      const blob = new Blob([response.data]);
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = `template_clientes.${format}`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error("Erro ao baixar template:", error);
+      alert("Erro ao baixar template");
+    } finally {
+      setDownloadingTemplate(null);
+    }
+  };
 
   // Mutations para deletar
   const deleteMutation = useMutation({
     mutationFn: (id: number) => clientsApi.delete(id),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["clients"] }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["clients-list"] });
+      queryClient.invalidateQueries({ queryKey: ["clients-stats"] });
+    },
   });
 
   const importMutation = useMutation({
     mutationFn: (file: File) => clientsApi.upload(file),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["clients"] }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["clients-list"] });
+      queryClient.invalidateQueries({ queryKey: ["clients-stats"] });
+    },
   });
 
   // Handlers
@@ -109,18 +162,7 @@ export function ClientList() {
     }
   };
 
-  // Estados de carregamento e erro
-  if (isLoading) {
-    return (
-      <div className="flex items-center justify-center h-48 sm:h-64">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-8 w-8 sm:h-12 sm:w-12 border-b-2 border-orangeWheel-500 mb-4 mx-auto"></div>
-          <p className="text-gray-600 text-sm sm:text-lg">Carregando clientes...</p>
-        </div>
-      </div>
-    );
-  }
-
+  // Estado de erro
   if (error) {
     return (
       <div className="bg-red-50 border border-red-200 rounded-lg p-4 sm:p-6 text-center">
@@ -144,6 +186,13 @@ export function ClientList() {
             <p className="text-gray-600 text-sm sm:text-base">Gerencie todos os clientes da sua oficina</p>
           </div>
           <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:items-center">
+            <button
+              onClick={() => setShowInstructions(true)}
+              className="bg-blue-500 hover:bg-blue-600 text-white font-semibold px-4 sm:px-5 py-2.5 rounded-lg shadow-sm transition-all duration-200 flex items-center justify-center gap-2"
+              title="Ver instruções de cadastro em massa"
+            >
+              ℹ️ Ajuda
+            </button>
             <button
               onClick={() => setShowImport(true)}
               className="bg-white text-orangeWheel-600 border border-orangeWheel-200 hover:border-orangeWheel-300 font-semibold px-4 sm:px-5 py-2.5 rounded-lg shadow-sm transition-all duration-200 flex items-center justify-center gap-2"
@@ -184,7 +233,7 @@ export function ClientList() {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-orange-100 text-xs sm:text-sm font-medium">Total de Clientes</p>
-              <p className="text-2xl sm:text-3xl font-bold">{clients?.length || 0}</p>
+              <p className="text-2xl sm:text-3xl font-bold">{totalClients}</p>
             </div>
             <div className="text-2xl sm:text-4xl opacity-80">👥</div>
           </div>
@@ -194,7 +243,7 @@ export function ClientList() {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-gray-300 text-xs sm:text-sm font-medium">Clientes Ativos</p>
-              <p className="text-2xl sm:text-3xl font-bold">{clients?.length || 0}</p>
+              <p className="text-2xl sm:text-3xl font-bold">{totalClients}</p>
             </div>
             <div className="text-2xl sm:text-4xl opacity-80">✅</div>
           </div>
@@ -203,16 +252,33 @@ export function ClientList() {
         <div className="bg-gradient-to-r from-orangeWheel-400 to-orangeWheel-500 rounded-lg p-4 sm:p-6 text-white sm:col-span-2 lg:col-span-1">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-orange-100 text-xs sm:text-sm font-medium">Novos este Mês</p>
-              <p className="text-2xl sm:text-3xl font-bold">+{Math.ceil((clients?.length || 0) * 0.2)}</p>
+              <p className="text-orange-100 text-xs sm:text-sm font-medium">Itens por Página</p>
+              <select 
+                value={pageSize}
+                onChange={(e) => {
+                  setPageSize(Number(e.target.value));
+                  setPage(0);
+                }}
+                className="mt-1 text-white rounded text-xl font-bold"
+              >
+                <option value={5}>5</option>
+                <option value={10}>10</option>
+                <option value={20}>20</option>
+                <option value={50}>50</option>
+              </select>
             </div>
-            <div className="text-2xl sm:text-4xl opacity-80">📈</div>
+            <div className="text-2xl sm:text-4xl opacity-80">📄</div>
           </div>
         </div>
       </div>
 
       {/* Lista de Clientes */}
-      {!clients || clients.length === 0 ? (
+      {isLoadingList && !clientsPage ? (
+        <div className="bg-white rounded-lg p-8 sm:p-12 text-center shadow-sm border border-gray-200">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orangeWheel-500 mb-4 mx-auto"></div>
+          <p className="text-gray-600">Carregando clientes...</p>
+        </div>
+      ) : !clients || clients.length === 0 ? (
         <div className="bg-white rounded-lg p-8 sm:p-12 text-center shadow-sm border border-gray-200">
           <div className="text-gray-400 text-4xl sm:text-6xl mb-4">👤</div>
           <h3 className="text-lg sm:text-xl font-semibold text-gray-700 mb-2">Nenhum cliente encontrado</h3>
@@ -227,7 +293,12 @@ export function ClientList() {
       ) : (
         <>
           {/* Desktop Table */}
-          <div className="hidden lg:block bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
+          <div className="hidden lg:block bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden relative">
+            {isLoadingList && (
+              <div className="absolute inset-0 bg-white bg-opacity-75 flex items-center justify-center z-10">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-orangeWheel-500"></div>
+              </div>
+            )}
             <div className="overflow-x-auto">
               <table className="w-full table-fixed divide-y divide-gray-200">
                 <colgroup>
@@ -311,7 +382,12 @@ export function ClientList() {
           </div>
 
           {/* Mobile Cards */}
-          <div className="lg:hidden space-y-3">
+          <div className="lg:hidden space-y-3 relative">
+            {isLoadingList && (
+              <div className="absolute inset-0 bg-white bg-opacity-75 flex items-center justify-center z-10">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-orangeWheel-500"></div>
+              </div>
+            )}
             {clients.map((client: Client) => (
               <div key={client.id} className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
                 <div className="flex items-start justify-between mb-3">
@@ -375,11 +451,28 @@ export function ClientList() {
         </>
       )}
 
+      {/* Paginação */}
+      {clientsPage && clientsPage.totalPages > 1 && (
+        <Pagination
+          currentPage={page}
+          totalPages={clientsPage.totalPages}
+          onPageChange={setPage}
+          isLoading={isLoadingList}
+        />
+      )}
+
   {showEdit && selectedClient && (
-    <EditClientModal client={selectedClient} onClose={handleCloseEdit} />
+    <EditClientModal
+      isOpen={showEdit}
+      client={selectedClient}
+      onClose={handleCloseEdit}
+    />
   )}
   {showCreate && (
-    <CreateClientModal onClose={handleCloseCreate} />
+    <CreateClientModal
+      isOpen={showCreate}
+      onClose={handleCloseCreate}
+    />
   )}
   {showImport && (
     <ClientImportModal
@@ -388,6 +481,16 @@ export function ClientList() {
       onUpload={handleImportClients}
     />
   )}
-</div>
+
+  {showInstructions && (
+    <ImportInstructionsModal
+      isOpen={showInstructions}
+      onClose={() => setShowInstructions(false)}
+      type="clients"
+      onDownloadTemplate={downloadTemplate}
+      isDownloading={downloadingTemplate}
+    />
+  )}
+    </div>
   );
 }

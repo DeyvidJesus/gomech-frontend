@@ -5,10 +5,12 @@ import { useState } from "react";
 import { EditVehicleModal } from "./EditVehicleModal";
 import { AddVehicleModal } from "./AddVehicleModal";
 import VehicleClientLinkModal from "./VehicleClientLinkModal";
-import { useNavigate } from "@tanstack/react-router";
+import { useNavigate, Link } from "@tanstack/react-router";
 import type { Client } from "../../client/types/client";
 import { clientsApi } from "../../client/services/api";
 import { VehicleImportModal } from "./VehicleImportModal";
+import axios from "../../../shared/services/axios";
+import { ImportInstructionsModal } from "../../../shared/components/ImportInstructionsModal";
 
 export function VehicleList() {
   const queryClient = useQueryClient();
@@ -32,8 +34,34 @@ export function VehicleList() {
   const [showAdd, setShowAdd] = useState(false);
   const [showLink, setShowLink] = useState(false);
   const [showImport, setShowImport] = useState(false);
+  const [showInstructions, setShowInstructions] = useState(false);
   const [isExporting, setIsExporting] = useState(false);
+  const [downloadingTemplate, setDownloadingTemplate] = useState<string | null>(null);
   const navigate = useNavigate();
+
+  const downloadTemplate = async (format: "xlsx" | "csv") => {
+    setDownloadingTemplate(format);
+    try {
+      const response = await axios.get(`/vehicles/template?format=${format}`, {
+        responseType: "blob",
+      });
+
+      const blob = new Blob([response.data]);
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = `template_veiculos.${format}`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error("Erro ao baixar template:", error);
+      alert("Erro ao baixar template");
+    } finally {
+      setDownloadingTemplate(null);
+    }
+  };
 
   const deleteMutation = useMutation({
     mutationFn: (id: number) => vehiclesApi.delete(id),
@@ -163,6 +191,13 @@ export function VehicleList() {
             <p className="text-gray-600 text-sm sm:text-base">Gerencie todos os veículos da sua oficina</p>
           </div>
           <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:items-center">
+            <button
+              onClick={() => setShowInstructions(true)}
+              className="bg-blue-500 hover:bg-blue-600 text-white font-semibold px-4 sm:px-5 py-2.5 rounded-lg shadow-sm transition-all duration-200 flex items-center justify-center gap-2"
+              title="Ver instruções de cadastro em massa"
+            >
+              ℹ️ Ajuda
+            </button>
             <button
               onClick={() => setShowImport(true)}
               className="bg-white text-orangeWheel-600 border border-orangeWheel-200 hover:border-orangeWheel-300 font-semibold px-4 sm:px-5 py-2.5 rounded-lg shadow-sm transition-all duration-200 flex items-center justify-center gap-2"
@@ -421,21 +456,31 @@ export function VehicleList() {
       )}
       {/* Modais de edição e criação */}
       {showAdd && (
-        <AddVehicleModal onClose={handleCloseAdd} />
+        <AddVehicleModal isOpen={showAdd} onClose={handleCloseAdd} />
       )}
       {showEdit && selectedVehicle && (
-        <EditVehicleModal vehicle={selectedVehicle} onClose={handleCloseEdit} />
+        <EditVehicleModal isOpen={showEdit} vehicle={selectedVehicle} onClose={handleCloseEdit} />
       )}
   {showLink && selectedVehicle && (
-    <VehicleClientLinkModal vehicle={selectedVehicle} onClose={handleCloseLink} />
+    <VehicleClientLinkModal isOpen={showLink} vehicle={selectedVehicle} onClose={handleCloseLink} />
   )}
-  {showImport && (
-    <VehicleImportModal
-      isOpen={showImport}
-      onClose={() => setShowImport(false)}
-      onUpload={handleImportVehicles}
-    />
-  )}
-</div>
+      {showImport && (
+        <VehicleImportModal
+          isOpen={showImport}
+          onClose={() => setShowImport(false)}
+          onUpload={handleImportVehicles}
+        />
+      )}
+
+      {showInstructions && (
+        <ImportInstructionsModal
+          isOpen={showInstructions}
+          onClose={() => setShowInstructions(false)}
+          type="vehicles"
+          onDownloadTemplate={downloadTemplate}
+          isDownloading={downloadingTemplate}
+        />
+      )}
+    </div>
   );
 }

@@ -1,14 +1,17 @@
 import { useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { clientsApi } from "../services/api";
+import Modal from "../../../shared/components/Modal";
+import Button from "../../../shared/components/Button";
 import type { Client } from "../types/client";
 
 interface EditClientModalProps {
+  isOpen: boolean;
   client: Client;
   onClose: () => void;
 }
 
-export function EditClientModal({ client, onClose }: EditClientModalProps) {
+export function EditClientModal({ isOpen, client, onClose }: EditClientModalProps) {
   const queryClient = useQueryClient();
   const [form, setForm] = useState<Partial<Client>>({ ...client });
   const [error, setError] = useState<string | null>(null);
@@ -45,34 +48,31 @@ export function EditClientModal({ client, onClose }: EditClientModalProps) {
   };
 
   return (
-    <div className="fixed inset-0 bg-[#242424ab] flex items-center justify-center p-4 z-50">
-      <div className="bg-white rounded-xl shadow-2xl max-w-md w-full">
-        {/* Header */}
-        <div className="bg-gradient-to-r from-orange-600 to-orange-700 p-6 rounded-t-xl">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="w-12 h-12 bg-white rounded-full flex items-center justify-center">
-                <span className="text-lg font-bold text-white">✏️</span>
-              </div>
-              <div>
-                <h2 className="text-xl font-bold text-white">Editar Cliente</h2>
-                <p className="text-orange-100">{client.name}</p>
-              </div>
-            </div>
-            <button
-              onClick={onClose}
-              className="text-white hover:bg-white rounded-lg p-2 transition-colors"
-              title="Fechar"
-            >
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-              </svg>
-            </button>
-          </div>
+    <Modal
+      isOpen={isOpen}
+      onClose={onClose}
+      title={`Editar Cliente: ${client.name}`}
+      description="Atualize as informações do cliente."
+      size="md"
+      headerStyle="default"
+      footer={
+        <div className="flex flex-col-reverse sm:flex-row gap-3">
+          <Button variant="outline" onClick={onClose} type="button" disabled={mutation.isPending}>
+            Cancelar
+          </Button>
+          <Button
+            variant="primary"
+            type="submit"
+            form="edit-client-form"
+            isLoading={mutation.isPending}
+            leftIcon={!mutation.isPending && "💾"}
+          >
+            {mutation.isPending ? "Salvando..." : "Salvar Alterações"}
+          </Button>
         </div>
-
-        {/* Form */}
-        <form onSubmit={handleSubmit} className="p-6 space-y-4 overflow-y-auto max-h-[80vh]">
+      }
+    >
+      <form id="edit-client-form" onSubmit={handleSubmit} className="space-y-4">
           {error && (
             <div className="bg-red-50 border border-red-200 rounded-lg p-3">
               <div className="flex items-center gap-2">
@@ -187,34 +187,7 @@ export function EditClientModal({ client, onClose }: EditClientModalProps) {
               placeholder="Observações adicionais sobre o cliente"
             />
           </div>
-
-          {/* Buttons */}
-          <div className="flex gap-3 pt-4">
-            <button
-              type="button"
-              onClick={onClose}
-              className="flex-1 bg-gray-200 hover:bg-gray-300 text-gray-700 font-semibold py-2.5 rounded-lg transition-colors"
-              disabled={mutation.isPending}
-            >
-              Cancelar
-            </button>
-            <button
-              type="submit"
-              className="flex-1 bg-orange-600 hover:bg-orange-700 text-white font-semibold py-2.5 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-              disabled={mutation.isPending}
-            >
-              {mutation.isPending ? (
-                <div className="flex items-center justify-center gap-2">
-                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                  Salvando...
-                </div>
-              ) : (
-                'Salvar Alterações'
-              )}
-            </button>
-          </div>
         </form>
-      </div>
-    </div>
+      </Modal>
   );
 }

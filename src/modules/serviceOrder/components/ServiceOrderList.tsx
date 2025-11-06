@@ -405,9 +405,10 @@ export default function ServiceOrderList() {
       </div>
 
       {/* Modal de criação */}
-      {showCreate && (
-        <CreateServiceOrderModal onClose={() => setShowCreate(false)} />
-      )}
+      <CreateServiceOrderModal 
+        isOpen={showCreate}
+        onClose={() => setShowCreate(false)} 
+      />
     </div>
   );
 }

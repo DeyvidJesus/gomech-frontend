@@ -59,7 +59,7 @@ export const inventoryApi = {
     return normalizeInventoryMovement(response.data);
   },
   consumeStock: async (payload: StockConsumptionRequest) => {
-    const response = await api.post<InventoryMovementResponse>("/inventory/movements/consumption", payload);
+    const response = await api.post<InventoryMovementResponse>("/inventory/movements/consumptions", payload);
     return normalizeInventoryMovement(response.data);
   },
   cancelReservation: async (payload: StockCancellationRequest) => {
@@ -97,13 +97,13 @@ export const inventoryApi = {
     const response = await api.get<InventoryAvailabilityResponse>(`/inventory/availability/parts/${partId}`);
     return normalizeInventoryAvailability(response.data);
   },
-  getVehicleAvailability: async (vehicleId: number): Promise<InventoryAvailability> => {
-    const response = await api.get<InventoryAvailabilityResponse>(`/inventory/availability/vehicles/${vehicleId}`);
-    return normalizeInventoryAvailability(response.data);
+  getVehicleAvailability: async (vehicleId: number): Promise<InventoryAvailability[]> => {
+    const response = await api.get<InventoryAvailabilityResponse[]>(`/inventory/availability/vehicles/${vehicleId}`);
+    return response.data.map(normalizeInventoryAvailability);
   },
-  getClientAvailability: async (clientId: number): Promise<InventoryAvailability> => {
-    const response = await api.get<InventoryAvailabilityResponse>(`/inventory/availability/clients/${clientId}`);
-    return normalizeInventoryAvailability(response.data);
+  getClientAvailability: async (clientId: number): Promise<InventoryAvailability[]> => {
+    const response = await api.get<InventoryAvailabilityResponse[]>(`/inventory/availability/clients/${clientId}`);
+    return response.data.map(normalizeInventoryAvailability);
   },
   getVehicleHistory: async (vehicleId: number): Promise<InventoryHistoryEntry[]> => {
     const response = await api.get<InventoryHistoryEntryResponse[]>(`/inventory/history/vehicles/${vehicleId}`);
@@ -113,4 +113,14 @@ export const inventoryApi = {
     const response = await api.get<InventoryHistoryEntryResponse[]>(`/inventory/history/clients/${clientId}`);
     return response.data.map(normalizeInventoryHistoryEntry);
   },
+  uploadItems: async (file: File): Promise<InventoryItem[]> => {
+    const formData = new FormData();
+    formData.append("file", file);
+    const response = await api.post<InventoryItemResponse[]>("/inventory/items/upload", formData, {
+      headers: { "Content-Type": "multipart/form-data" },
+    });
+    return response.data.map(normalizeInventoryItem);
+  },
+  downloadTemplate: (format: "xlsx" | "csv" = "xlsx") =>
+    api.get(`/inventory/items/template?format=${format}`, { responseType: "blob" }),
 };

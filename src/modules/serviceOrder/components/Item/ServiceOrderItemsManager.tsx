@@ -49,6 +49,11 @@ export function ServiceOrderItemsManager({ serviceOrderId, items }: ServiceOrder
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["serviceOrderItems", serviceOrderId.toString()] });
     },
+    onError: (error: any) => {
+      const errorMessage = error?.response?.data?.message || error?.message || "Erro ao deletar item";
+      alert(`❌ Erro ao remover item:\n\n${errorMessage}`);
+      console.error("Erro ao deletar item:", error);
+    },
   });
 
   const applyMutation = useMutation({

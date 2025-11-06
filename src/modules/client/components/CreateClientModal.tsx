@@ -1,13 +1,16 @@
 import { useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { clientsApi } from "../services/api";
+import Modal from "../../../shared/components/Modal";
+import Button from "../../../shared/components/Button";
 import type { Client } from "../types/client";
 
 interface CreateClientModalProps {
+  isOpen: boolean;
   onClose: () => void;
 }
 
-export function CreateClientModal({ onClose }: CreateClientModalProps) {
+export function CreateClientModal({ isOpen, onClose }: CreateClientModalProps) {
   const queryClient = useQueryClient();
   const [form, setForm] = useState<Partial<Client>>({
     name: '',
@@ -53,34 +56,31 @@ export function CreateClientModal({ onClose }: CreateClientModalProps) {
   };
 
   return (
-    <div className="fixed inset-0 bg-[#242424cb] flex items-center justify-center p-3 sm:p-4 z-50">
-      <div className="bg-white rounded-xl shadow-2xl max-w-md w-full max-h-[95vh] flex flex-col">
-        {/* Header */}
-        <div className="bg-gradient-to-r from-orangeWheel-500 to-orangeWheel-600 p-4 sm:p-6 rounded-t-xl flex-shrink-0">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 sm:w-12 sm:h-12 bg-white bg-opacity-20 rounded-full flex items-center justify-center">
-                <span className="text-base sm:text-lg font-bold text-white">👤</span>
-              </div>
-              <div>
-                <h2 className="text-lg sm:text-xl font-bold text-white">Novo Cliente</h2>
-                <p className="text-orange-100 text-sm">Cadastrar novo cliente</p>
-              </div>
-            </div>
-            <button
-              onClick={onClose}
-              className="text-white hover:bg-white hover:bg-opacity-20 rounded-lg p-2 transition-colors"
-              title="Fechar"
-            >
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-              </svg>
-            </button>
-          </div>
+    <Modal
+      isOpen={isOpen}
+      onClose={onClose}
+      title="Novo Cliente"
+      description="Cadastrar novo cliente no sistema."
+      size="md"
+      headerStyle="default"
+      footer={
+        <div className="flex flex-col-reverse sm:flex-row gap-3">
+          <Button variant="outline" onClick={onClose} type="button" disabled={mutation.isPending}>
+            Cancelar
+          </Button>
+          <Button
+            variant="primary"
+            type="submit"
+            form="create-client-form"
+            isLoading={mutation.isPending}
+            leftIcon={!mutation.isPending && "✅"}
+          >
+            {mutation.isPending ? "Criando..." : "Criar Cliente"}
+          </Button>
         </div>
-
-        {/* Form */}
-        <form onSubmit={handleSubmit} className="p-4 sm:p-6 space-y-4 overflow-y-auto flex-1">
+      }
+    >
+      <form id="create-client-form" onSubmit={handleSubmit} className="space-y-4">
           {error && (
             <div className="bg-red-50 border border-red-200 rounded-lg p-3">
               <div className="flex items-center gap-2">
@@ -197,43 +197,16 @@ export function CreateClientModal({ onClose }: CreateClientModalProps) {
           </div>
 
           {/* Info */}
-          <div className="bg-orange-50 border border-orange-200 rounded-lg p-3">
+          <div className="bg-orangeWheel-50 border border-orangeWheel-200 rounded-lg p-3">
             <div className="flex items-start gap-2">
-              <span className="text-orange-600 mt-0.5">💡</span>
-              <div className="text-orange-800 text-sm">
+              <span className="text-orangeWheel-600 mt-0.5">💡</span>
+              <div className="text-orangeWheel-800 text-sm">
                 <p className="font-medium mb-1">Dica:</p>
                 <p>Preencha pelo menos o nome e email. Os demais campos (telefone, endereço, documento, data de nascimento e observações) são opcionais e podem ser adicionados posteriormente.</p>
               </div>
             </div>
           </div>
-
-          {/* Buttons */}
-          <div className="flex flex-col sm:flex-row gap-3 pt-4 border-t border-gray-200">
-            <button
-              type="button"
-              onClick={onClose}
-              className="flex-1 bg-gray-200 hover:bg-gray-300 text-gray-700 font-semibold py-2.5 rounded-lg transition-colors order-2 sm:order-1"
-              disabled={mutation.isPending}
-            >
-              Cancelar
-            </button>
-            <button
-              type="submit"
-              className="flex-1 bg-orangeWheel-500 hover:bg-orangeWheel-600 text-white font-semibold py-2.5 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed order-1 sm:order-2"
-              disabled={mutation.isPending}
-            >
-              {mutation.isPending ? (
-                <div className="flex items-center justify-center gap-2">
-                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                  Criando...
-                </div>
-              ) : (
-                'Criar Cliente'
-              )}
-            </button>
-          </div>
         </form>
-      </div>
-    </div>
+      </Modal>
   );
 }

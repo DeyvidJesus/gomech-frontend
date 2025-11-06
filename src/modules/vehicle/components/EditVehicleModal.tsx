@@ -2,14 +2,17 @@ import { useState } from "react";
 import { useMutation, useQueryClient, useQuery } from "@tanstack/react-query";
 import { vehiclesApi } from "../services/api";
 import { clientsApi } from "../../client/services/api";
+import Modal from "../../../shared/components/Modal";
+import Button from "../../../shared/components/Button";
 import type { Vehicle } from "../types/vehicle";
 
 interface EditVehicleModalProps {
+  isOpen: boolean;
   vehicle: Vehicle;
   onClose: () => void;
 }
 
-export function EditVehicleModal({ vehicle, onClose }: EditVehicleModalProps) {
+export function EditVehicleModal({ isOpen, vehicle, onClose }: EditVehicleModalProps) {
   const queryClient = useQueryClient();
   
   // Buscar clientes para o select
@@ -77,34 +80,31 @@ export function EditVehicleModal({ vehicle, onClose }: EditVehicleModalProps) {
   };
 
   return (
-    <div className="fixed inset-0 bg-[#242424cb] flex items-center justify-center p-4 z-50">
-      <div className="bg-white rounded-xl shadow-2xl max-w-md w-full">
-        {/* Header */}
-        <div className="bg-gradient-to-r from-orange-600 to-orange-700 p-6 rounded-t-xl">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="w-12 h-12 bg-white rounded-full flex items-center justify-center">
-                <span className="text-lg font-bold text-white">✏️</span>
-              </div>
-              <div>
-                <h2 className="text-xl font-bold text-white">Editar Veículo</h2>
-                <p className="text-orange-100">{vehicle.licensePlate} - {vehicle.brand} {vehicle.model}</p>
-              </div>
-            </div>
-            <button
-              onClick={onClose}
-              className="text-white hover:bg-white rounded-lg p-2 transition-colors"
-              title="Fechar"
-            >
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-              </svg>
-            </button>
-          </div>
+    <Modal
+      isOpen={isOpen}
+      onClose={onClose}
+      title="Editar Veículo"
+      description={`${vehicle.licensePlate} - ${vehicle.brand} ${vehicle.model}`}
+      size="md"
+      headerStyle="default"
+      footer={
+        <div className="flex flex-col-reverse sm:flex-row gap-3">
+          <Button variant="outline" onClick={onClose} type="button" disabled={mutation.isPending}>
+            Cancelar
+          </Button>
+          <Button
+            variant="primary"
+            type="submit"
+            form="edit-vehicle-form"
+            isLoading={mutation.isPending}
+            leftIcon={!mutation.isPending && "💾"}
+          >
+            {mutation.isPending ? "Salvando..." : "Salvar Alterações"}
+          </Button>
         </div>
-
-        {/* Form */}
-        <form onSubmit={handleSubmit} className="p-6 space-y-4 overflow-y-auto max-h-[80vh]">
+      }
+    >
+      <form id="edit-vehicle-form" onSubmit={handleSubmit} className="space-y-4">
           {error && (
             <div className="bg-red-50 border border-red-200 rounded-lg p-3">
               <div className="flex items-center gap-2">
@@ -265,34 +265,7 @@ export function EditVehicleModal({ vehicle, onClose }: EditVehicleModalProps) {
               placeholder="Informações adicionais sobre o veículo..."
             />
           </div>
-
-          {/* Buttons */}
-          <div className="flex gap-3 pt-4">
-            <button
-              type="button"
-              onClick={onClose}
-              className="flex-1 bg-gray-200 hover:bg-gray-300 text-gray-700 font-semibold py-2.5 rounded-lg transition-colors"
-              disabled={mutation.isPending}
-            >
-              Cancelar
-            </button>
-            <button
-              type="submit"
-              className="flex-1 bg-orange-600 hover:bg-orange-700 text-white font-semibold py-2.5 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-              disabled={mutation.isPending}
-            >
-              {mutation.isPending ? (
-                <div className="flex items-center justify-center gap-2">
-                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                  Salvando...
-                </div>
-              ) : (
-                'Salvar Alterações'
-              )}
-            </button>
-          </div>
         </form>
-      </div>
-    </div>
+    </Modal>
   );
 }

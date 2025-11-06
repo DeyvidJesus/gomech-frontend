@@ -72,7 +72,7 @@ export function Layout() {
         <div className="flex flex-1">          
           <Sidebar isOpen={isSidebarOpen} onClose={closeSidebar} isDesktop={isDesktop} />
 
-          <main className="flex-1 p-3 sm:p-4 lg:p-6 lg:ml-0">
+          <main className="flex-1 py-4 px-3 sm:px-4 lg:px-5 lg:ml-[230px]">
             <Outlet />
           </main>
         </div>

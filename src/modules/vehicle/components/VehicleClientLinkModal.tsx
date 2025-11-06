@@ -2,14 +2,17 @@ import { useState } from "react";
 import { useMutation, useQueryClient, useQuery } from "@tanstack/react-query";
 import { vehiclesApi } from "../services/api";
 import { clientsApi } from "../../client/services/api";
+import Modal from "../../../shared/components/Modal";
+import Button from "../../../shared/components/Button";
 import type { Vehicle } from "../types/vehicle";
 
 interface VehicleClientLinkModalProps {
+  isOpen: boolean;
   vehicle: Vehicle;
   onClose: () => void;
 }
 
-export default function VehicleClientLinkModal({ vehicle, onClose }: VehicleClientLinkModalProps) {
+export default function VehicleClientLinkModal({ isOpen, vehicle, onClose }: VehicleClientLinkModalProps) {
   const queryClient = useQueryClient();
   const [selectedClientId, setSelectedClientId] = useState<number | undefined>(vehicle.clientId);
   const [error, setError] = useState<string | null>(null);
@@ -45,34 +48,32 @@ export default function VehicleClientLinkModal({ vehicle, onClose }: VehicleClie
   const newClient = clients.find(c => c.id === selectedClientId);
 
   return (
-    <div className="fixed inset-0 bg-[#242424cb] flex items-center justify-center p-4 z-50">
-      <div className="bg-white rounded-xl shadow-2xl max-w-md w-full">
-        {/* Header */}
-        <div className="bg-gradient-to-r from-blue-600 to-blue-700 p-6 rounded-t-xl">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="w-12 h-12 bg-white rounded-full flex items-center justify-center">
-                <span className="text-lg font-bold text-blue-600">🔗</span>
-              </div>
-              <div>
-                <h2 className="text-xl font-bold text-white">Vincular Cliente</h2>
-                <p className="text-blue-100">{vehicle.brand} {vehicle.model} - {vehicle.licensePlate}</p>
-              </div>
-            </div>
-            <button
-              onClick={onClose}
-              className="text-white hover:bg-white hover:bg-opacity-20 rounded-lg p-2 transition-colors"
-              title="Fechar"
-            >
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-              </svg>
-            </button>
-          </div>
+    <Modal
+      isOpen={isOpen}
+      onClose={onClose}
+      title="Vincular Cliente"
+      description={`${vehicle.brand} ${vehicle.model} - ${vehicle.licensePlate}`}
+      size="md"
+      headerStyle="default"
+      footer={
+        <div className="flex flex-col-reverse sm:flex-row gap-3">
+          <Button variant="outline" onClick={onClose} type="button" disabled={mutation.isPending}>
+            Cancelar
+          </Button>
+          <Button
+            variant="primary"
+            type="submit"
+            form="link-vehicle-client-form"
+            isLoading={mutation.isPending}
+            disabled={selectedClientId === vehicle.clientId}
+            leftIcon={!mutation.isPending && "🔗"}
+          >
+            {mutation.isPending ? "Salvando..." : selectedClientId === undefined ? "Desvincular Cliente" : currentClient ? "Alterar Vinculação" : "Vincular Cliente"}
+          </Button>
         </div>
-
-        {/* Body */}
-        <form onSubmit={handleSubmit} className="p-6 space-y-4">
+      }
+    >
+      <form id="link-vehicle-client-form" onSubmit={handleSubmit} className="space-y-4">
           {error && (
             <div className="bg-red-50 border border-red-200 rounded-lg p-3">
               <div className="flex items-center gap-2">
@@ -126,8 +127,8 @@ export default function VehicleClientLinkModal({ vehicle, onClose }: VehicleClie
 
           {/* Preview da Mudança */}
           {selectedClientId !== vehicle.clientId && (
-            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-              <h3 className="text-sm font-semibold text-blue-800 mb-2">Prévia da Alteração</h3>
+            <div className="bg-orangeWheel-50 border border-orangeWheel-200 rounded-lg p-4">
+              <h3 className="text-sm font-semibold text-orangeWheel-800 mb-2">Prévia da Alteração</h3>
               <div className="space-y-2 text-sm">
                 <div className="flex items-center gap-2">
                   <span className="text-gray-500">De:</span>
@@ -136,47 +137,16 @@ export default function VehicleClientLinkModal({ vehicle, onClose }: VehicleClie
                   </span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <span className="text-blue-600">→</span>
-                  <span className="text-blue-600">Para:</span>
-                  <span className="font-medium text-blue-800">
+                  <span className="text-orangeWheel-600">→</span>
+                  <span className="text-orangeWheel-600">Para:</span>
+                  <span className="font-medium text-orangeWheel-800">
                     {newClient ? newClient.name : 'Sem vinculação'}
                   </span>
                 </div>
               </div>
             </div>
           )}
-
-          {/* Buttons */}
-          <div className="flex gap-3 pt-4">
-            <button
-              type="button"
-              onClick={onClose}
-              className="flex-1 bg-gray-200 hover:bg-gray-300 text-gray-700 font-semibold py-2.5 rounded-lg transition-colors"
-              disabled={mutation.isPending}
-            >
-              Cancelar
-            </button>
-            <button
-              type="submit"
-              className="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2.5 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-              disabled={mutation.isPending || selectedClientId === vehicle.clientId}
-            >
-              {mutation.isPending ? (
-                <div className="flex items-center justify-center gap-2">
-                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                  Salvando...
-                </div>
-              ) : selectedClientId === undefined ? (
-                'Desvincular Cliente'
-              ) : currentClient ? (
-                'Alterar Vinculação'
-              ) : (
-                'Vincular Cliente'
-              )}
-            </button>
-          </div>
         </form>
-      </div>
-    </div>
+    </Modal>
   );
 }
