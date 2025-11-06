@@ -13,7 +13,7 @@ interface SidebarProps {
 
 export default function Sidebar({ isOpen, onClose, isDesktop }: SidebarProps) {
   const { data } = useAuth()
-  const { email, role } = data?.user || {}
+  const { email, role } = data || {}
   const logout = useLogout()
   const navigate = useNavigate()
 
@@ -144,24 +144,6 @@ export default function Sidebar({ isOpen, onClose, isDesktop }: SidebarProps) {
                 onClick={handleLinkClick}
               >
                 Administração
-              </Link>
-            </div>
-            <div className="text-[var(--sidebar-text)] bg-[var(--sidebar-button-bg)] rounded-sm overflow-hidden hover:bg-[#242424e1] my-0.5">
-              <Link
-                className="no-underline text-[var(--sidebar-text)] block p-3 transition-all duration-200 ease-in-out hover:bg-[#242424e1] font-medium"
-                to="/analytics"
-                onClick={handleLinkClick}
-              >
-                Analytics
-              </Link>
-            </div>
-            <div className="text-[var(--sidebar-text)] bg-[var(--sidebar-button-bg)] rounded-sm overflow-hidden hover:bg-[#242424e1] my-0.5">
-              <Link
-                className="no-underline text-[var(--sidebar-text)] block p-3 transition-all duration-200 ease-in-out hover:bg-[#242424e1] font-medium"
-                to="/audit"
-                onClick={handleLinkClick}
-              >
-                Auditoria
               </Link>
             </div>
           </RoleGuard>

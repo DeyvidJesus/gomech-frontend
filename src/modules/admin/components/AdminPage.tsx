@@ -8,11 +8,13 @@ import ProtectedRoute from "../../auth/components/ProtectedRoute";
 import RoleGuard from "../../auth/components/RoleGuard";
 import SystemSettings from "./SystemSettings";
 import VehicleClientStats from "./VehicleClientStats";
+import AnalyticsPanel from "./AnalyticsPanel";
+import AuditPanel from "./AuditPanel";
 
 export default function AdminPage() {
   const { data: authData } = useAuth();
   // const { canCreate, canEdit, canDelete } = useRole(); // Não utilizado no momento
-  const [activeTab, setActiveTab] = useState<'overview' | 'users' | 'system' | 'reports'>('overview');
+  const [activeTab, setActiveTab] = useState<'overview' | 'users' | 'system' | 'analytics' | 'audit'>('overview');
 
   const { data: clients = [], isLoading: clientsLoading } = useQuery({
     queryKey: ["clients"],
@@ -49,7 +51,8 @@ export default function AdminPage() {
     { id: 'overview', label: 'Visão Geral', icon: '📊' },
     { id: 'users', label: 'Usuários', icon: '👥' },
     { id: 'system', label: 'Sistema', icon: '⚙️' },
-    { id: 'reports', label: 'Relatórios', icon: '📈' }
+    { id: 'analytics', label: 'Analytics', icon: '📈' },
+    { id: 'audit', label: 'Auditoria', icon: '🔒' }
   ] as const;
 
   return (
@@ -73,12 +76,12 @@ export default function AdminPage() {
               <div className="flex items-center gap-3">
                 <div className="w-8 h-8 sm:w-10 sm:h-10 bg-orangeWheel-100 rounded-full flex items-center justify-center flex-shrink-0">
                   <span className="text-orangeWheel-600 font-semibold text-sm sm:text-base">
-                    {authData?.user.name?.charAt(0).toUpperCase()}
+                    {authData?.name?.charAt(0).toUpperCase()}
                   </span>
                 </div>
                 <div className="min-w-0 flex-1">
-                  <p className="font-medium text-gray-900 text-sm sm:text-base truncate">Bem-vindo, {authData?.user.name}</p>
-                  <p className="text-xs sm:text-sm text-gray-500">Função: {authData?.user.role}</p>
+                  <p className="font-medium text-gray-900 text-sm sm:text-base truncate">Bem-vindo, {authData?.name}</p>
+                  <p className="text-xs sm:text-sm text-gray-500">Função: {authData?.role}</p>
                 </div>
               </div>
             </div>
@@ -246,16 +249,9 @@ export default function AdminPage() {
 
           {activeTab === 'system' && <SystemSettings onSave={() => undefined} />}
 
-          {activeTab === 'reports' && (
-            <div className="bg-white rounded-lg shadow-sm border p-4 sm:p-6">
-              <h3 className="text-base sm:text-lg font-semibold text-gray-900 mb-4">Relatórios e Analytics</h3>
-              <div className="text-center py-6 sm:py-8">
-                <span className="text-3xl sm:text-4xl">📈</span>
-                <p className="text-gray-500 mt-2 text-sm sm:text-base">Relatórios em desenvolvimento</p>
-                <p className="text-xs sm:text-sm text-gray-400">Em breve você terá acesso a relatórios detalhados</p>
-              </div>
-            </div>
-          )}
+          {activeTab === 'analytics' && <AnalyticsPanel />}
+
+          {activeTab === 'audit' && <AuditPanel />}
         </div>
       </RoleGuard>
     </ProtectedRoute>

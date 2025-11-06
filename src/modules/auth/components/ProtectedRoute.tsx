@@ -40,7 +40,8 @@ export default function ProtectedRoute({
   }
 
   if (requiredRole) {
-    const userRole = data.user.role;
+    console.log(data)
+    const userRole = data?.role;
     if (userRole !== requiredRole && userRole !== 'ADMIN') {
       return <>{fallback}</>;
     }

@@ -58,7 +58,7 @@ function DashboardContent() {
 
   const isLoading = clientsLoading || vehiclesLoading || serviceOrdersLoading
 
-  const { name, role } = data?.user || {}
+  const { name, role } = data || {}
 
   return (
     <div className="p-3 sm:p-4 md:p-6 lg:p-8 bg-gray-50 min-h-screen rounded-lg">

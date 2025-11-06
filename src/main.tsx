@@ -18,8 +18,6 @@ import { vehicleDetailsRoute } from './modules/vehicle/routes/vehicleDetailsRout
 import { vehicleRoute } from './modules/vehicle/routes/vehicleRoute.ts'
 import { partRoute } from './modules/part/routes/partRoute.ts'
 import { inventoryRoute } from './modules/inventory/routes/inventoryRoute.ts'
-import { analyticsRoute } from './modules/analytics/routes/analyticsRoute.ts'
-import { auditRoute } from './modules/audit/routes/auditRoute.ts'
 import reportWebVitals from './reportWebVitals.ts'
 
 import './styles.css'
@@ -36,8 +34,6 @@ const routeTree = rootRoute.addChildren([
   vehicleRoute.addChildren([vehicleDetailsRoute]),
   partRoute,
   inventoryRoute,
-  analyticsRoute,
-  auditRoute,
   serviceOrderRoute.addChildren([serviceOrderDetailsRoute]),
   adminRoute
 ])

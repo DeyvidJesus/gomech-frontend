@@ -18,11 +18,12 @@ const inferredProductionBaseURL =
     : undefined
 
 const baseURL =
-  import.meta.env.VITE_API_BASE_URL ?? inferredProductionBaseURL ?? 'http://localhost:8080'
+  import.meta.env.VITE_API_URL ?? inferredProductionBaseURL ?? 'http://localhost:8080'
 
 const api = axios.create({
   baseURL,
   timeout: 30000,
+  withCredentials: true,
   headers: {
     'Content-Type': 'application/json',
   },
@@ -33,6 +34,7 @@ const refreshClient = axios.create({
   timeout: 30000,
   headers: {
     'Content-Type': 'application/json',
+
   },
 })
 

@@ -1,20 +1,16 @@
 export type UserRole = 'ADMIN' | 'USER'
 
-export interface AuthUser {
-  id: number
-  name: string
-  email: string
-  role: UserRole
-  mfaEnabled?: boolean
-}
-
 export interface AuthTokens {
   accessToken: string
   refreshToken: string
 }
 
 export interface AuthResponse extends AuthTokens {
-  user: AuthUser
+  id: number
+  name: string
+  email: string
+  role: UserRole
+  mfaEnabled?: boolean
 }
 
 export interface LoginRequest {
