@@ -5,7 +5,7 @@ export interface Vehicle {
   brand: string;
   model: string;
   manufactureDate: string;
-  color: string;
+  color?: string;
   observations?: string;
   kilometers: number;
   chassisId: string;

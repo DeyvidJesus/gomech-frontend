@@ -1,3 +1,7 @@
+// --------------------- Enums ---------------------
+export type InventoryMovementType = "IN" | "OUT" | "ADJUSTMENT";
+
+// --------------------- Interfaces principais ---------------------
 export interface InventoryPartSummary {
   id: number
   code?: string | null
@@ -11,16 +15,12 @@ export interface InventoryItemResponse {
   part?: InventoryPartSummary | null
   partId?: number
   partName?: string
-  availableQuantity?: number | null
-  currentQuantity?: number | null
+  location?: string | null
+  quantity?: number | null
   reservedQuantity?: number | null
   minimumQuantity?: number | null
-  minimumStock?: number | null
-  location?: string | null
-  averageCost?: number | null
   unitCost?: number | null
   salePrice?: number | null
-  status?: string | null
   createdAt?: string
   updatedAt?: string
 }
@@ -31,36 +31,84 @@ export interface InventoryItem {
   partName: string
   partCode?: string
   manufacturer?: string
-  availableQuantity: number
+  location: string
+  quantity: number
   reservedQuantity: number
   minimumQuantity: number
-  location?: string
-  averageCost?: number
+  unitCost?: number
   salePrice?: number
-  status?: string
   createdAt?: string
   updatedAt?: string
 }
 
 export interface InventoryItemCreateDTO {
   partId: number
+  location: string
+  quantity?: number
+  reservedQuantity?: number
   minimumQuantity: number
-  initialQuantity: number
-  location?: string
-  averageCost?: number
+  unitCost?: number
   salePrice?: number
 }
 
-export interface InventoryItemUpdateDTO extends Partial<Omit<InventoryItemCreateDTO, 'initialQuantity' | 'partId'>> {
-  status?: string
+export interface InventoryItemUpdateDTO {
+  location?: string
+  quantity?: number
+  reservedQuantity?: number
+  minimumQuantity?: number
+  unitCost?: number
+  salePrice?: number
+}
+
+export interface InventoryMovementResponse {
+  id: number
+  inventoryItemId?: number
+  part?: InventoryPartSummary | null
+  partId?: number
+  partName?: string
+  serviceOrderId?: number
+  vehicleId?: number
+  movementType?: string
+  quantity: number
+  referenceCode?: string | null
+  notes?: string | null
+  movementDate?: string
+  createdAt?: string
+  updatedAt?: string
+}
+
+export interface InventoryMovement {
+  id: number
+  inventoryItemId: number
+  partId: number
+  partName?: string
+  serviceOrderId?: number
+  vehicleId?: number
+  movementType: InventoryMovementType
+  quantity: number
+  referenceCode?: string
+  notes?: string
+  movementDate: string
+  createdAt?: string
+  updatedAt?: string
+}
+
+export interface InventoryMovementCreateDTO {
+  inventoryItemId: number
+  partId: number
+  serviceOrderId?: number
+  vehicleId?: number
+  movementType: InventoryMovementType
+  quantity: number
+  referenceCode?: string
+  notes?: string
 }
 
 export interface InventoryEntryRequest {
-  itemId?: number
-  partId?: number
+  partId: number
+  location: string
   quantity: number
   unitCost?: number
-  unitPrice?: number
   notes?: string
 }
 
@@ -228,6 +276,7 @@ export interface RecommendationPipeline {
   isDefault?: boolean
 }
 
+// --------------------- Funções de normalização ---------------------
 export function normalizeInventoryItem(item: InventoryItemResponse): InventoryItem {
   const partId = item.part?.id ?? item.partId ?? 0
   return {
@@ -236,37 +285,34 @@ export function normalizeInventoryItem(item: InventoryItemResponse): InventoryIt
     partName: item.part?.name ?? item.partName ?? `Peça ${partId}`,
     partCode: item.part?.code ?? undefined,
     manufacturer: item.part?.manufacturer ?? undefined,
-    availableQuantity: item.availableQuantity ?? item.currentQuantity ?? 0,
+    location: item.location ?? 'Não especificado',
+    quantity: item.quantity ?? 0,
     reservedQuantity: item.reservedQuantity ?? 0,
-    minimumQuantity: item.minimumQuantity ?? item.minimumStock ?? 0,
-    location: item.location ?? undefined,
-    averageCost: item.averageCost ?? item.unitCost ?? undefined,
+    minimumQuantity: item.minimumQuantity ?? 0,
+    unitCost: item.unitCost ?? undefined,
     salePrice: item.salePrice ?? undefined,
-    status: item.status ?? undefined,
     createdAt: item.createdAt,
     updatedAt: item.updatedAt,
   }
 }
 
 export function normalizeInventoryMovement(movement: InventoryMovementResponse): InventoryMovement {
-  const occurredAt = movement.occurredAt ?? movement.createdAt ?? new Date().toISOString()
+  const movementDate = movement.movementDate ?? movement.createdAt ?? new Date().toISOString()
 
   return {
     id: movement.id,
-    movementType: movement.movementType ?? movement.type ?? 'UNKNOWN',
-    quantity: movement.quantity,
-    occurredAt,
-    partId: movement.part?.id ?? movement.partId,
+    inventoryItemId: movement.inventoryItemId ?? 0,
+    partId: movement.part?.id ?? movement.partId ?? 0,
     partName: movement.part?.name ?? movement.partName,
     serviceOrderId: movement.serviceOrderId,
-    serviceOrderItemId: movement.serviceOrderItemId,
     vehicleId: movement.vehicleId,
+    movementType: (movement.movementType as InventoryMovementType) ?? 'ADJUSTMENT',
+    quantity: movement.quantity,
+    referenceCode: movement.referenceCode ?? undefined,
     notes: movement.notes ?? undefined,
-    reservationId: movement.reservationId,
-    unitCost: movement.unitCost ?? undefined,
-    unitPrice: movement.unitPrice ?? undefined,
-    balanceAfter: movement.balanceAfter ?? undefined,
-    performedBy: movement.performedBy ?? undefined,
+    movementDate,
+    createdAt: movement.createdAt,
+    updatedAt: movement.updatedAt,
   }
 }
 

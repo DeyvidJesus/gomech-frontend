@@ -6,7 +6,7 @@ export interface InventoryItemFormValues {
   partId: number;
   minimumQuantity: number;
   initialQuantity: number;
-  location?: string;
+  location: string;
   averageCost?: number;
   salePrice?: number;
 }
@@ -47,10 +47,10 @@ export function InventoryItemModal({
       if (initialData) {
         setFormData({
           partId: initialData.partId,
-          initialQuantity: initialData.availableQuantity,
+          initialQuantity: initialData.quantity,
           minimumQuantity: initialData.minimumQuantity,
           location: initialData.location ?? "",
-          averageCost: initialData.averageCost ?? 0,
+          averageCost: initialData.unitCost,
           salePrice: initialData.salePrice ?? 0,
         });
       } else {
@@ -90,10 +90,15 @@ export function InventoryItemModal({
       return;
     }
 
+    if (!formData.location?.trim()) {
+      setError("Localização é obrigatória");
+      return;
+    }
+
     try {
       await onSubmit({
         ...formData,
-        location: formData.location?.trim() || undefined,
+        location: formData.location!.trim(),
         averageCost: formData.averageCost ?? undefined,
         salePrice: formData.salePrice ?? undefined,
       });
@@ -145,13 +150,14 @@ export function InventoryItemModal({
             </div>
 
             <div className="flex flex-col">
-              <label className="text-sm font-medium text-gray-700">Localização (opcional)</label>
+              <label className="text-sm font-medium text-gray-700">Localização *</label>
               <input
                 type="text"
                 value={formData.location ?? ""}
                 onChange={event => handleChange("location", event.target.value)}
                 className="mt-1 rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-orangeWheel-500 focus:outline-none focus:ring-2 focus:ring-orangeWheel-200"
                 placeholder="Ex: Prateleira A3"
+                required
               />
             </div>
           </div>

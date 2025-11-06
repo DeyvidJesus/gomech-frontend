@@ -68,8 +68,8 @@ export function EditVehicleModal({ vehicle, onClose }: EditVehicleModalProps) {
       setError("Data de fabricação é obrigatória");
       return;
     }
-    if (!form.color?.trim()) {
-      setError("Cor é obrigatória");
+    if (form.kilometers === undefined || form.kilometers === null) {
+      setError("Quilometragem é obrigatória");
       return;
     }
     
@@ -174,7 +174,7 @@ export function EditVehicleModal({ vehicle, onClose }: EditVehicleModalProps) {
             </div>
             <div>
               <label className="block text-sm font-semibold text-gray-700 mb-2">
-                Cor *
+                Cor
               </label>
               <input
                 type="text"
@@ -183,7 +183,6 @@ export function EditVehicleModal({ vehicle, onClose }: EditVehicleModalProps) {
                 onChange={handleChange}
                 className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-colors"
                 placeholder="Branco, Prata, etc."
-                required
               />
             </div>
           </div>
@@ -237,7 +236,7 @@ export function EditVehicleModal({ vehicle, onClose }: EditVehicleModalProps) {
             </div>
             <div>
               <label className="block text-sm font-semibold text-gray-700 mb-2">
-                Quilometragem
+                Quilometragem *
               </label>
               <input
                 type="number"
@@ -247,6 +246,7 @@ export function EditVehicleModal({ vehicle, onClose }: EditVehicleModalProps) {
                 className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-colors"
                 placeholder="120000"
                 min="0"
+                required
               />
             </div>
           </div>

@@ -1,9 +1,9 @@
 import { useQuery } from "@tanstack/react-query";
-import { Link, useNavigate, useParams } from "@tanstack/react-router";
+import { useNavigate, useParams } from "@tanstack/react-router";
 import { vehiclesApi } from "../services/api";
 import type { Vehicle } from "../types/vehicle";
 import { useState } from "react";
-import { serviceOrdersApi } from '../../serviceOrder/services/api';
+// import { serviceOrdersApi } from '../../serviceOrder/services/api';
 import { EditVehicleModal } from "./EditVehicleModal";
 import { clientsApi } from "../../client/services/api";
 import type { Client } from "../../client/types/client";
@@ -14,17 +14,17 @@ export function VehicleDetailsPage() {
   const vehicleId = Number(id);
   const [showEdit, setShowEdit] = useState(false);
 
-  const {
-    data: vehicleServiceOrders = [],
-    isLoading: vehicleOrdersLoading
-  } = useQuery({
-    queryKey: ["serviceOrders", vehicleId],
-    queryFn: async () => {
-      const res = await serviceOrdersApi.getByVehicle(vehicleId);
-      return res.data;
-    },
-    enabled: !!vehicleId,
-  });
+  // const {
+  //   data: vehicleServiceOrders = [],
+  //   isLoading: vehicleOrdersLoading
+  // } = useQuery({
+  //   queryKey: ["serviceOrders", vehicleId],
+  //   queryFn: async () => {
+  //     const res = await serviceOrdersApi.getByVehicleId(vehicleId);
+  //     return res.data;
+  //   },
+  //   enabled: !!vehicleId,
+  // });
 
   const { data: clients } = useQuery<Client[]>({
     queryKey: ["clients"],
@@ -137,7 +137,11 @@ export function VehicleDetailsPage() {
             <div className="grid grid-cols-2 gap-3 sm:gap-4">
               <div className="bg-gray-50 rounded-lg p-3 sm:p-4">
                 <label className="text-xs sm:text-sm font-medium text-gray-600">Cor</label>
-                <div className="text-sm sm:text-lg text-gray-900 font-medium">{vehicle.color}</div>
+                <div className="text-sm sm:text-lg text-gray-900 font-medium">
+                  {vehicle.color || (
+                    <span className="text-gray-400 italic">Não informado</span>
+                  )}
+                </div>
               </div>
               <div className="bg-gray-50 rounded-lg p-3 sm:p-4">
                 <label className="text-xs sm:text-sm font-medium text-gray-600">Quilometragem</label>
@@ -226,7 +230,7 @@ export function VehicleDetailsPage() {
           </button>
         </div>
 
-        {vehicleOrdersLoading ? (
+        {/* {vehicleOrdersLoading ? (
           <div className="text-center py-6 sm:py-8">
             <div className="animate-spin rounded-full h-6 w-6 sm:h-8 sm:w-8 border-b-2 border-orangeWheel-500 mb-4 mx-auto"></div>
             <p className="text-gray-600 text-sm sm:text-base">Carregando histórico de serviços...</p>
@@ -262,7 +266,7 @@ export function VehicleDetailsPage() {
               </tbody>
             </table>
           </div>
-        )}
+        )} */}
       </div>
 
       {/* Informações do Sistema */}

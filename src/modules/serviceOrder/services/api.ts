@@ -16,10 +16,10 @@ export const serviceOrdersApi = {
     api.get<ServiceOrderResponseDTO[]>(`/service-orders/status/${status}`),
   getByClient: (clientId: number) =>
     api.get<ServiceOrderResponseDTO[]>(`/service-orders/client/${clientId}`),
-  getByVehicle: (vehicleId: number) =>
-    api.get<ServiceOrderResponseDTO[]>(`/service-orders/vehicle/${vehicleId}`),
-  getVehicleHistory: (vehicleId: number) =>
-    api.get<ServiceOrderResponseDTO[]>(`/service-orders/vehicle/${vehicleId}/history`),
+  // getByVehicle: (vehicleId: number) =>
+  //   api.get<ServiceOrderResponseDTO[]>(`/service-orders/vehicle/${vehicleId}`),
+  // getVehicleHistory: (vehicleId: number) =>
+  //   api.get<ServiceOrderResponseDTO[]>(`/service-orders/vehicle/${vehicleId}/history`),
 
   updateStatus: (id: number, status: ServiceOrderStatus) =>
     api.put<ServiceOrderResponseDTO>(`/service-orders/${id}/status`, { status }),

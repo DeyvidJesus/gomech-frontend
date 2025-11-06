@@ -66,16 +66,6 @@ export default function PartList() {
   }, [parts, search]);
 
   const totalParts = parts.length;
-  const criticalParts = parts.filter(part => {
-    const stock = part.stockQuantity ?? 0;
-    const minimum = part.minimumStock ?? 0;
-    return stock <= minimum;
-  }).length;
-  const totalStockValue = parts.reduce((sum, part) => {
-    const cost = part.cost ?? 0;
-    const quantity = part.stockQuantity ?? 0;
-    return sum + cost * quantity;
-  }, 0);
 
   const handleDelete = (part: Part) => {
     const confirmation = window.confirm(
@@ -162,14 +152,8 @@ export default function PartList() {
           <p className="text-2xl font-bold text-gray-900">{totalParts}</p>
         </div>
         <div className="rounded-lg border border-gray-200 bg-white p-4 shadow-sm">
-          <p className="text-sm text-gray-500">Itens críticos</p>
-          <p className="text-2xl font-bold text-red-500">{criticalParts}</p>
-        </div>
-        <div className="rounded-lg border border-gray-200 bg-white p-4 shadow-sm">
-          <p className="text-sm text-gray-500">Valor em estoque (custo)</p>
-          <p className="text-2xl font-bold text-gray-900">
-            {totalStockValue.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}
-          </p>
+          <p className="text-sm text-gray-500">Peças ativas</p>
+          <p className="text-2xl font-bold text-gray-900">{parts.filter(part => part.active).length}</p>
         </div>
       </div>
 
@@ -181,7 +165,6 @@ export default function PartList() {
                 <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">Peça</th>
                 <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">SKU</th>
                 <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">Fabricante</th>
-                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">Estoque</th>
                 <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">Custo</th>
                 <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">Preço</th>
                 <th className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wider text-gray-500">Ações</th>
@@ -189,11 +172,8 @@ export default function PartList() {
             </thead>
             <tbody className="divide-y divide-gray-200 bg-white">
               {filteredParts.map(part => {
-                const stockQuantity = part.stockQuantity ?? 0;
-                const minimumStock = part.minimumStock ?? 0;
-                const isCritical = stockQuantity <= minimumStock;
                 return (
-                  <tr key={part.id} className={isCritical ? "bg-red-50" : ""}>
+                  <tr key={part.id}>
                     <td className="px-4 py-3">
                       <div className="flex flex-col">
                         <span className="font-semibold text-gray-900">{part.name}</span>
@@ -203,16 +183,10 @@ export default function PartList() {
                     <td className="px-4 py-3 text-sm text-gray-600">{part.sku}</td>
                     <td className="px-4 py-3 text-sm text-gray-600">{part.manufacturer ?? "-"}</td>
                     <td className="px-4 py-3 text-sm text-gray-600">
-                      <div className="flex items-center gap-2">
-                        <span>{stockQuantity}</span>
-                        <span className="text-xs text-gray-400">mín: {minimumStock}</span>
-                      </div>
+                      {(part.unitCost ?? 0).toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}
                     </td>
                     <td className="px-4 py-3 text-sm text-gray-600">
-                      {(part.cost ?? 0).toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}
-                    </td>
-                    <td className="px-4 py-3 text-sm text-gray-600">
-                      {(part.price ?? 0).toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}
+                      {(part.unitPrice ?? 0).toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}
                     </td>
                     <td className="px-4 py-3 text-right">
                       <RoleGuard roles={['ADMIN']}>

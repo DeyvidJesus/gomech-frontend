@@ -107,21 +107,64 @@ export function ClientDetailsPage() {
           </div>
         </div>
 
-        {/* Endereço */}
+        {/* Dados Pessoais */}
         <div className="bg-white rounded-lg p-4 sm:p-6 shadow-sm border border-gray-200">
           <h2 className="text-lg sm:text-xl font-semibold text-gray-800 mb-4 flex items-center gap-2">
-            <span className="text-base sm:text-lg">🏠</span>
-            Endereço
+            <span className="text-base sm:text-lg">👤</span>
+            Dados Pessoais
           </h2>
-          <div className="bg-gray-50 rounded-lg p-3 sm:p-4">
-            <div className="text-sm sm:text-lg text-gray-900">
-              {client.address || (
-                <span className="text-gray-400 italic">Endereço não informado</span>
-              )}
+          <div className="space-y-3 sm:space-y-4">
+            <div className="bg-gray-50 rounded-lg p-3 sm:p-4">
+              <label className="text-xs sm:text-sm font-medium text-gray-600">Documento (CPF/CNPJ)</label>
+              <div className="text-sm sm:text-lg text-gray-900 font-medium">
+                {client.document || (
+                  <span className="text-gray-400 italic">Não informado</span>
+                )}
+              </div>
+            </div>
+            <div className="bg-gray-50 rounded-lg p-3 sm:p-4">
+              <label className="text-xs sm:text-sm font-medium text-gray-600">Data de Nascimento</label>
+              <div className="text-sm sm:text-lg text-gray-900 font-medium">
+                {client.birthDate ? (
+                  new Date(client.birthDate).toLocaleDateString('pt-BR')
+                ) : (
+                  <span className="text-gray-400 italic">Não informado</span>
+                )}
+              </div>
             </div>
           </div>
         </div>
       </div>
+
+      {/* Endereço */}
+      <div className="bg-white rounded-lg p-4 sm:p-6 shadow-sm border border-gray-200">
+        <h2 className="text-lg sm:text-xl font-semibold text-gray-800 mb-4 flex items-center gap-2">
+          <span className="text-base sm:text-lg">🏠</span>
+          Endereço
+        </h2>
+        <div className="bg-gray-50 rounded-lg p-3 sm:p-4">
+          <div className="text-sm sm:text-lg text-gray-900">
+            {client.address || (
+              <span className="text-gray-400 italic">Endereço não informado</span>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* Observações */}
+      {client.observations && (
+        <div className="bg-white rounded-lg p-4 sm:p-6 shadow-sm border border-gray-200">
+          <h2 className="text-lg sm:text-xl font-semibold text-gray-800 mb-4 flex items-center gap-2">
+            <span className="text-base sm:text-lg">📝</span>
+            Observações
+          </h2>
+          <div className="bg-gray-50 rounded-lg p-3 sm:p-4">
+            <div className="text-sm sm:text-base text-gray-900 whitespace-pre-wrap">
+              {client.observations}
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Veículos */}
       <div className="bg-white rounded-lg p-4 sm:p-6 shadow-sm border border-gray-200">

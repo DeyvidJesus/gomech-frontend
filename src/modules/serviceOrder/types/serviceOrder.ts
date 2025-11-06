@@ -49,15 +49,16 @@ export interface ServiceOrder {
 export interface ServiceOrderItem {
   id: number;
   serviceOrderId?: number; // referência simplificada
+  partId?: number; // referência à Part (ManyToOne)
   description: string;
   itemType: ServiceOrderItemType;
   quantity: number;
   unitPrice: number;
   totalPrice: number;
   productCode?: string;
+  inventoryItemId?: number; // referência ao InventoryItem (ManyToOne)
   requiresStock: boolean;
   stockReserved: boolean;
-  stockProductId?: number;
   observations?: string;
   applied: boolean;
   createdAt: string;
@@ -101,9 +102,10 @@ export interface ServiceOrderItemCreateDTO {
   quantity: number;
   unitPrice: number;
   productCode?: string;
+  partId?: number;
+  inventoryItemId?: number;
   requiresStock?: boolean;
   observations?: string;
-  stockProductId?: number;
 }
 
 // --------------------- DTOs de resposta ---------------------

@@ -21,7 +21,8 @@ export default function AddServiceOrderItemModal({ serviceOrderId, onClose }: Ad
     productCode: '',
     requiresStock: false,
     observations: '',
-    stockProductId: undefined,
+    inventoryItemId: undefined,
+    partId: undefined,
   });
 
   const mutation = useMutation({

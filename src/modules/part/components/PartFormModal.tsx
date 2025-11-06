@@ -16,10 +16,9 @@ const emptyPart: PartCreateDTO = {
   sku: "",
   manufacturer: "",
   description: "",
-  cost: 0,
-  price: 0,
-  stockQuantity: 0,
-  minimumStock: 0,
+  active: true,
+  unitCost: 0,
+  unitPrice: 0,
 };
 
 export function PartFormModal({
@@ -41,10 +40,9 @@ export function PartFormModal({
           sku: initialData.sku,
           manufacturer: initialData.manufacturer ?? "",
           description: initialData.description ?? "",
-          cost: initialData.cost,
-          price: initialData.price,
-          stockQuantity: initialData.stockQuantity,
-          minimumStock: initialData.minimumStock,
+          active: initialData.active,
+          unitCost: initialData.unitCost,
+          unitPrice: initialData.unitPrice,
         });
       } else {
         setFormData(emptyPart);
@@ -75,7 +73,7 @@ export function PartFormModal({
       return;
     }
 
-    if (formData.cost < 0 || formData.price < 0) {
+    if ((formData.unitCost && formData.unitCost < 0) || (formData.unitPrice && formData.unitPrice < 0)) {
       setError("Valores de custo e preço devem ser positivos");
       return;
     }
@@ -161,8 +159,8 @@ export function PartFormModal({
                   step="0.01"
                   min={0}
                   className="mt-1 rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-orangeWheel-500 focus:outline-none focus:ring-2 focus:ring-orangeWheel-200"
-                  value={formData.cost}
-                  onChange={event => handleChange("cost", Number(event.target.value))}
+                  value={formData.unitCost ?? 0}
+                  onChange={event => handleChange("unitCost", Number(event.target.value))}
                 />
               </div>
               <div className="flex flex-col">
@@ -172,34 +170,14 @@ export function PartFormModal({
                   step="0.01"
                   min={0}
                   className="mt-1 rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-orangeWheel-500 focus:outline-none focus:ring-2 focus:ring-orangeWheel-200"
-                  value={formData.price}
-                  onChange={event => handleChange("price", Number(event.target.value))}
+                  value={formData.unitPrice ?? 0}
+                  onChange={event => handleChange("unitPrice", Number(event.target.value))}
                 />
               </div>
             </div>
           </div>
 
           <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
-            <div className="flex flex-col">
-              <label className="text-sm font-medium text-gray-700">Estoque atual</label>
-              <input
-                type="number"
-                min={0}
-                className="mt-1 rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-orangeWheel-500 focus:outline-none focus:ring-2 focus:ring-orangeWheel-200"
-                value={formData.stockQuantity}
-                onChange={event => handleChange("stockQuantity", Number(event.target.value))}
-              />
-            </div>
-            <div className="flex flex-col">
-              <label className="text-sm font-medium text-gray-700">Estoque mínimo</label>
-              <input
-                type="number"
-                min={0}
-                className="mt-1 rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-orangeWheel-500 focus:outline-none focus:ring-2 focus:ring-orangeWheel-200"
-                value={formData.minimumStock}
-                onChange={event => handleChange("minimumStock", Number(event.target.value))}
-              />
-            </div>
             <div className="flex flex-col md:col-span-1">
               <label className="text-sm font-medium text-gray-700">Descrição</label>
               <textarea

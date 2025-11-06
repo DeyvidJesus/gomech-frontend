@@ -148,19 +148,13 @@ function InventoryDashboardContent() {
 
     const term = search.toLowerCase();
     return items.filter(item =>
-      [item.partName, item.location, item.status]
+      [item.partName, item.location]
         .filter(Boolean)
         .some(value => value?.toLowerCase().includes(term)),
     );
   }, [items, search]);
 
-  const totalStockValue = items.reduce(
-    (sum, item) =>
-      sum + (item.averageCost ?? item.salePrice ?? 0) * item.availableQuantity,
-    0,
-  );
   const totalItems = items.length;
-  const lowStockItems = items.filter(item => item.availableQuantity <= item.minimumQuantity).length;
 
   const handleDeleteItem = (item: InventoryItem) => {
     const confirmation = window.confirm(`Remover o item "${item.partName}" do estoque?`);
@@ -233,8 +227,7 @@ function InventoryDashboardContent() {
         <section className="space-y-6">
           <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
             <SectionCard title="Itens monitorados" value={String(totalItems)} />
-            <SectionCard title="Itens críticos" value={String(lowStockItems)} highlight={lowStockItems > 0} />
-            <SectionCard title="Valor total em estoque" value={formatCurrency(totalStockValue)} />
+            <SectionCard title="Itens críticos" value={String(criticalParts.length)} highlight={criticalParts.length > 0} />
           </div>
 
           <div className="rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
@@ -284,18 +277,12 @@ function InventoryDashboardContent() {
                     </thead>
                     <tbody className="divide-y divide-gray-200 bg-white">
                       {filteredItems.map(item => {
-                        const critical = item.availableQuantity <= item.minimumQuantity;
                         return (
-                          <tr key={item.id} className={critical ? "bg-red-50" : undefined}>
+                          <tr key={item.id}>
                             <td className="px-4 py-3">
                               <div className="flex flex-col gap-1">
                                 <div className="flex items-center gap-2">
                                   <span className="font-semibold text-gray-900">{item.partName}</span>
-                                  {item.status && (
-                                    <span className="rounded-full bg-gray-100 px-2 py-0.5 text-xs font-medium text-gray-600">
-                                      {item.status}
-                                    </span>
-                                  )}
                                 </div>
                                 <div className="text-xs text-gray-500">
                                   <span>ID Peça: {item.partId}</span>
@@ -304,13 +291,13 @@ function InventoryDashboardContent() {
                                 </div>
                               </div>
                             </td>
-                            <td className="px-4 py-3 text-sm text-gray-600">{item.availableQuantity}</td>
+                            <td className="px-4 py-3 text-sm text-gray-600">{item.quantity}</td>
                             <td className="px-4 py-3 text-sm text-gray-600">{item.reservedQuantity}</td>
                             <td className="px-4 py-3 text-sm text-gray-600">{item.minimumQuantity}</td>
-                            <td className="px-4 py-3 text-sm text-gray-600">{formatCurrency(item.averageCost ?? 0)}</td>
+                            <td className="px-4 py-3 text-sm text-gray-600">{formatCurrency(item.unitCost ?? 0)}</td>
                             <td className="px-4 py-3 text-sm text-gray-600">{formatCurrency(item.salePrice ?? 0)}</td>
-                            <td className="px-4 py-3 text-sm text-gray-600">{item.location ?? "-"}</td>
-                            <td className="px-4 py-3 text-right text-sm">
+                            <td className="px-4 py-3 text-sm text-gray-600">{item.location}</td>
+                            <td className="px-4 py-3 text-left text-sm">
                               <RoleGuard roles={["ADMIN"]}>
                                 <div className="flex justify-end gap-2">
                                   <button
@@ -400,25 +387,23 @@ function InventoryDashboardContent() {
                   description="Atualize o estoque com novas peças recebidas."
                   isLoading={entryMutation.isPending}
                   onSubmit={async payload => {
-                    const { itemId, quantity, unitCost, unitPrice, notes, partId } = payload as {
-                      itemId?: number;
-                      partId?: number;
+                    const { partId, location, quantity, unitCost, notes } = payload as {
+                      partId: number;
+                      location: string;
                       quantity: number;
                       unitCost?: number;
-                      unitPrice?: number;
                       notes?: string;
                     };
                     await entryMutation.mutateAsync({
-                      itemId,
                       partId,
+                      location,
                       quantity,
                       unitCost,
-                      unitPrice,
                       notes,
                     });
                     void refetchMovements();
                   }}
-                  fields={["itemId", "quantity", "unitCost", "unitPrice", "notes"]}
+                  fields={["partId", "location", "quantity", "unitCost", "notes"]}
                 />
                 <MovementForm
                   title="Reserva para OS"
@@ -750,9 +735,8 @@ function InventoryDashboardContent() {
           const payload: InventoryItemCreateDTO = {
             partId: data.partId,
             minimumQuantity: data.minimumQuantity,
-            initialQuantity: data.initialQuantity,
-            location: data.location,
-            averageCost: data.averageCost,
+            quantity: data.initialQuantity,
+            location: data.location ?? "",
             salePrice: data.salePrice,
           };
           await createItemMutation.mutateAsync(payload);
@@ -768,8 +752,8 @@ function InventoryDashboardContent() {
           if (!selectedItem) return;
           const payload: InventoryItemUpdateDTO = {
             minimumQuantity: data.minimumQuantity,
+            quantity: data.initialQuantity,
             location: data.location,
-            averageCost: data.averageCost,
             salePrice: data.salePrice,
           };
           await updateItemMutation.mutateAsync({ id: selectedItem.id, data: payload });
@@ -794,6 +778,7 @@ function MovementForm({
   fields: Array<
     | "itemId"
     | "partId"
+    | "location"
     | "quantity"
     | "unitCost"
     | "unitPrice"
@@ -820,9 +805,9 @@ function MovementForm({
 
     for (const field of fields) {
       const rawValue = formState[field];
-      const isTextField = ["notes", "reason"].includes(field);
+      const isTextField = ["notes", "reason", "location"].includes(field);
       const isNumericField = !isTextField;
-      const isRequiredField = ["itemId", "partId", "quantity", "serviceOrderItemId", "reservationId"].includes(field);
+      const isRequiredField = ["itemId", "partId", "location", "quantity", "serviceOrderItemId", "reservationId"].includes(field);
 
       if (!rawValue && isRequiredField) {
         setError("Preencha os campos obrigatórios");
@@ -880,6 +865,7 @@ function MovementForm({
             <label className="text-xs font-medium text-gray-600">
               {field === "itemId" && "ID do item de estoque"}
               {field === "partId" && "ID da peça"}
+              {field === "location" && "Localização"}
               {field === "quantity" && "Quantidade"}
               {field === "unitCost" && "Custo unitário (R$)"}
               {field === "unitPrice" && "Preço unitário (R$)"}
@@ -893,6 +879,14 @@ function MovementForm({
                 rows={2}
                 value={formState[field] ?? ""}
                 onChange={event => handleChange(field, event.target.value)}
+                className="mt-1 rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-orangeWheel-500 focus:outline-none focus:ring-2 focus:ring-orangeWheel-200"
+              />
+            ) : field === "location" ? (
+              <input
+                type="text"
+                value={formState[field] ?? ""}
+                onChange={event => handleChange(field, event.target.value)}
+                placeholder="Ex: Prateleira A1"
                 className="mt-1 rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-orangeWheel-500 focus:outline-none focus:ring-2 focus:ring-orangeWheel-200"
               />
             ) : (
