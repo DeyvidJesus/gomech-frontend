@@ -1,29 +1,39 @@
 import api from "../../../shared/services/axios";
 import type {
+  CriticalPartReport,
+  CriticalPartReportResponse,
   InventoryAvailability,
+  InventoryAvailabilityResponse,
+  InventoryEntryRequest,
   InventoryHistoryEntry,
+  InventoryHistoryEntryResponse,
   InventoryItem,
   InventoryItemCreateDTO,
+  InventoryItemResponse,
   InventoryItemUpdateDTO,
   InventoryMovement,
   InventoryMovementFilters,
   InventoryMovementResponse,
   InventoryRecommendation,
-  InventoryItemResponse,
-  InventoryAvailabilityResponse,
-  InventoryHistoryEntryResponse,
+  InventoryRecommendationResponse,
   RecommendationPipeline,
+  StockCancellationRequest,
+  StockConsumptionRequest,
+  StockReservationRequest,
+  StockReturnRequest,
 } from "../types/inventory";
 import {
+  normalizeCriticalPartReport,
   normalizeInventoryAvailability,
   normalizeInventoryHistoryEntry,
   normalizeInventoryItem,
   normalizeInventoryMovement,
+  normalizeInventoryRecommendation,
 } from "../types/inventory";
 
 export const inventoryApi = {
-  getItems: async (): Promise<InventoryItem[]> => {
-    const response = await api.get<InventoryItemResponse[]>("/inventory/items");
+  getItems: async (params?: { partId?: number }): Promise<InventoryItem[]> => {
+    const response = await api.get<InventoryItemResponse[]>("/inventory/items", { params });
     return response.data.map(normalizeInventoryItem);
   },
   getItemById: async (id: number): Promise<InventoryItem> => {
@@ -40,23 +50,23 @@ export const inventoryApi = {
   },
   deleteItem: (id: number) => api.delete(`/inventory/items/${id}`),
 
-  registerEntry: async (payload: { partId: number; quantity: number; cost?: number; notes?: string }) => {
+  registerEntry: async (payload: InventoryEntryRequest) => {
     const response = await api.post<InventoryMovementResponse>("/inventory/movements/entry", payload);
     return normalizeInventoryMovement(response.data);
   },
-  reserveStock: async (payload: { partId: number; serviceOrderId: number; quantity: number }) => {
+  reserveStock: async (payload: StockReservationRequest) => {
     const response = await api.post<InventoryMovementResponse>("/inventory/movements/reservations", payload);
     return normalizeInventoryMovement(response.data);
   },
-  consumeStock: async (payload: { reservationId: number; quantity: number; notes?: string }) => {
-    const response = await api.post<InventoryMovementResponse>("/inventory/movements/consumptions", payload);
+  consumeStock: async (payload: StockConsumptionRequest) => {
+    const response = await api.post<InventoryMovementResponse>("/inventory/movements/consumption", payload);
     return normalizeInventoryMovement(response.data);
   },
-  cancelReservation: async (payload: { reservationId: number; reason?: string }) => {
+  cancelReservation: async (payload: StockCancellationRequest) => {
     const response = await api.post<InventoryMovementResponse>("/inventory/movements/reservations/cancel", payload);
     return normalizeInventoryMovement(response.data);
   },
-  registerReturn: async (payload: { partId: number; serviceOrderId?: number; quantity: number; notes?: string }) => {
+  registerReturn: async (payload: StockReturnRequest) => {
     const response = await api.post<InventoryMovementResponse>("/inventory/movements/returns", payload);
     return normalizeInventoryMovement(response.data);
   },
@@ -65,11 +75,24 @@ export const inventoryApi = {
     return response.data.map(normalizeInventoryMovement);
   },
 
-  getRecommendations: (params?: { vehicleId?: number; serviceOrderId?: number; limit?: number; pipelineId?: string }) =>
-    api.get<InventoryRecommendation[]>("/inventory/recommendations", { params }),
-  getRecommendationPipelines: () => api.get<RecommendationPipeline[]>("/inventory/recommendations/pipelines"),
+  getRecommendations: async (params?: {
+    vehicleId?: number;
+    serviceOrderId?: number;
+    limit?: number;
+    pipelineId?: string;
+  }): Promise<InventoryRecommendation[]> => {
+    const response = await api.get<InventoryRecommendationResponse[]>("/inventory/recommendations", { params });
+    return response.data.map(normalizeInventoryRecommendation);
+  },
+  getRecommendationPipelines: async (): Promise<RecommendationPipeline[]> => {
+    const response = await api.get<RecommendationPipeline[]>("/inventory/recommendations/pipelines");
+    return response.data;
+  },
 
-  getCriticalPartsReport: () => api.get<InventoryRecommendation[]>("/inventory/reports/critical-parts"),
+  getCriticalPartsReport: async (): Promise<CriticalPartReport[]> => {
+    const response = await api.get<CriticalPartReportResponse[]>("/inventory/reports/critical-parts");
+    return response.data.map(normalizeCriticalPartReport);
+  },
   getPartAvailability: async (partId: number): Promise<InventoryAvailability> => {
     const response = await api.get<InventoryAvailabilityResponse>(`/inventory/availability/parts/${partId}`);
     return normalizeInventoryAvailability(response.data);

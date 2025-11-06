@@ -5,6 +5,7 @@ import RoleGuard from "../../auth/components/RoleGuard";
 import ProtectedRoute from "../../auth/components/ProtectedRoute";
 import { inventoryApi } from "../services/api";
 import type {
+  CriticalPartReport,
   InventoryAvailability,
   InventoryHistoryEntry,
   InventoryItem,
@@ -14,7 +15,7 @@ import type {
   InventoryRecommendation,
   RecommendationPipeline,
 } from "../types/inventory";
-import { InventoryItemModal } from "./InventoryItemModal";
+import { InventoryItemModal, type InventoryItemFormValues } from "./InventoryItemModal";
 
 const tabs = [
   { id: "items", label: "Itens" },
@@ -65,7 +66,12 @@ function InventoryDashboardContent() {
   const [selectedItem, setSelectedItem] = useState<InventoryItem | null>(null);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
-  const [movementFilters, setMovementFilters] = useState<{ partId?: number; serviceOrderId?: number; vehicleId?: number }>({});
+  const [movementFilters, setMovementFilters] = useState<{
+    itemId?: number;
+    partId?: number;
+    serviceOrderId?: number;
+    vehicleId?: number;
+  }>({});
   const [recommendationFilters, setRecommendationFilters] = useState<{ vehicleId?: number; serviceOrderId?: number; limit?: number; pipelineId?: string }>({ limit: 5 });
   const [availabilityIds, setAvailabilityIds] = useState<{ partId?: number; vehicleId?: number; clientId?: number }>({});
   const [availabilityData, setAvailabilityData] = useState<AvailabilityState>({});
@@ -111,27 +117,18 @@ function InventoryDashboardContent() {
 
   const { data: pipelines = [] } = useQuery<RecommendationPipeline[]>({
     queryKey: ["inventory", "pipelines"],
-    queryFn: async () => {
-      const response = await inventoryApi.getRecommendationPipelines();
-      return response.data;
-    },
+    queryFn: inventoryApi.getRecommendationPipelines,
   });
 
   const { data: recommendations = [], refetch: refetchRecommendations, isFetching: isFetchingRecommendations } =
     useQuery<InventoryRecommendation[]>({
       queryKey: ["inventory", "recommendations", recommendationFilters],
-      queryFn: async () => {
-        const response = await inventoryApi.getRecommendations(recommendationFilters);
-        return response.data;
-      },
+      queryFn: () => inventoryApi.getRecommendations(recommendationFilters),
     });
 
-  const { data: criticalParts = [] } = useQuery<InventoryRecommendation[]>({
+  const { data: criticalParts = [] } = useQuery<CriticalPartReport[]>({
     queryKey: ["inventory", "criticalParts"],
-    queryFn: async () => {
-      const response = await inventoryApi.getCriticalPartsReport();
-      return response.data;
-    },
+    queryFn: inventoryApi.getCriticalPartsReport,
   });
 
   const filteredItems = useMemo(() => {
@@ -148,7 +145,8 @@ function InventoryDashboardContent() {
   }, [items, search]);
 
   const totalStockValue = items.reduce(
-    (sum, item) => sum + (item.averageCost ?? 0) * item.availableQuantity,
+    (sum, item) =>
+      sum + (item.averageCost ?? item.salePrice ?? 0) * item.availableQuantity,
     0,
   );
   const totalItems = items.length;
@@ -269,6 +267,7 @@ function InventoryDashboardContent() {
                         <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">Reservado</th>
                         <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">Mínimo</th>
                         <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">Custo</th>
+                        <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">Preço</th>
                         <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">Localização</th>
                         <th className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wider text-gray-500">Ações</th>
                       </tr>
@@ -279,15 +278,27 @@ function InventoryDashboardContent() {
                         return (
                           <tr key={item.id} className={critical ? "bg-red-50" : undefined}>
                             <td className="px-4 py-3">
-                              <div className="flex flex-col">
-                                <span className="font-semibold text-gray-900">{item.partName}</span>
-                                <span className="text-xs text-gray-500">ID Peça: {item.partId}</span>
+                              <div className="flex flex-col gap-1">
+                                <div className="flex items-center gap-2">
+                                  <span className="font-semibold text-gray-900">{item.partName}</span>
+                                  {item.status && (
+                                    <span className="rounded-full bg-gray-100 px-2 py-0.5 text-xs font-medium text-gray-600">
+                                      {item.status}
+                                    </span>
+                                  )}
+                                </div>
+                                <div className="text-xs text-gray-500">
+                                  <span>ID Peça: {item.partId}</span>
+                                  {item.partCode && <span className="ml-2">SKU: {item.partCode}</span>}
+                                  {item.manufacturer && <span className="ml-2">{item.manufacturer}</span>}
+                                </div>
                               </div>
                             </td>
                             <td className="px-4 py-3 text-sm text-gray-600">{item.availableQuantity}</td>
                             <td className="px-4 py-3 text-sm text-gray-600">{item.reservedQuantity}</td>
                             <td className="px-4 py-3 text-sm text-gray-600">{item.minimumQuantity}</td>
                             <td className="px-4 py-3 text-sm text-gray-600">{formatCurrency(item.averageCost ?? 0)}</td>
+                            <td className="px-4 py-3 text-sm text-gray-600">{formatCurrency(item.salePrice ?? 0)}</td>
                             <td className="px-4 py-3 text-sm text-gray-600">{item.location ?? "-"}</td>
                             <td className="px-4 py-3 text-right text-sm">
                               <RoleGuard roles={["ADMIN"]}>
@@ -318,7 +329,7 @@ function InventoryDashboardContent() {
 
                       {filteredItems.length === 0 && (
                         <tr>
-                          <td colSpan={7} className="px-4 py-8 text-center text-sm text-gray-500">
+                          <td colSpan={8} className="px-4 py-8 text-center text-sm text-gray-500">
                             Nenhum item encontrado para os filtros aplicados.
                           </td>
                         </tr>
@@ -334,14 +345,31 @@ function InventoryDashboardContent() {
             <div className="rounded-lg border border-orangeWheel-200 bg-orangeWheel-50 p-4">
               <h3 className="mb-2 text-sm font-semibold text-orangeWheel-700">Peças com estoque crítico</h3>
               <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-3">
-                {criticalParts.map(recommendation => (
-                  <div key={recommendation.id} className="rounded-lg border border-orangeWheel-200 bg-white p-4 shadow-sm">
-                    <p className="text-sm font-semibold text-gray-800">{recommendation.partName ?? recommendation.id}</p>
-                    {recommendation.description && (
-                      <p className="mt-1 text-xs text-gray-500">{recommendation.description}</p>
+                {criticalParts.map(report => (
+                  <div key={report.partId} className="rounded-lg border border-orangeWheel-200 bg-white p-4 shadow-sm">
+                    <div className="flex items-center justify-between">
+                      <p className="text-sm font-semibold text-gray-800">{report.partName}</p>
+                      <span
+                        className={`rounded-full px-2 py-0.5 text-xs font-semibold ${
+                          report.severity === "CRITICAL"
+                            ? "bg-red-100 text-red-600"
+                            : report.severity === "WARNING"
+                              ? "bg-amber-100 text-amber-700"
+                              : "bg-emerald-100 text-emerald-700"
+                        }`}
+                      >
+                        {report.severity}
+                      </span>
+                    </div>
+                    <p className="mt-2 text-xs text-gray-500">
+                      Quantidade atual: <span className="font-semibold">{report.currentQuantity}</span> | Mínimo:{" "}
+                      <span className="font-semibold">{report.minimumQuantity}</span>
+                    </p>
+                    {report.recommendedAction && (
+                      <p className="mt-2 text-xs text-gray-600">{report.recommendedAction}</p>
                     )}
-                    {recommendation.suggestedQuantity && (
-                      <p className="mt-2 text-xs text-gray-500">Sugestão: {recommendation.suggestedQuantity} unidades</p>
+                    {typeof report.confidence === "number" && (
+                      <p className="mt-2 text-xs text-gray-500">Confiança: {(report.confidence * 100).toFixed(0)}%</p>
                     )}
                   </div>
                 ))}
@@ -362,31 +390,40 @@ function InventoryDashboardContent() {
                   description="Atualize o estoque com novas peças recebidas."
                   isLoading={entryMutation.isPending}
                   onSubmit={async payload => {
-                    const { partId, quantity, cost, notes } = payload as {
-                      partId: number;
+                    const { itemId, quantity, unitCost, unitPrice, notes, partId } = payload as {
+                      itemId?: number;
+                      partId?: number;
                       quantity: number;
-                      cost?: number;
+                      unitCost?: number;
+                      unitPrice?: number;
                       notes?: string;
                     };
-                    await entryMutation.mutateAsync({ partId, quantity, cost, notes });
+                    await entryMutation.mutateAsync({
+                      itemId,
+                      partId,
+                      quantity,
+                      unitCost,
+                      unitPrice,
+                      notes,
+                    });
                     void refetchMovements();
                   }}
-                  fields={["partId", "quantity", "cost", "notes"]}
+                  fields={["itemId", "quantity", "unitCost", "unitPrice", "notes"]}
                 />
                 <MovementForm
                   title="Reserva para OS"
                   description="Reserve peças para uma ordem de serviço."
                   isLoading={reserveMutation.isPending}
                   onSubmit={async payload => {
-                    const { partId, quantity, serviceOrderId } = payload as {
-                      partId: number;
+                    const { serviceOrderItemId, quantity, notes } = payload as {
+                      serviceOrderItemId: number;
                       quantity: number;
-                      serviceOrderId: number;
+                      notes?: string;
                     };
-                    await reserveMutation.mutateAsync({ partId, quantity, serviceOrderId });
+                    await reserveMutation.mutateAsync({ serviceOrderItemId, quantity, notes });
                     void refetchMovements();
                   }}
-                  fields={["partId", "quantity", "serviceOrderId"]}
+                  fields={["serviceOrderItemId", "quantity", "notes"]}
                 />
                 <MovementForm
                   title="Consumo de reserva"
@@ -422,16 +459,15 @@ function InventoryDashboardContent() {
                   description="Registre a devolução de peças ao estoque."
                   isLoading={returnMutation.isPending}
                   onSubmit={async payload => {
-                    const { partId, quantity, serviceOrderId, notes } = payload as {
-                      partId: number;
+                    const { serviceOrderItemId, quantity, notes } = payload as {
+                      serviceOrderItemId: number;
                       quantity: number;
-                      serviceOrderId?: number;
                       notes?: string;
                     };
-                    await returnMutation.mutateAsync({ partId, quantity, serviceOrderId, notes });
+                    await returnMutation.mutateAsync({ serviceOrderItemId, quantity, notes });
                     void refetchMovements();
                   }}
-                  fields={["partId", "quantity", "serviceOrderId", "notes"]}
+                  fields={["serviceOrderItemId", "quantity", "notes"]}
                 />
               </div>
             </RoleGuard>
@@ -449,6 +485,13 @@ function InventoryDashboardContent() {
               </div>
 
               <div className="grid gap-3 md:grid-cols-2">
+                <FilterInput
+                  label="ID do item"
+                  value={movementFilters.itemId ?? ""}
+                  onChange={value =>
+                    setMovementFilters(prev => ({ ...prev, itemId: value ? Number(value) : undefined }))
+                  }
+                />
                 <FilterInput
                   label="ID da peça"
                   value={movementFilters.partId ?? ""}
@@ -560,19 +603,38 @@ function InventoryDashboardContent() {
             ) : (
               <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
                 {recommendations.map(recommendation => (
-                  <article key={recommendation.id} className="rounded-lg border border-gray-200 bg-white p-4 shadow-sm">
-                    <h3 className="text-base font-semibold text-gray-800">
-                      {recommendation.partName ?? `Sugestão ${recommendation.id}`}
-                    </h3>
+                  <article key={recommendation.id} className="flex flex-col gap-3 rounded-lg border border-gray-200 bg-white p-4 shadow-sm">
+                    <header className="flex items-start justify-between gap-2">
+                      <div>
+                        <h3 className="text-base font-semibold text-gray-800">
+                          {recommendation.partName ?? `Sugestão ${recommendation.id}`}
+                        </h3>
+                        {typeof recommendation.priorityScore === "number" && (
+                          <p className="text-xs text-gray-400">Prioridade: {recommendation.priorityScore.toFixed(2)}</p>
+                        )}
+                      </div>
+                      {recommendation.isFallback && (
+                        <span className="rounded-full bg-purple-100 px-2 py-0.5 text-xs font-semibold text-purple-600">
+                          Fallback
+                        </span>
+                      )}
+                    </header>
                     {recommendation.description && (
-                      <p className="mt-2 text-sm text-gray-600">{recommendation.description}</p>
+                      <p className="text-sm text-gray-600">{recommendation.description}</p>
                     )}
-                    {recommendation.suggestedQuantity && (
-                      <p className="mt-3 text-xs text-gray-500">Quantidade sugerida: {recommendation.suggestedQuantity}</p>
+                    {recommendation.rationale && (
+                      <p className="text-xs text-gray-500">{recommendation.rationale}</p>
                     )}
-                    {recommendation.priorityScore && (
-                      <p className="mt-1 text-xs text-gray-400">Prioridade: {recommendation.priorityScore.toFixed(2)}</p>
-                    )}
+                    <div className="mt-auto space-y-1 text-xs text-gray-500">
+                      {recommendation.suggestedQuantity && (
+                        <p>
+                          Quantidade sugerida: <span className="font-semibold">{recommendation.suggestedQuantity}</span>
+                        </p>
+                      )}
+                      {typeof recommendation.confidence === "number" && (
+                        <p>Confiança: {(recommendation.confidence * 100).toFixed(0)}%</p>
+                      )}
+                    </div>
                   </article>
                 ))}
               </div>
@@ -675,7 +737,15 @@ function InventoryDashboardContent() {
         isOpen={isCreateModalOpen}
         onClose={() => setIsCreateModalOpen(false)}
         onSubmit={async data => {
-          await createItemMutation.mutateAsync(data);
+          const payload: InventoryItemCreateDTO = {
+            partId: data.partId,
+            minimumQuantity: data.minimumQuantity,
+            initialQuantity: data.initialQuantity,
+            location: data.location,
+            averageCost: data.averageCost,
+            salePrice: data.salePrice,
+          };
+          await createItemMutation.mutateAsync(payload);
         }}
         title="Adicionar item ao estoque"
         isSubmitting={createItemMutation.isPending}
@@ -686,7 +756,13 @@ function InventoryDashboardContent() {
         onClose={() => setIsEditModalOpen(false)}
         onSubmit={async data => {
           if (!selectedItem) return;
-          await updateItemMutation.mutateAsync({ id: selectedItem.id, data });
+          const payload: InventoryItemUpdateDTO = {
+            minimumQuantity: data.minimumQuantity,
+            location: data.location,
+            averageCost: data.averageCost,
+            salePrice: data.salePrice,
+          };
+          await updateItemMutation.mutateAsync({ id: selectedItem.id, data: payload });
         }}
         title="Editar item de estoque"
         initialData={selectedItem}
@@ -705,7 +781,17 @@ function MovementForm({
 }: {
   title: string;
   description: string;
-  fields: Array<"partId" | "quantity" | "cost" | "notes" | "serviceOrderId" | "reservationId" | "reason">;
+  fields: Array<
+    | "itemId"
+    | "partId"
+    | "quantity"
+    | "unitCost"
+    | "unitPrice"
+    | "notes"
+    | "serviceOrderItemId"
+    | "reservationId"
+    | "reason"
+  >;
   onSubmit: (payload: Record<string, number | string | undefined>) => Promise<void> | void;
   isLoading?: boolean;
 }) {
@@ -724,18 +810,52 @@ function MovementForm({
 
     for (const field of fields) {
       const rawValue = formState[field];
-      if (!rawValue && ["partId", "quantity", "serviceOrderId", "reservationId"].includes(field)) {
+      const isTextField = ["notes", "reason"].includes(field);
+      const isNumericField = !isTextField;
+      const isRequiredField = ["itemId", "partId", "quantity", "serviceOrderItemId", "reservationId"].includes(field);
+
+      if (!rawValue && isRequiredField) {
         setError("Preencha os campos obrigatórios");
         return;
       }
 
-      if (rawValue) {
-        payload[field] = ["notes", "reason"].includes(field) ? rawValue : Number(rawValue);
+      if (rawValue && isNumericField) {
+        const numericValue = Number(rawValue);
+        if (Number.isNaN(numericValue)) {
+          setError("Informe valores numéricos válidos");
+          return;
+        }
+
+        if (field === "quantity" && numericValue < 1) {
+          setError("A quantidade mínima é 1");
+          return;
+        }
+
+        if (["itemId", "partId", "serviceOrderItemId", "reservationId"].includes(field) && numericValue <= 0) {
+          setError("Valores devem ser maiores que zero");
+          return;
+        }
+
+        if (["unitCost", "unitPrice"].includes(field) && numericValue < 0) {
+          setError("Valores monetários não podem ser negativos");
+          return;
+        }
+
+        payload[field] = numericValue;
+      }
+
+      if (rawValue && isTextField) {
+        payload[field] = rawValue;
       }
     }
 
-    await onSubmit(payload);
-    setFormState(Object.fromEntries(fields.map(field => [field, ""])));
+    try {
+      await onSubmit(payload);
+      setFormState(Object.fromEntries(fields.map(field => [field, ""])));
+    } catch (submitError: any) {
+      const message = submitError?.response?.data?.message ?? 'Não foi possível registrar a movimentação.';
+      setError(message);
+    }
   };
 
   return (
@@ -748,11 +868,13 @@ function MovementForm({
         {fields.map(field => (
           <div key={field} className="flex flex-col text-sm">
             <label className="text-xs font-medium text-gray-600">
+              {field === "itemId" && "ID do item de estoque"}
               {field === "partId" && "ID da peça"}
               {field === "quantity" && "Quantidade"}
-              {field === "cost" && "Custo (R$)"}
+              {field === "unitCost" && "Custo unitário (R$)"}
+              {field === "unitPrice" && "Preço unitário (R$)"}
               {field === "notes" && "Observações"}
-              {field === "serviceOrderId" && "ID da OS"}
+              {field === "serviceOrderItemId" && "ID do item da OS"}
               {field === "reservationId" && "ID da reserva"}
               {field === "reason" && "Motivo"}
             </label>
@@ -766,8 +888,16 @@ function MovementForm({
             ) : (
               <input
                 type="number"
-                step={field === "cost" ? "0.01" : "1"}
-                min={field === "quantity" || field === "cost" ? 0 : undefined}
+                step={["unitCost", "unitPrice"].includes(field) ? "0.01" : "1"}
+                min={
+                  field === "quantity"
+                    ? 1
+                    : ["unitCost", "unitPrice"].includes(field)
+                      ? 0
+                      : ["itemId", "partId", "serviceOrderItemId", "reservationId"].includes(field)
+                        ? 1
+                        : undefined
+                }
                 value={formState[field] ?? ""}
                 onChange={event => handleChange(field, event.target.value)}
                 className="mt-1 rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-orangeWheel-500 focus:outline-none focus:ring-2 focus:ring-orangeWheel-200"
@@ -835,6 +965,16 @@ function AvailabilityCard({ title, data }: { title: string; data: InventoryAvail
           <p className="font-semibold text-gray-800">{data.pending}</p>
         </div>
       </div>
+      {(data.projectedStockoutDate || data.coverageDays) && (
+        <div className="mt-3 text-xs text-gray-500">
+          {data.projectedStockoutDate && (
+            <p>Estoque estimado até: {new Date(data.projectedStockoutDate).toLocaleDateString("pt-BR")}</p>
+          )}
+          {typeof data.coverageDays === "number" && (
+            <p>Autonomia estimada: {data.coverageDays} dias</p>
+          )}
+        </div>
+      )}
       {data.breakdown && data.breakdown.length > 0 && (
         <div className="mt-3 space-y-1 text-xs text-gray-500">
           {data.breakdown.map((location, index) => (
@@ -865,6 +1005,7 @@ function HistoryCard({ title, entries }: { title: string; entries: InventoryHist
               </div>
               <p className="mt-1 font-semibold text-gray-800">{entry.partName ?? `ID ${entry.id}`}</p>
               <p className="text-xs text-gray-500">Quantidade: {entry.quantity}</p>
+              {entry.performedBy && <p className="text-xs text-gray-400">Por: {entry.performedBy}</p>}
               {entry.notes && <p className="text-xs text-gray-400">{entry.notes}</p>}
             </div>
           ))
