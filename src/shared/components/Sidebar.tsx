@@ -3,6 +3,7 @@ import { Link, useNavigate } from '@tanstack/react-router'
 import RoleGuard from '../../modules/auth/components/RoleGuard'
 import { useAuth } from '../../modules/auth/hooks/useAuth'
 import { useLogout } from '../../modules/auth/hooks/useLogout'
+import { OrganizationBadge } from '../../modules/organization/components/OrganizationBadge'
 
 interface SidebarProps {
   isOpen: boolean
@@ -67,15 +68,18 @@ export default function Sidebar({ isOpen, onClose, isDesktop }: SidebarProps) {
 
         {/* Informações do usuário */}
         {data && (
-          <div className="p-3 mt-0 mx-3 mb-4 bg-[rgba(255,255,255,0.1)] rounded-lg text-xs text-[var(--sidebar-text)]">
-            <div className="mb-1.5">
-              <strong>{email}</strong>
+          <div className="px-3 space-y-3 mb-4">
+            <div className="p-3 bg-[rgba(255,255,255,0.1)] rounded-lg text-xs text-[var(--sidebar-text)]">
+              <div className="mb-1.5">
+                <strong>{email}</strong>
+              </div>
+              <div className={`inline-block px-2 py-1 rounded-xl text-xs font-bold text-white ${
+                role === 'ADMIN' ? 'bg-red-500' : 'bg-blue-500'
+              }`}>
+                {role}
+              </div>
             </div>
-            <div className={`inline-block px-2 py-1 rounded-xl text-xs font-bold text-white ${
-              role === 'ADMIN' ? 'bg-red-500' : 'bg-blue-500'
-            }`}>
-              {role}
-            </div>
+            <OrganizationBadge />
           </div>
         )}
 
