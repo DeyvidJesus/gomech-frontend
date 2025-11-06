@@ -4,8 +4,19 @@ export interface AnalyticsRequest {
 }
 
 export interface AnalyticsResponse {
-  status: string
+  status: 'SUCCESS' | 'ERROR'
   data?: unknown
   message?: string
   generatedAt?: string
+}
+
+export type AnalyticsInsightCategory = 'INVENTORY' | 'CUSTOMER' | 'OPERATIONS' | 'SUPPLIER'
+
+export interface AnalyticsInsight {
+  id: string
+  title: string
+  description: string
+  category: AnalyticsInsightCategory
+  createdAt?: string
+  updatedAt?: string
 }

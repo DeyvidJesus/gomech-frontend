@@ -11,6 +11,7 @@ import {
   setStoredTokens,
 } from '../../modules/auth/utils/authCache'
 import type { RefreshTokenResponse } from '../../modules/auth/types/user'
+import { emitHttpStatusEvent } from './httpEvents'
 
 const inferredProductionBaseURL =
   typeof window !== 'undefined' && window.location.hostname.endsWith('go-mech.com')
@@ -109,6 +110,12 @@ api.interceptors.response.use(
         return api(originalRequest)
       } catch (refreshError) {
         clearStoredAuth()
+        emitHttpStatusEvent('unauthorized', {
+          status: 401,
+          message:
+            error.response?.data?.message ??
+            'Sua sessão expirou. Faça login novamente para continuar.',
+        })
         if (typeof window !== 'undefined') {
           window.location.href = '/login'
         } else {
@@ -120,6 +127,11 @@ api.interceptors.response.use(
 
     if (status === 403) {
       console.error('Acesso negado:', error)
+      emitHttpStatusEvent('forbidden', {
+        status: 403,
+        message:
+          error.response?.data?.message ?? 'Você não tem permissão para acessar este recurso.',
+      })
       redirect({ to: '/' })
     }
 

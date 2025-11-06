@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useMutation } from "@tanstack/react-query";
 
 import { analyticsApi } from "../../analytics/services/api";
-import type { AnalyticsResponse } from "../../analytics/types/analytics";
+import type { AnalyticsRequest, AnalyticsResponse } from "../../analytics/types/analytics";
 
 export default function AnalyticsPanel() {
   const defaultPayloadExample = '{\n  "range": "30d"\n}';
@@ -11,10 +11,10 @@ export default function AnalyticsPanel() {
   const [error, setError] = useState<string | null>(null);
   const [result, setResult] = useState<AnalyticsResponse | null>(null);
 
-  const mutation = useMutation({
+  const mutation = useMutation<AnalyticsResponse, unknown, AnalyticsRequest>({
     mutationFn: analyticsApi.send,
     onSuccess: response => {
-      setResult(response.data);
+      setResult(response);
     },
   });
 

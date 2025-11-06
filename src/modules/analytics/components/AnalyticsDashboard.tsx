@@ -1,10 +1,35 @@
-import { useState } from "react";
-import { useMutation } from "@tanstack/react-query";
+import { useMemo, useState } from "react";
+import { useMutation, useQuery } from "@tanstack/react-query";
 
 import ProtectedRoute from "../../auth/components/ProtectedRoute";
 import RoleGuard from "../../auth/components/RoleGuard";
 import { analyticsApi } from "../services/api";
-import type { AnalyticsResponse } from "../types/analytics";
+import type { AnalyticsInsight, AnalyticsResponse } from "../types/analytics";
+
+const metricCatalog = [
+  {
+    id: "inventory.trends",
+    label: "Tendências de estoque",
+    description: "Evolução de consumo e reposição por peça e categoria",
+    example: { range: "30d" },
+  },
+  {
+    id: "service-orders.performance",
+    label: "Performance de ordens de serviço",
+    description: "Ciclo médio, margem e itens mais consumidos",
+    example: { status: "OPEN", window: "14d" },
+  },
+  {
+    id: "supplier.reliability",
+    label: "Confiabilidade de fornecedores",
+    description: "Atrasos, devoluções e custo médio por fornecedor",
+    example: { period: "quarter" },
+  },
+];
+
+function formatPayload(example: Record<string, unknown>) {
+  return JSON.stringify(example, null, 2);
+}
 
 export default function AnalyticsDashboard() {
   return (
@@ -17,43 +42,56 @@ export default function AnalyticsDashboard() {
 }
 
 function AnalyticsDashboardContent() {
-  const defaultPayloadExample = '{\n  "range": "30d"\n}';
-  const [metric, setMetric] = useState("inventory.trends");
-  const [payloadText, setPayloadText] = useState(defaultPayloadExample);
+  const [selectedMetric, setSelectedMetric] = useState(metricCatalog[0]);
+  const [payloadText, setPayloadText] = useState(() => formatPayload(metricCatalog[0].example));
   const [error, setError] = useState<string | null>(null);
   const [result, setResult] = useState<AnalyticsResponse | null>(null);
 
+  const insightsQuery = useQuery({
+    queryKey: ["analytics", "insights"],
+    queryFn: analyticsApi.getInsights,
+    staleTime: 60_000,
+  });
+
   const mutation = useMutation({
     mutationFn: analyticsApi.send,
-    onSuccess: response => {
-      setResult(response.data);
+    onSuccess: data => {
+      setResult(data);
     },
   });
+
+  const insightsByCategory = useMemo(() => {
+    const grouped = new Map<string, AnalyticsInsight[]>();
+    (insightsQuery.data ?? []).forEach(insight => {
+      if (!grouped.has(insight.category)) {
+        grouped.set(insight.category, []);
+      }
+      grouped.get(insight.category)!.push(insight);
+    });
+    return Array.from(grouped.entries());
+  }, [insightsQuery.data]);
 
   const handleSubmit = (event: React.FormEvent) => {
     event.preventDefault();
     setError(null);
     setResult(null);
 
-    if (!metric.trim()) {
-      setError("Informe a métrica desejada");
-      return;
-    }
-
     try {
-      const parsedPayload = payloadText.trim() ? JSON.parse(payloadText) : {};
-      mutation.mutate({ metric: metric.trim(), payload: parsedPayload });
+      const parsedPayload = payloadText.trim() ? (JSON.parse(payloadText) as Record<string, unknown>) : {};
+      mutation.mutate({ metric: selectedMetric.id, payload: parsedPayload });
     } catch (parseError) {
       setError("Payload inválido. Insira um JSON válido.");
     }
   };
+
+  const hasErrorResult = result?.status === "ERROR";
 
   return (
     <div className="space-y-6">
       <header className="rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
         <h1 className="text-2xl font-bold text-orangeWheel-500">Analytics Operacional</h1>
         <p className="mt-2 text-sm text-gray-500">
-          Envie solicitações ao serviço Python para gerar relatórios customizados e dashboards avançados.
+          Conecte-se ao serviço analítico para gerar insights sob demanda e alimentar os dashboards da GoMech.
         </p>
       </header>
 
@@ -62,14 +100,22 @@ function AnalyticsDashboardContent() {
         <div className="grid gap-4 md:grid-cols-3">
           <div className="md:col-span-1">
             <label className="text-sm font-medium text-gray-700">Métrica</label>
-            <input
-              type="text"
-              value={metric}
-              onChange={event => setMetric(event.target.value)}
+            <select
+              value={selectedMetric.id}
+              onChange={event => {
+                const metric = metricCatalog.find(option => option.id === event.target.value) ?? metricCatalog[0];
+                setSelectedMetric(metric);
+                setPayloadText(formatPayload(metric.example));
+              }}
               className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-orangeWheel-500 focus:outline-none focus:ring-2 focus:ring-orangeWheel-200"
-              placeholder="ex: inventory.trends"
-              required
-            />
+            >
+              {metricCatalog.map(metric => (
+                <option key={metric.id} value={metric.id}>
+                  {metric.label}
+                </option>
+              ))}
+            </select>
+            <p className="mt-2 text-xs text-gray-500">{selectedMetric.description}</p>
           </div>
           <div className="md:col-span-2">
             <label className="text-sm font-medium text-gray-700">Payload (JSON)</label>
@@ -78,7 +124,7 @@ function AnalyticsDashboardContent() {
               value={payloadText}
               onChange={event => setPayloadText(event.target.value)}
               className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 font-mono text-sm focus:border-orangeWheel-500 focus:outline-none focus:ring-2 focus:ring-orangeWheel-200"
-              placeholder={defaultPayloadExample}
+              placeholder={formatPayload(selectedMetric.example)}
             />
           </div>
         </div>
@@ -98,13 +144,13 @@ function AnalyticsDashboardContent() {
         </button>
       </form>
 
-      {mutation.isError && !error && (
+      {hasErrorResult && (
         <div className="rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-700">
-          {(mutation.error as any)?.response?.data?.message ?? "Falha ao gerar o relatório solicitado."}
+          {result?.message ?? "Falha ao gerar o relatório solicitado."}
         </div>
       )}
 
-      {result && (
+      {result && !hasErrorResult && (
         <section className="space-y-4 rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
           <div className="flex items-center justify-between">
             <div>
@@ -121,6 +167,58 @@ function AnalyticsDashboardContent() {
           </pre>
         </section>
       )}
+
+      <section className="space-y-4 rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
+        <div className="flex items-center justify-between">
+          <div>
+            <h2 className="text-lg font-semibold text-gray-800">Insights automáticos</h2>
+            <p className="text-sm text-gray-500">Agrupados por categoria para alimentar dashboards temáticos.</p>
+          </div>
+          <button
+            type="button"
+            onClick={() => insightsQuery.refetch()}
+            className="rounded-md border border-gray-200 px-3 py-1 text-xs font-medium text-gray-600 transition-colors hover:bg-gray-100"
+          >
+            Atualizar
+          </button>
+        </div>
+
+        {insightsQuery.isLoading ? (
+          <div className="flex h-40 items-center justify-center">
+            <div className="h-10 w-10 animate-spin rounded-full border-4 border-orangeWheel-500 border-t-transparent" />
+          </div>
+        ) : insightsByCategory.length === 0 ? (
+          <div className="rounded-md border border-dashed border-gray-300 p-6 text-center text-sm text-gray-500">
+            Nenhum insight disponível no momento.
+          </div>
+        ) : (
+          <div className="space-y-4">
+            {insightsByCategory.map(([category, insights]) => (
+              <div key={category} className="space-y-3">
+                <h3 className="text-sm font-semibold uppercase tracking-wide text-gray-500">{category}</h3>
+                <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-3">
+                  {insights.map(insight => (
+                    <article
+                      key={insight.id}
+                      className="flex h-full flex-col justify-between rounded-lg border border-gray-200 bg-white p-4 shadow-sm"
+                    >
+                      <div className="space-y-2">
+                        <h4 className="text-base font-semibold text-gray-800">{insight.title}</h4>
+                        <p className="text-sm text-gray-600">{insight.description}</p>
+                      </div>
+                      {(insight.updatedAt || insight.createdAt) && (
+                        <p className="mt-3 text-xs text-gray-400">
+                          Atualizado em {new Date(insight.updatedAt ?? insight.createdAt ?? "").toLocaleString("pt-BR")}
+                        </p>
+                      )}
+                    </article>
+                  ))}
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </section>
     </div>
   );
 }

@@ -5,6 +5,7 @@ import ProtectedRoute from '../../modules/auth/components/ProtectedRoute'
 import { useAuth } from '../../modules/auth/hooks/useAuth'
 import { useMediaQuery } from '../hooks/useMediaQuery'
 import Sidebar from './Sidebar'
+import { HttpStatusBanner } from './HttpStatusBanner'
 
 const ChatBot = lazy(() => import('../../modules/ai/components/ChatBot/ChatBot'))
 
@@ -44,6 +45,7 @@ export function Layout() {
   return (
     <ProtectedRoute>
       <div className={containerClassName}>
+        <HttpStatusBanner />
         {shouldShowChatBot && (
           <Suspense fallback={null}>
             <ChatBot />

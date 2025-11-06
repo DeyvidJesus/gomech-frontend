@@ -1,22 +1,32 @@
 import { useEffect, useState } from "react";
 
-import type { InventoryItem, InventoryItemCreateDTO } from "../types/inventory";
+import type { InventoryItem } from "../types/inventory";
+
+export interface InventoryItemFormValues {
+  partId: number;
+  minimumQuantity: number;
+  initialQuantity: number;
+  location?: string;
+  averageCost?: number;
+  salePrice?: number;
+}
 
 interface InventoryItemModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSubmit: (payload: InventoryItemCreateDTO) => Promise<void> | void;
+  onSubmit: (payload: InventoryItemFormValues) => Promise<void> | void;
   title: string;
   initialData?: InventoryItem | null;
   isSubmitting?: boolean;
 }
 
-const emptyItem: InventoryItemCreateDTO = {
+const emptyItem: InventoryItemFormValues = {
   partId: 0,
-  availableQuantity: 0,
+  initialQuantity: 0,
   minimumQuantity: 0,
   location: "",
   averageCost: 0,
+  salePrice: 0,
 };
 
 export function InventoryItemModal({
@@ -27,18 +37,21 @@ export function InventoryItemModal({
   initialData,
   isSubmitting = false,
 }: InventoryItemModalProps) {
-  const [formData, setFormData] = useState<InventoryItemCreateDTO>(emptyItem);
+  const [formData, setFormData] = useState<InventoryItemFormValues>(emptyItem);
   const [error, setError] = useState<string | null>(null);
+
+  const isEditMode = Boolean(initialData);
 
   useEffect(() => {
     if (isOpen) {
       if (initialData) {
         setFormData({
           partId: initialData.partId,
-          availableQuantity: initialData.availableQuantity,
+          initialQuantity: initialData.availableQuantity,
           minimumQuantity: initialData.minimumQuantity,
           location: initialData.location ?? "",
           averageCost: initialData.averageCost ?? 0,
+          salePrice: initialData.salePrice ?? 0,
         });
       } else {
         setFormData(emptyItem);
@@ -51,7 +64,7 @@ export function InventoryItemModal({
     return null;
   }
 
-  const handleChange = (field: keyof InventoryItemCreateDTO, value: string | number) => {
+  const handleChange = (field: keyof InventoryItemFormValues, value: string | number) => {
     setFormData(prev => ({
       ...prev,
       [field]: typeof value === "string" ? value : value,
@@ -67,8 +80,13 @@ export function InventoryItemModal({
       return;
     }
 
-    if (formData.availableQuantity < 0 || formData.minimumQuantity < 0) {
+    if (formData.initialQuantity < 0 || formData.minimumQuantity < 0) {
       setError("Quantidades devem ser positivas");
+      return;
+    }
+
+    if ((formData.averageCost ?? 0) < 0 || (formData.salePrice ?? 0) < 0) {
+      setError("Valores monetários não podem ser negativos");
       return;
     }
 
@@ -77,6 +95,7 @@ export function InventoryItemModal({
         ...formData,
         location: formData.location?.trim() || undefined,
         averageCost: formData.averageCost ?? undefined,
+        salePrice: formData.salePrice ?? undefined,
       });
       onClose();
     } catch (submitError: any) {
@@ -118,8 +137,11 @@ export function InventoryItemModal({
                 onChange={event => handleChange("partId", Number(event.target.value))}
                 className="mt-1 rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-orangeWheel-500 focus:outline-none focus:ring-2 focus:ring-orangeWheel-200"
                 required
+                disabled={isEditMode}
               />
-              <span className="mt-1 text-xs text-gray-500">Consulte o ID na listagem de peças cadastradas.</span>
+              <span className="mt-1 text-xs text-gray-500">
+                Consulte o ID na listagem de peças cadastradas.
+              </span>
             </div>
 
             <div className="flex flex-col">
@@ -136,14 +158,20 @@ export function InventoryItemModal({
 
           <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
             <div className="flex flex-col">
-              <label className="text-sm font-medium text-gray-700">Quantidade disponível</label>
+              <label className="text-sm font-medium text-gray-700">Estoque atual</label>
               <input
                 type="number"
                 min={0}
-                value={formData.availableQuantity}
-                onChange={event => handleChange("availableQuantity", Number(event.target.value))}
+                value={formData.initialQuantity}
+                onChange={event => handleChange("initialQuantity", Number(event.target.value))}
                 className="mt-1 rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-orangeWheel-500 focus:outline-none focus:ring-2 focus:ring-orangeWheel-200"
+                disabled={isEditMode}
               />
+              {isEditMode && (
+                <span className="mt-1 text-xs text-gray-500">
+                  Ajustes de quantidade devem ser feitos via movimentações.
+                </span>
+              )}
             </div>
             <div className="flex flex-col">
               <label className="text-sm font-medium text-gray-700">Quantidade mínima</label>
@@ -163,6 +191,17 @@ export function InventoryItemModal({
                 min={0}
                 value={formData.averageCost ?? 0}
                 onChange={event => handleChange("averageCost", Number(event.target.value))}
+                className="mt-1 rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-orangeWheel-500 focus:outline-none focus:ring-2 focus:ring-orangeWheel-200"
+              />
+            </div>
+            <div className="flex flex-col">
+              <label className="text-sm font-medium text-gray-700">Preço de venda (R$)</label>
+              <input
+                type="number"
+                step="0.01"
+                min={0}
+                value={formData.salePrice ?? 0}
+                onChange={event => handleChange("salePrice", Number(event.target.value))}
                 className="mt-1 rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-orangeWheel-500 focus:outline-none focus:ring-2 focus:ring-orangeWheel-200"
               />
             </div>
