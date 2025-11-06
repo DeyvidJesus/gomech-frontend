@@ -418,22 +418,27 @@ function AuditEventContent() {
                       <div className="text-[10px] uppercase text-gray-400">{event.role}</div>
                     </td>
                     <td className="px-3 py-3 text-xs text-gray-600">
-                      {event.blockchainHash ? (
-                        <button
-                          type="button"
-                          onClick={() => {
-                            if (navigator?.clipboard?.writeText) {
-                              void navigator.clipboard.writeText(event.blockchainHash);
-                            }
-                          }}
-                          className="break-all text-left font-mono text-[11px] text-orangeWheel-600 hover:underline"
-                          title="Clique para copiar"
-                        >
-                          {event.blockchainHash}
-                        </button>
-                      ) : (
-                        <span className="text-gray-400">—</span>
-                      )}
+                      {(() => {
+                        const hash = event.blockchainHash ?? "";
+                        if (!hash) {
+                          return <span className="text-gray-400">—</span>;
+                        }
+
+                        return (
+                          <button
+                            type="button"
+                            onClick={() => {
+                              if (navigator?.clipboard?.writeText) {
+                                void navigator.clipboard.writeText(hash);
+                              }
+                            }}
+                            className="break-all text-left font-mono text-[11px] text-orangeWheel-600 hover:underline"
+                            title="Clique para copiar"
+                          >
+                            {hash}
+                          </button>
+                        );
+                      })()}
                       {event.previousHash && (
                         <div className="mt-1 text-[10px] text-gray-400">Prev: {event.previousHash}</div>
                       )}

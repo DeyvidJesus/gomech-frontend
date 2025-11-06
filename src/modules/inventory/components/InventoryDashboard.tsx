@@ -15,7 +15,7 @@ import type {
   InventoryRecommendation,
   RecommendationPipeline,
 } from "../types/inventory";
-import { InventoryItemModal, type InventoryItemFormValues } from "./InventoryItemModal";
+import { InventoryItemModal } from "./InventoryItemModal";
 
 const tabs = [
   { id: "items", label: "Itens" },
@@ -78,10 +78,13 @@ function InventoryDashboardContent() {
   const [historyIds, setHistoryIds] = useState<{ vehicleId?: number; clientId?: number }>({});
   const [historyData, setHistoryData] = useState<HistoryState>({});
 
-  const { data: items = [], isLoading: isLoadingItems, error: itemsError } = useQuery<InventoryItem[]>({
+  const itemsQuery = useQuery<InventoryItem[]>({
     queryKey: ["inventory", "items"],
-    queryFn: inventoryApi.getItems,
+    queryFn: () => inventoryApi.getItems(),
   });
+  const items = itemsQuery.data ?? [];
+  const isLoadingItems = itemsQuery.isLoading;
+  const itemsError = itemsQuery.error;
 
   const createItemMutation = useMutation({
     mutationFn: (payload: InventoryItemCreateDTO) => inventoryApi.createItem(payload),
@@ -110,26 +113,33 @@ function InventoryDashboardContent() {
   const cancelReservationMutation = useMutation({ mutationFn: inventoryApi.cancelReservation });
   const returnMutation = useMutation({ mutationFn: inventoryApi.registerReturn });
 
-  const { data: movements = [], refetch: refetchMovements, isFetching: isFetchingMovements } = useQuery<InventoryMovement[]>({
+  const movementsQuery = useQuery<InventoryMovement[]>({
     queryKey: ["inventory", "movements", movementFilters],
     queryFn: () => inventoryApi.listMovements(movementFilters),
   });
+  const movements = movementsQuery.data ?? [];
+  const refetchMovements = movementsQuery.refetch;
+  const isFetchingMovements = movementsQuery.isFetching;
 
-  const { data: pipelines = [] } = useQuery<RecommendationPipeline[]>({
+  const pipelinesQuery = useQuery<RecommendationPipeline[]>({
     queryKey: ["inventory", "pipelines"],
-    queryFn: inventoryApi.getRecommendationPipelines,
+    queryFn: () => inventoryApi.getRecommendationPipelines(),
   });
+  const pipelines = pipelinesQuery.data ?? [];
 
-  const { data: recommendations = [], refetch: refetchRecommendations, isFetching: isFetchingRecommendations } =
-    useQuery<InventoryRecommendation[]>({
-      queryKey: ["inventory", "recommendations", recommendationFilters],
-      queryFn: () => inventoryApi.getRecommendations(recommendationFilters),
-    });
+  const recommendationsQuery = useQuery<InventoryRecommendation[]>({
+    queryKey: ["inventory", "recommendations", recommendationFilters],
+    queryFn: () => inventoryApi.getRecommendations(recommendationFilters),
+  });
+  const recommendations = recommendationsQuery.data ?? [];
+  const refetchRecommendations = recommendationsQuery.refetch;
+  const isFetchingRecommendations = recommendationsQuery.isFetching;
 
-  const { data: criticalParts = [] } = useQuery<CriticalPartReport[]>({
+  const criticalPartsQuery = useQuery<CriticalPartReport[]>({
     queryKey: ["inventory", "criticalParts"],
-    queryFn: inventoryApi.getCriticalPartsReport,
+    queryFn: () => inventoryApi.getCriticalPartsReport(),
   });
+  const criticalParts = criticalPartsQuery.data ?? [];
 
   const filteredItems = useMemo(() => {
     if (!search.trim()) {
