@@ -50,12 +50,17 @@ function ensureAuthorizationHeader(config: any) {
 
   if (token) {
     config.headers.Authorization = `Bearer ${token}`
-    return config
+  } else {
+    const auth = getCachedAuth() ?? loadPersistedAuth()
+    if (auth?.accessToken) {
+      config.headers.Authorization = `Bearer ${auth.accessToken}`
+    }
   }
 
+  // Adiciona o organization_id em todas as requisições
   const auth = getCachedAuth() ?? loadPersistedAuth()
-  if (auth?.accessToken) {
-    config.headers.Authorization = `Bearer ${auth.accessToken}`
+  if (auth?.organization?.id) {
+    config.headers['X-Organization-ID'] = auth.organization.id.toString()
   }
 
   return config
