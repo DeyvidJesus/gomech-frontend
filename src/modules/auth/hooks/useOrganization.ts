@@ -1,5 +1,4 @@
 import { useAuth } from './useAuth'
-import type { Organization } from '../types/user'
 
 /**
  * Hook para acessar informações da organização do usuário logado
