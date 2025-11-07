@@ -196,12 +196,12 @@ export default function LoginPage() {
             {/* Link para registro */}
             <div className="text-center pt-4">
               <p className="text-gray-600">
-                Não tem uma conta?{" "}
+                Não tem uma organização cadastrada?{" "}
                 <Link
                   to="/register"
                   className="text-orange-600 hover:text-orange-700 font-semibold transition-colors"
                 >
-                  Criar conta
+                  Cadastrar organização
                 </Link>
               </p>
             </div>

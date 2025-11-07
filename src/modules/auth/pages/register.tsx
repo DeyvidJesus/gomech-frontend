@@ -1,369 +1,581 @@
 import { useState } from "react";
 import { Link, useNavigate } from "@tanstack/react-router";
+import { useMutation } from "@tanstack/react-query";
+import { organizationApi } from "../../organization/services/api";
+import type { OrganizationCreateRequest } from "../../organization/types/organization";
 
-import { useRegister } from "../hooks/useRegister";
-import { useAuth } from "../hooks/useAuth";
-import type { RegisterRequest, UserRole } from "../types/user";
+const STEPS = [
+  { id: 1, title: "Informações Básicas", icon: "🏢" },
+  { id: 2, title: "Contato", icon: "📞" },
+  { id: 3, title: "Documentação", icon: "📄" },
+  { id: 4, title: "Revisão", icon: "✓" },
+] as const;
 
 function Register() {
-  const register = useRegister();
   const navigate = useNavigate();
-  const { data }: any = useAuth();
+  const [currentStep, setCurrentStep] = useState(1);
   const [error, setError] = useState<string | null>(null);
-  const [confirmPassword, setConfirmPassword] = useState("");
-  const [role, setRole] = useState<UserRole>("USER");
-  const [mfaEnabled, setMfaEnabled] = useState(false);
-  const [mfaSecret, setMfaSecret] = useState<string | null>(null);
-  const [allowAutoRedirect, setAllowAutoRedirect] = useState(true);
+  const [isSuccess, setIsSuccess] = useState(false);
+  const [createdOrganization, setCreatedOrganization] = useState<any>(null);
 
-  if (data?.accessToken && allowAutoRedirect) {
-    navigate({ to: "/" });
-    return null;
-  }
+  const [formData, setFormData] = useState<OrganizationCreateRequest>({
+    name: "",
+    slug: "",
+    description: "",
+    contactEmail: "",
+    contactPhone: "",
+    address: "",
+    document: "",
+  });
 
-  const [name, setName] = useState("");
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [acceptTerms, setAcceptTerms] = useState(false);
+  const createOrganization = useMutation({
+    mutationFn: (data: OrganizationCreateRequest) =>
+      organizationApi.create(data),
+    onSuccess: (response) => {
+      setCreatedOrganization(response.data);
+      setIsSuccess(true);
+      setCurrentStep(4);
+    },
+    onError: (err: any) => {
+      setError(
+        err?.response?.data?.message ||
+          "Erro ao cadastrar organização. Tente novamente."
+      );
+    },
+  });
 
-  function handleSubmit(e: React.FormEvent) {
-    e.preventDefault();
+  const handleInputChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+  ) => {
+    const { name, value } = e.target;
+    setFormData((prev) => ({ ...prev, [name]: value }));
     setError(null);
-    
-    // Validações
-    if (!name.trim() || !email.trim() || !password.trim() || !confirmPassword.trim()) {
-      setError("Por favor, preencha todos os campos obrigatórios");
-      return;
+
+    // Auto-generate slug from name
+    if (name === "name") {
+      const slug = value
+        .toLowerCase()
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "")
+        .replace(/[^a-z0-9\s-]/g, "")
+        .replace(/\s+/g, "-")
+        .replace(/-+/g, "-")
+        .trim();
+      setFormData((prev) => ({ ...prev, slug }));
     }
+  };
 
-    if (!acceptTerms) {
-      setError("Você deve aceitar os Termos de Uso e Política de Privacidade para continuar");
-      return;
-    }
+  const validateStep = (step: number): boolean => {
+    setError(null);
 
-    if (password !== confirmPassword) {
-      setError("As senhas não coincidem");
-      return;
-    }
-
-    if (password.length < 6) {
-      setError("A senha deve ter pelo menos 6 caracteres");
-      return;
-    }
-
-    const payload: RegisterRequest = {
-      name,
-      email,
-      password,
-      role,
-      organizationId: 1,
-      ...(mfaEnabled ? { mfaEnabled: true } : {}),
-    };
-
-    register.mutate(payload, {
-      onSuccess: (response) => {
-        if (payload.mfaEnabled && response.mfaSetupSecret) {
-          setAllowAutoRedirect(false);
-          setMfaSecret(response.mfaSetupSecret);
-        } else {
-          navigate({ to: "/" });
+    switch (step) {
+      case 1:
+        if (!formData.name.trim()) {
+          setError("O nome da organização é obrigatório");
+          return false;
         }
-      },
-      onError: (err: any) => {
-        setError(err?.response?.data?.message || "Erro ao criar conta. Tente novamente.");
-      },
-    });
-  }
+        return true;
+
+      case 2:
+        if (!formData.contactEmail?.trim()) {
+          setError("O email de contato é obrigatório");
+          return false;
+        }
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (formData.contactEmail && !emailRegex.test(formData.contactEmail)) {
+          setError("Por favor, insira um email válido");
+          return false;
+        }
+        return true;
+
+      case 3:
+        // Documentação é opcional, mas se preenchida, deve ser válida
+        if (formData.document && formData.document.trim().length < 11) {
+          setError("O documento deve ter pelo menos 11 caracteres");
+          return false;
+        }
+        return true;
+
+      default:
+        return true;
+    }
+  };
+
+  const handleNext = () => {
+    if (validateStep(currentStep)) {
+      if (currentStep < STEPS.length - 1) {
+        setCurrentStep(currentStep + 1);
+      }
+    }
+  };
+
+  const handlePrevious = () => {
+    if (currentStep > 1) {
+      setCurrentStep(currentStep - 1);
+      setError(null);
+    }
+  };
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (validateStep(currentStep)) {
+      createOrganization.mutate(formData);
+    }
+  };
+
+  const renderStepContent = () => {
+    switch (currentStep) {
+      case 1:
+        return (
+          <div className="space-y-5">
+            <div>
+              <label
+                htmlFor="name"
+                className="block text-sm font-semibold text-gray-700 mb-2"
+              >
+                Nome da Organização <span className="text-red-500">*</span>
+              </label>
+              <input
+                id="name"
+                name="name"
+                type="text"
+                placeholder="Ex: Oficina Silva & Cia"
+                value={formData.name}
+                onChange={handleInputChange}
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-colors text-gray-900 placeholder-gray-500 bg-white"
+                required
+              />
+            </div>
+
+            <div>
+              <label
+                htmlFor="slug"
+                className="block text-sm font-semibold text-gray-700 mb-2"
+              >
+                Slug (URL amigável)
+              </label>
+              <input
+                id="slug"
+                name="slug"
+                type="text"
+                placeholder="oficina-silva-cia"
+                value={formData.slug}
+                onChange={handleInputChange}
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-colors text-gray-900 placeholder-gray-500 bg-white"
+              />
+              <p className="mt-1 text-xs text-gray-500">
+                Gerado automaticamente a partir do nome. Usado para identificar
+                sua organização na URL.
+              </p>
+            </div>
+
+            <div>
+              <label
+                htmlFor="description"
+                className="block text-sm font-semibold text-gray-700 mb-2"
+              >
+                Descrição
+              </label>
+              <textarea
+                id="description"
+                name="description"
+                rows={4}
+                placeholder="Descreva sua organização, serviços oferecidos, etc."
+                value={formData.description}
+                onChange={handleInputChange}
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-colors text-gray-900 placeholder-gray-500 bg-white resize-none"
+              />
+            </div>
+          </div>
+        );
+
+      case 2:
+        return (
+          <div className="space-y-5">
+            <div>
+              <label
+                htmlFor="contactEmail"
+                className="block text-sm font-semibold text-gray-700 mb-2"
+              >
+                Email de Contato <span className="text-red-500">*</span>
+              </label>
+              <input
+                id="contactEmail"
+                name="contactEmail"
+                type="email"
+                placeholder="contato@oficina.com"
+                value={formData.contactEmail}
+                onChange={handleInputChange}
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-colors text-gray-900 placeholder-gray-500 bg-white"
+                required
+              />
+            </div>
+
+            <div>
+              <label
+                htmlFor="contactPhone"
+                className="block text-sm font-semibold text-gray-700 mb-2"
+              >
+                Telefone de Contato
+              </label>
+              <input
+                id="contactPhone"
+                name="contactPhone"
+                type="tel"
+                placeholder="(11) 98765-4321"
+                value={formData.contactPhone}
+                onChange={handleInputChange}
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-colors text-gray-900 placeholder-gray-500 bg-white"
+              />
+            </div>
+
+            <div>
+              <label
+                htmlFor="address"
+                className="block text-sm font-semibold text-gray-700 mb-2"
+              >
+                Endereço
+              </label>
+              <input
+                id="address"
+                name="address"
+                type="text"
+                placeholder="Rua, número, bairro, cidade - Estado"
+                value={formData.address}
+                onChange={handleInputChange}
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-colors text-gray-900 placeholder-gray-500 bg-white"
+              />
+            </div>
+          </div>
+        );
+
+      case 3:
+        return (
+          <div className="space-y-5">
+            <div>
+              <label
+                htmlFor="document"
+                className="block text-sm font-semibold text-gray-700 mb-2"
+              >
+                CNPJ/CPF
+              </label>
+              <input
+                id="document"
+                name="document"
+                type="text"
+                placeholder="00.000.000/0000-00 ou 000.000.000-00"
+                value={formData.document}
+                onChange={handleInputChange}
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-colors text-gray-900 placeholder-gray-500 bg-white"
+              />
+              <p className="mt-1 text-xs text-gray-500">
+                Documento é opcional, mas recomendado para identificação
+                oficial.
+              </p>
+            </div>
+
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+              <div className="flex items-start gap-3">
+                <span className="text-blue-600 text-xl">ℹ️</span>
+                <div className="text-sm text-blue-700">
+                  <p className="font-medium mb-1">Próximos passos</p>
+                  <p>
+                    Após o cadastro, um administrador precisará aprovar sua
+                    organização. Você receberá um email quando isso acontecer.
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        );
+
+      case 4:
+        if (isSuccess && createdOrganization) {
+          return (
+            <div className="text-center space-y-6">
+              <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto">
+                <span className="text-4xl">✅</span>
+              </div>
+              <div>
+                <h3 className="text-2xl font-bold text-gray-800 mb-2">
+                  Organização cadastrada com sucesso!
+                </h3>
+                <p className="text-gray-600 mb-4">
+                  Sua organização <strong>{createdOrganization.name}</strong>{" "}
+                  foi cadastrada e está aguardando aprovação.
+                </p>
+                <div className="bg-orange-50 border border-orange-200 rounded-lg p-4 text-sm text-orange-700">
+                  <p className="font-medium mb-1">📧 O que acontece agora?</p>
+                  <p>
+                    Você receberá um email quando sua organização for aprovada
+                    por um administrador. Após a aprovação, você poderá fazer
+                    login e começar a usar o sistema.
+                  </p>
+                </div>
+              </div>
+              <div className="flex gap-3 justify-center">
+                <button
+                  type="button"
+                  onClick={() => navigate({ to: "/login" })}
+                  className="px-6 py-3 bg-gradient-to-r from-orange-600 to-orange-700 hover:from-orange-700 hover:to-orange-800 text-white font-semibold rounded-lg transition-all duration-200"
+                >
+                  Ir para Login
+                </button>
+              </div>
+            </div>
+          );
+        }
+
+        return (
+          <div className="space-y-5">
+            <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
+              <h3 className="text-lg font-semibold text-gray-800 mb-4">
+                Revisão dos Dados
+              </h3>
+              <div className="space-y-3 text-sm">
+                <div>
+                  <span className="font-semibold text-gray-700">Nome:</span>
+                  <p className="text-gray-600">{formData.name || "-"}</p>
+                </div>
+                <div>
+                  <span className="font-semibold text-gray-700">Slug:</span>
+                  <p className="text-gray-600">{formData.slug || "-"}</p>
+                </div>
+                {formData.description && (
+                  <div>
+                    <span className="font-semibold text-gray-700">
+                      Descrição:
+                    </span>
+                    <p className="text-gray-600">{formData.description}</p>
+                  </div>
+                )}
+                <div>
+                  <span className="font-semibold text-gray-700">Email:</span>
+                  <p className="text-gray-600">
+                    {formData.contactEmail || "-"}
+                  </p>
+                </div>
+                {formData.contactPhone && (
+                  <div>
+                    <span className="font-semibold text-gray-700">Telefone:</span>
+                    <p className="text-gray-600">{formData.contactPhone}</p>
+                  </div>
+                )}
+                {formData.address && (
+                  <div>
+                    <span className="font-semibold text-gray-700">Endereço:</span>
+                    <p className="text-gray-600">{formData.address}</p>
+                  </div>
+                )}
+                {formData.document && (
+                  <div>
+                    <span className="font-semibold text-gray-700">Documento:</span>
+                    <p className="text-gray-600">{formData.document}</p>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            <div className="bg-orange-50 border border-orange-200 rounded-lg p-4">
+              <div className="flex items-start gap-3">
+                <span className="text-orange-600 text-xl">🔒</span>
+                <div className="text-sm text-orange-700">
+                  <p className="font-medium mb-1">Seus dados estão seguros</p>
+                  <p>
+                    Todas as informações fornecidas serão tratadas com
+                    confidencialidade e segurança.
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        );
+
+      default:
+        return null;
+    }
+  };
 
   return (
     <div className="min-h-screen flex">
-      {/* Lado esquerdo - Formulário de cadastro */}
+      {/* Lado esquerdo - Formulário */}
       <div className="w-full lg:w-1/2 flex items-center justify-center p-8 bg-gradient-to-br from-orange-50 to-orange-100">
-        <div className="w-full max-w-md">
-          {mfaSecret && (
-            <div className="mb-6 bg-white border border-orange-200 rounded-lg p-4 shadow-sm">
-              <h3 className="text-lg font-semibold text-orange-600 mb-2">Configuração MFA</h3>
-              <p className="text-sm text-gray-600 mb-3">
-                Escaneie o código abaixo no seu autenticador TOTP ou utilize a chave para concluir a configuração de múltiplos
-                fatores.
-              </p>
-              <div className="bg-gray-100 rounded-md px-3 py-2 font-mono text-sm text-gray-800 break-all border border-gray-200">
-                {mfaSecret}
-              </div>
-              <button
-                type="button"
-                onClick={() => {
-                  setAllowAutoRedirect(true);
-                  navigate({ to: "/" });
-                }}
-                className="mt-4 w-full bg-orangeWheel-500 hover:bg-orangeWheel-600 text-white font-semibold py-2.5 rounded-lg transition-colors"
-              >
-                Acessar painel
-              </button>
-            </div>
-          )}
-
+        <div className="w-full max-w-2xl">
           {/* Logo para telas menores */}
           <div className="lg:hidden text-center mb-8">
             <h1 className="text-3xl font-bold text-orange-600 mb-2">GoMech</h1>
             <p className="text-gray-600">Sistema de Gestão Automotiva</p>
           </div>
 
+          {/* Indicador de etapas */}
+          <div className="mb-8">
+            <div className="flex items-center justify-between mb-4">
+              {STEPS.map((step, index) => (
+                <div key={step.id} className="flex items-center flex-1">
+                  <div className="flex flex-col items-center flex-1">
+                    <div
+                      className={`w-10 h-10 rounded-full flex items-center justify-center font-semibold transition-all ${
+                        currentStep >= step.id
+                          ? "bg-orange-600 text-white"
+                          : "bg-gray-200 text-gray-500"
+                      }`}
+                    >
+                      {currentStep > step.id ? "✓" : step.icon}
+                    </div>
+                    <span
+                      className={`text-xs mt-2 text-center ${
+                        currentStep >= step.id
+                          ? "text-orange-600 font-semibold"
+                          : "text-gray-500"
+                      }`}
+                    >
+                      {step.title}
+                    </span>
+                  </div>
+                  {index < STEPS.length - 1 && (
+                    <div
+                      className={`h-1 flex-1 mx-2 rounded ${
+                        currentStep > step.id
+                          ? "bg-orange-600"
+                          : "bg-gray-200"
+                      }`}
+                    />
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+
           {/* Cabeçalho do formulário */}
           <div className="text-center mb-8">
             <div className="w-16 h-16 bg-orange-600 rounded-full flex items-center justify-center mx-auto mb-4">
-              <span className="text-2xl text-white">🚀</span>
+              <span className="text-2xl text-white">
+                {STEPS[currentStep - 1]?.icon || "🏢"}
+              </span>
             </div>
-            <h2 className="text-2xl font-bold text-gray-800 mb-2">Comece sua jornada!</h2>
-            <p className="text-gray-600">Crie sua conta e gerencie sua oficina</p>
+            <h2 className="text-2xl font-bold text-gray-800 mb-2">
+              {STEPS[currentStep - 1]?.title || "Cadastro de Organização"}
+            </h2>
+            <p className="text-gray-600">
+              {currentStep === 1 && "Vamos começar com as informações básicas"}
+              {currentStep === 2 && "Como podemos entrar em contato?"}
+              {currentStep === 3 && "Informações de documentação"}
+              {currentStep === 4 && "Revise os dados antes de finalizar"}
+            </p>
           </div>
 
           {/* Formulário */}
-          <form onSubmit={handleSubmit} className="space-y-5">
+          <form onSubmit={handleSubmit} className="space-y-6">
             {/* Exibição de erro */}
             {error && (
               <div className="bg-red-50 border border-red-200 rounded-lg p-4">
                 <div className="flex items-center gap-2">
                   <span className="text-red-600">⚠️</span>
-                  <span className="text-red-700 text-sm font-medium">{error}</span>
+                  <span className="text-red-700 text-sm font-medium">
+                    {error}
+                  </span>
                 </div>
               </div>
             )}
 
-            {/* Campo de nome */}
-            <div>
-              <label htmlFor="name" className="block text-sm font-semibold text-gray-700 mb-2">
-                Nome completo
-              </label>
-              <input
-                id="name"
-                type="text"
-                placeholder="Seu nome completo"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-colors text-gray-900 placeholder-gray-500 bg-white"
-                required
-              />
+            {/* Conteúdo da etapa */}
+            <div className="bg-white rounded-lg p-6 shadow-sm border border-gray-200">
+              {renderStepContent()}
             </div>
 
-            {/* Campo de email */}
-            <div>
-              <label htmlFor="email" className="block text-sm font-semibold text-gray-700 mb-2">
-                E-mail
-              </label>
-              <input
-                id="email"
-                type="email"
-                placeholder="seuemail@exemplo.com"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-colors text-gray-900 placeholder-gray-500 bg-white"
-                required
-              />
-            </div>
-
-            {/* Campos de senha em grid */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label htmlFor="password" className="block text-sm font-semibold text-gray-700 mb-2">
-                  Senha
-                </label>
-                <input
-                  id="password"
-                  type="password"
-                  placeholder="Mínimo 6 caracteres"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-colors text-gray-900 placeholder-gray-500 bg-white"
-                  required
-                  minLength={6}
-                />
-              </div>
-              <div>
-                <label htmlFor="confirmPassword" className="block text-sm font-semibold text-gray-700 mb-2">
-                  Confirmar senha
-                </label>
-                <input
-                  id="confirmPassword"
-                  type="password"
-                  placeholder="Repita a senha"
-                  value={confirmPassword}
-                  onChange={(e) => setConfirmPassword(e.target.value)}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-colors text-gray-900 placeholder-gray-500 bg-white"
-                  required
-                />
-              </div>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label htmlFor="role" className="block text-sm font-semibold text-gray-700 mb-2">
-                  Perfil de acesso
-                </label>
-                <select
-                  id="role"
-                  value={role}
-                  onChange={(event) => setRole(event.target.value as UserRole)}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-colors text-gray-900 bg-white"
+            {/* Botões de navegação */}
+            {!isSuccess && (
+              <div className="flex justify-between gap-3">
+                <button
+                  type="button"
+                  onClick={handlePrevious}
+                  disabled={currentStep === 1}
+                  className="px-6 py-3 border border-gray-300 rounded-lg text-gray-700 font-semibold hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                 >
-                  <option value="USER">Usuário padrão</option>
-                  <option value="ADMIN">Administrador</option>
-                </select>
-              </div>
+                  Voltar
+                </button>
 
-              <div className="flex items-center md:items-end gap-3 p-4 border border-gray-200 rounded-lg bg-white">
-                <input
-                  id="mfaEnabled"
-                  type="checkbox"
-                  checked={mfaEnabled}
-                  onChange={(event) => setMfaEnabled(event.target.checked)}
-                  className="h-5 w-5 text-orange-600 focus:ring-orange-500 border-gray-300 rounded"
-                />
-                <label htmlFor="mfaEnabled" className="text-sm text-gray-700 cursor-pointer">
-                  Ativar MFA (recomendado para administradores)
-                </label>
+                {currentStep < STEPS.length - 1 ? (
+                  <button
+                    type="button"
+                    onClick={handleNext}
+                    className="px-6 py-3 bg-gradient-to-r from-orange-600 to-orange-700 hover:from-orange-700 hover:to-orange-800 text-white font-semibold rounded-lg transition-all duration-200 flex items-center gap-2"
+                  >
+                    Próximo
+                    <span>→</span>
+                  </button>
+                ) : (
+                  <button
+                    type="submit"
+                    disabled={createOrganization.isPending}
+                    className="px-6 py-3 bg-gradient-to-r from-orange-600 to-orange-700 hover:from-orange-700 hover:to-orange-800 disabled:from-gray-400 disabled:to-gray-500 disabled:cursor-not-allowed text-white font-semibold rounded-lg transition-all duration-200 flex items-center gap-2"
+                  >
+                    {createOrganization.isPending ? (
+                      <>
+                        <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                        Cadastrando...
+                      </>
+                    ) : (
+                      <>
+                        <span>✨</span>
+                        Finalizar Cadastro
+                      </>
+                    )}
+                  </button>
+                )}
               </div>
-            </div>
+            )}
 
-            {mfaEnabled && (
-              <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 text-sm text-blue-700">
-                <p className="font-medium mb-1">Como funciona?</p>
-                <p>
-                  Ative esta opção para exigir um código temporário gerado por aplicativo autenticador (Google Authenticator,
-                  Authy, etc.) em cada login.
+            {/* Link para login */}
+            {!isSuccess && (
+              <div className="text-center pt-4">
+                <p className="text-gray-600">
+                  Já tem uma organização cadastrada?{" "}
+                  <Link
+                    to="/login"
+                    className="text-orange-600 hover:text-orange-700 font-semibold transition-colors"
+                  >
+                    Fazer login
+                  </Link>
                 </p>
               </div>
             )}
-
-            {/* Informações de segurança */}
-            <div className="bg-orange-50 border border-orange-200 rounded-lg p-3">
-              <div className="flex items-start gap-2">
-                <span className="text-orange-600 mt-0.5">🔒</span>
-                <div className="text-sm text-orange-700">
-                  <p className="font-medium mb-1">Sua conta será protegida com:</p>
-                  <ul className="text-xs space-y-1 text-orange-600">
-                    <li>• Criptografia de dados</li>
-                    <li>• Autenticação segura</li>
-                    <li>• Backup automático</li>
-                  </ul>
-                </div>
-              </div>
-            </div>
-
-            {/* Aceite dos Termos e Políticas */}
-            <div className="space-y-3">
-              <div className="flex items-start gap-3 p-4 border border-gray-200 rounded-lg bg-gray-50">
-                <div className="flex items-center h-5">
-                  <input
-                    id="acceptTerms"
-                    type="checkbox"
-                    checked={acceptTerms}
-                    onChange={(e) => setAcceptTerms(e.target.checked)}
-                    className="h-4 w-4 text-orange-600 focus:ring-orange-500 border-gray-300 rounded"
-                    required
-                  />
-                </div>
-                <div className="text-sm">
-                  <label htmlFor="acceptTerms" className="font-medium text-gray-900 cursor-pointer">
-                    Aceito os termos e políticas
-                  </label>
-                  <p className="text-gray-600 mt-1">
-                    Li e concordo com os{" "}
-                    <Link 
-                      to={"/terms-of-service"} 
-                      className="text-orange-600 hover:text-orange-700 font-semibold underline"
-                      target="_blank"
-                    >
-                      Termos de Uso
-                    </Link>{" "}
-                    e{" "}
-                    <Link 
-                      to={"/privacy-policy"} 
-                      className="text-orange-600 hover:text-orange-700 font-semibold underline"
-                      target="_blank"
-                    >
-                      Política de Privacidade
-                    </Link>
-                  </p>
-                </div>
-              </div>
-            </div>
-
-            {/* Botão de cadastro */}
-            <button
-              type="submit"
-              disabled={register.isPending || !acceptTerms}
-              className="w-full bg-gradient-to-r from-orange-600 to-orange-700 hover:from-orange-700 hover:to-orange-800 disabled:from-gray-400 disabled:to-gray-500 disabled:cursor-not-allowed text-white font-semibold py-3 px-4 rounded-lg transition-all duration-200 flex items-center justify-center gap-2"
-            >
-              {register.isPending ? (
-                <>
-                  <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                  Criando conta...
-                </>
-              ) : (
-                <>
-                  <span>✨</span>
-                  Criar conta
-                </>
-              )}
-            </button>
-
-            {/* Link para login */}
-            <div className="text-center pt-4">
-              <p className="text-gray-600">
-                Já tem uma conta?{" "}
-                <Link
-                  to="/login"
-                  className="text-orange-600 hover:text-orange-700 font-semibold transition-colors"
-                >
-                  Fazer login
-                </Link>
-              </p>
-            </div>
           </form>
         </div>
       </div>
 
       {/* Lado direito - Benefícios e imagem */}
-      <div 
+      <div
         className="hidden lg:flex lg:w-1/2 bg-cover bg-center bg-no-repeat relative"
-        style={{ backgroundImage: 'url(/login_bg.webp)' }}
+        style={{ backgroundImage: "url(/login_bg.webp)" }}
       >
         {/* Overlay com gradiente laranja */}
         <div className="absolute inset-0 bg-gradient-to-br from-orange-600 to-orange-800"></div>
-        
+
         {/* Conteúdo sobre a imagem */}
         <div className="relative z-10 flex flex-col justify-center items-center text-white p-12">
           <div className="text-center">
             <div className="w-20 h-20 bg-white rounded-full flex items-center justify-center mx-auto mb-6">
-              <span className="text-4xl">🏆</span>
+              <span className="text-4xl">🏢</span>
             </div>
-            <h1 className="text-4xl font-bold mb-4">Junte-se a GoMech</h1>
+            <h1 className="text-4xl font-bold mb-4">Cadastre sua Organização</h1>
             <p className="text-xl text-orange-100 mb-8">
-              Milhares de oficinas já confiam em nós
+              Gerencie sua oficina de forma profissional
             </p>
-            
-            {/* Estatísticas */}
-            <div className="grid grid-cols-2 gap-6 mb-8">
-              <div className="text-center">
-                <div className="text-3xl font-bold text-orange-200">500+</div>
-                <div className="text-sm text-orange-100">Oficinas ativas</div>
-              </div>
-              <div className="text-center">
-                <div className="text-3xl font-bold text-orange-200">50k+</div>
-                <div className="text-sm text-orange-100">Veículos gerenciados</div>
-              </div>
-            </div>
 
             {/* Benefícios */}
-            <div className="space-y-4 text-orange-100">
+            <div className="space-y-4 text-orange-100 mb-8">
               <div className="flex items-center gap-3">
                 <span className="text-orange-300 text-xl">⚡</span>
-                <span>Setup rápido em menos de 5 minutos</span>
+                <span>Cadastro rápido e simples</span>
               </div>
               <div className="flex items-center gap-3">
-                <span className="text-orange-300 text-xl">🛡️</span>
-                <span>Suporte técnico especializado</span>
+                <span className="text-orange-300 text-xl">🔧</span>
+                <span>Gestão completa de clientes e veículos</span>
+              </div>
+              <div className="flex items-center gap-3">
+                <span className="text-orange-300 text-xl">📊</span>
+                <span>Controle de ordens de serviço</span>
               </div>
               <div className="flex items-center gap-3">
                 <span className="text-orange-300 text-xl">📈</span>
@@ -374,10 +586,11 @@ function Register() {
             {/* Depoimento */}
             <div className="mt-8 p-4 bg-white rounded-lg border border-white border-opacity-20">
               <p className="text-sm italic text-[#242424] mb-2">
-                "A GoMech revolucionou nossa oficina. Agora conseguimos atender 3x mais clientes!"
+                "O cadastro foi super simples e em poucos minutos já estávamos
+                usando o sistema!"
               </p>
               <div className="text-xs text-[#242424]">
-                — Carlos Silva, Oficina Silva & Cia
+                — Maria Santos, Oficina Santos
               </div>
             </div>
           </div>

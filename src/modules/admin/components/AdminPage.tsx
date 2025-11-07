@@ -11,11 +11,11 @@ import VehicleClientStats from "./VehicleClientStats";
 import AnalyticsPanel from "./AnalyticsPanel";
 import AuditPanel from "./AuditPanel";
 import { PageTutorial } from "@/modules/tutorial/components/PageTutorial";
-import { OrganizationManagement } from "../../organization/components/OrganizationManagement";
+import { UserManagement } from "../../user/components/UserManagement";
 
 export default function AdminPage() {
   const { data: authData } = useAuth();
-  const [activeTab, setActiveTab] = useState<'overview' | 'users' | 'organizations' | 'system' | 'analytics' | 'audit'>('overview');
+  const [activeTab, setActiveTab] = useState<'overview' | 'users' | 'system' | 'analytics' | 'audit'>('overview');
 
   const { data: clients = [], isLoading: clientsLoading } = useQuery({
     queryKey: ["clients"],
@@ -51,7 +51,6 @@ export default function AdminPage() {
   const tabs = [
     { id: 'overview', label: 'Visão Geral', icon: '📊' },
     { id: 'users', label: 'Usuários', icon: '👥' },
-    { id: 'organizations', label: 'Organizações', icon: '🏢' },
     { id: 'system', label: 'Sistema', icon: '⚙️' },
     { id: 'analytics', label: 'Analytics', icon: '📈' },
     { id: 'audit', label: 'Auditoria', icon: '🔒' }
@@ -260,18 +259,7 @@ export default function AdminPage() {
             </div>
           )}
 
-          {activeTab === 'users' && (
-            <div className="bg-white rounded-lg shadow-sm border p-4 sm:p-6">
-              <h3 className="text-base sm:text-lg font-semibold text-gray-900 mb-4">Gerenciamento de Usuários</h3>
-              <div className="text-center py-6 sm:py-8">
-                <span className="text-3xl sm:text-4xl">👷‍♂️</span>
-                <p className="text-gray-500 mt-2 text-sm sm:text-base">Funcionalidade em desenvolvimento</p>
-                <p className="text-xs sm:text-sm text-gray-400">Em breve você poderá gerenciar usuários aqui</p>
-              </div>
-            </div>
-          )}
-
-          {activeTab === 'organizations' && <OrganizationManagement />}
+          {activeTab === 'users' && <UserManagement />}
 
           {activeTab === 'system' && <SystemSettings onSave={() => undefined} />}
 

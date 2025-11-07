@@ -14,6 +14,10 @@
     "generate:routes": "tsr generate"
   },
   "dependencies": {
+    "@capacitor/android": "^7.4.4",
+    "@capacitor/cli": "^7.4.4",
+    "@capacitor/core": "^7.4.4",
+    "@capacitor/ios": "^7.4.4",
     "@tailwindcss/vite": "^4.0.6",
     "@tanstack/query-sync-storage-persister": "^5.85.5",
     "@tanstack/react-query": "^5.85.5",
@@ -30,7 +34,8 @@
     "react-dom": "^19.0.0",
     "react-markdown": "^10.1.0",
     "remark-gfm": "^4.0.1",
-    "tailwindcss": "^4.0.6"
+    "tailwindcss": "^4.0.6",
+    "vite-plugin-pwa": "^1.1.0"
   },
   "devDependencies": {
     "@tanstack/eslint-plugin-query": "^5.83.1",

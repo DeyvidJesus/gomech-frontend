@@ -51,14 +51,6 @@ function formatCurrency(value: number) {
   return value.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 }
 
-function SectionCard({ title, value, highlight }: { title: string; value: string; highlight?: boolean }) {
-  return (
-    <div className={`rounded-lg border p-4 shadow-sm ${highlight ? "border-orangeWheel-300 bg-orangeWheel-50" : "border-gray-200 bg-white"}`}>
-      <p className="text-sm text-gray-500">{title}</p>
-      <p className={`text-2xl font-bold ${highlight ? "text-orangeWheel-600" : "text-gray-900"}`}>{value}</p>
-    </div>
-  );
-}
 
 export default function InventoryDashboard() {
   return (
@@ -399,658 +391,944 @@ function InventoryDashboardContent() {
   );
 
   return (
-    <div className="space-y-6 flex">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       {tutorial}
-      <header className="rounded-lg border border-gray-200 bg-white p-6 shadow-sm fixed w-full max-w-[calc(100%-270px)]">
-        <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-          <div>
-            <h1 className="flex items-center gap-2 text-2xl font-bold text-orangeWheel-500">
-              <span>📦</span>
-              Estoque e Peças
-            </h1>
-            <p className="text-sm text-gray-500">Gerencie peças, estoque, movimentações e recomendações inteligentes.</p>
+      <div className="p-4 sm:p-6 lg:p-8">
+        <header className="rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 p-4 sm:p-6 shadow-sm mb-6">
+          <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+            <div>
+              <h1 className="flex items-center gap-2 text-xl sm:text-2xl font-bold text-orangeWheel-500 dark:text-orangeWheel-400">
+                <span>📦</span>
+                <span className="hidden xs:inline">Estoque e Peças</span>
+                <span className="xs:hidden">Estoque</span>
+              </h1>
+              <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400 mt-1">
+                Gerencie peças, estoque, movimentações e recomendações inteligentes.
+              </p>
+            </div>
+            <div className="flex flex-wrap gap-1 sm:gap-2">
+              {tabs.map(tab => (
+                <button
+                  key={tab.id}
+                  onClick={() => setActiveTab(tab.id)}
+                  className={`rounded-full px-2 sm:px-3 py-1 sm:py-2 text-xs sm:text-sm font-medium transition-colors whitespace-nowrap ${
+                    activeTab === tab.id
+                      ? "bg-orangeWheel-500 text-white shadow"
+                      : "bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600"
+                  }`}
+                >
+                  {tab.label}
+                </button>
+              ))}
+            </div>
           </div>
-          <div className="flex flex-wrap gap-2">
-            {tabs.map(tab => (
-              <button
-                key={tab.id}
-                onClick={() => setActiveTab(tab.id)}
-                className={`rounded-full px-3 py-2 text-sm font-medium transition-colors ${
-                  activeTab === tab.id
-                    ? "bg-orangeWheel-500 text-white shadow"
-                    : "bg-gray-100 text-gray-600 hover:bg-gray-200"
-                }`}
-              >
-                {tab.label}
-              </button>
-            ))}
-          </div>
-        </div>
-      </header>
+        </header>
 
-      {activeTab === "parts" && (
-        <section className="space-y-6 mt-30 w-full">
-          <div className="rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
-            <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-              <div>
-                <h2 className="flex items-center gap-2 text-xl font-bold text-orangeWheel-500">
-                  <span>🧰</span>
-                  Catálogo de Peças
-                </h2>
-                <p className="text-sm text-gray-500">Gerencie os itens disponíveis para ordens de serviço e estoque.</p>
+        {activeTab === "parts" && (
+          <section className="space-y-4 sm:space-y-6">
+            <div className="rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 p-4 sm:p-6 shadow-sm">
+              <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+                <div>
+                  <h2 className="flex items-center gap-2 text-lg sm:text-xl font-bold text-orangeWheel-500 dark:text-orangeWheel-400">
+                    <span>🧰</span>
+                    <span className="hidden sm:inline">Catálogo de Peças</span>
+                    <span className="sm:hidden">Peças</span>
+                  </h2>
+                  <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400 mt-1">
+                    Gerencie os itens disponíveis para ordens de serviço e estoque.
+                  </p>
+                </div>
+
+                <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+                  <input
+                    type="text"
+                    value={partSearch}
+                    onChange={event => setPartSearch(event.target.value)}
+                    placeholder="Buscar por nome, SKU..."
+                    className="w-full rounded-lg border border-gray-300 dark:border-gray-600 px-3 sm:px-4 py-2 text-sm focus:border-orangeWheel-500 focus:outline-none focus:ring-2 focus:ring-orangeWheel-200 dark:bg-gray-700 dark:text-white sm:w-64"
+                  />
+
+                  <RoleGuard roles={['ADMIN']}>
+                    <div className="flex gap-2">
+                      <button
+                        type="button"
+                        onClick={() => setIsImportPartModalOpen(true)}
+                        className="flex items-center gap-1 sm:gap-2 rounded-lg border border-orangeWheel-200 dark:border-orangeWheel-600 bg-orangeWheel-50 dark:bg-orangeWheel-900 px-3 sm:px-4 py-2 text-xs sm:text-sm font-medium text-orangeWheel-600 dark:text-orangeWheel-300 transition-colors hover:bg-orangeWheel-100 dark:hover:bg-orangeWheel-800"
+                      >
+                        <span>⬆️</span>
+                        <span className="hidden xs:inline">Importar</span>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setIsCreatePartModalOpen(true)}
+                        className="flex items-center gap-1 sm:gap-2 rounded-lg bg-orangeWheel-500 px-3 sm:px-4 py-2 text-xs sm:text-sm font-semibold text-white transition-colors hover:bg-orangeWheel-600"
+                      >
+                        <span>➕</span>
+                        <span className="hidden xs:inline">Nova peça</span>
+                      </button>
+                    </div>
+                  </RoleGuard>
+                </div>
               </div>
+            </div>
 
-              <div className="flex flex-col gap-2 md:flex-row md:items-center">
-                <input
-                  type="text"
-                  value={partSearch}
-                  onChange={event => setPartSearch(event.target.value)}
-                  placeholder="Buscar por nome, SKU ou fabricante"
-                  className="w-full rounded-lg border border-gray-300 px-4 py-2 text-sm focus:border-orangeWheel-500 focus:outline-none focus:ring-2 focus:ring-orangeWheel-200 md:w-64"
-                />
-
-                <RoleGuard roles={['ADMIN']}>
-                  <div className="flex gap-2">
-                    <button
-                      type="button"
-                      onClick={() => setIsImportPartModalOpen(true)}
-                      className="flex items-center gap-2 rounded-lg border border-orangeWheel-200 bg-orangeWheel-50 px-4 py-2 text-sm font-medium text-orangeWheel-600 transition-colors hover:bg-orangeWheel-100"
-                    >
-                      ⬆️ Importar
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setIsCreatePartModalOpen(true)}
-                      className="flex items-center gap-2 rounded-lg bg-orangeWheel-500 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-orangeWheel-600"
-                    >
-                      ➕ Nova peça
-                    </button>
-                  </div>
-                </RoleGuard>
+            <div className="grid grid-cols-1 gap-3 sm:gap-4 sm:grid-cols-2 lg:grid-cols-3">
+              <div className="rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 p-3 sm:p-4 shadow-sm">
+                <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400">Peças cadastradas</p>
+                <p className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white">{totalParts}</p>
+              </div>
+              <div className="rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 p-3 sm:p-4 shadow-sm">
+                <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400">Peças ativas</p>
+                <p className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white">{parts.filter(part => part.active).length}</p>
+              </div>
+              <div className="rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 p-3 sm:p-4 shadow-sm sm:col-span-2 lg:col-span-1">
+                <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400">Peças inativas</p>
+                <p className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white">{parts.filter(part => !part.active).length}</p>
               </div>
             </div>
-          </div>
 
-          <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
-            <div className="rounded-lg border border-gray-200 bg-white p-4 shadow-sm">
-              <p className="text-sm text-gray-500">Peças cadastradas</p>
-              <p className="text-2xl font-bold text-gray-900">{totalParts}</p>
-            </div>
-            <div className="rounded-lg border border-gray-200 bg-white p-4 shadow-sm">
-              <p className="text-sm text-gray-500">Peças ativas</p>
-              <p className="text-2xl font-bold text-gray-900">{parts.filter(part => part.active).length}</p>
-            </div>
-            <div className="rounded-lg border border-gray-200 bg-white p-4 shadow-sm">
-              <p className="text-sm text-gray-500">Peças inativas</p>
-              <p className="text-2xl font-bold text-gray-900">{parts.filter(part => !part.active).length}</p>
-            </div>
-          </div>
-
-          <div className="overflow-hidden rounded-lg border border-gray-200 bg-white shadow-sm">
-            <div className="overflow-x-auto">
-              <table className="min-w-full divide-y divide-gray-200">
-                <thead className="bg-gray-50">
-                  <tr>
-                    <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">Peça</th>
-                    <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">SKU</th>
-                    <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">Fabricante</th>
-                    <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">Custo</th>
-                    <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">Preço</th>
-                    <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">Status</th>
-                    <th className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wider text-gray-500">Ações</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-gray-200 bg-white">
+            <div className="overflow-hidden rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 shadow-sm">
+              {/* Mobile view */}
+              <div className="block sm:hidden">
+                <div className="divide-y divide-gray-200 dark:divide-gray-700">
                   {filteredParts.map(part => (
-                    <tr key={part.id}>
-                      <td className="px-4 py-3">
-                        <div className="flex flex-col">
-                          <span className="font-semibold text-gray-900">{part.name}</span>
-                          {part.description && <span className="text-xs text-gray-500">{part.description}</span>}
+                    <div key={part.id} className="p-4">
+                      <div className="flex items-start justify-between">
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2 mb-2">
+                            <span className="font-semibold text-gray-900 dark:text-white truncate">{part.name}</span>
+                            <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
+                              part.active 
+                                ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200' 
+                                : 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-200'
+                            }`}>
+                              {part.active ? '✓' : '✗'}
+                            </span>
+                          </div>
+                          {part.description && (
+                            <p className="text-xs text-gray-500 dark:text-gray-400 mb-2 line-clamp-2">{part.description}</p>
+                          )}
+                          <div className="grid grid-cols-2 gap-2 text-xs">
+                            <div>
+                              <span className="text-gray-500 dark:text-gray-400">SKU:</span>
+                              <span className="ml-1 text-gray-900 dark:text-white">{part.sku}</span>
+                            </div>
+                            <div>
+                              <span className="text-gray-500 dark:text-gray-400">Fabricante:</span>
+                              <span className="ml-1 text-gray-900 dark:text-white">{part.manufacturer ?? "-"}</span>
+                            </div>
+                            <div>
+                              <span className="text-gray-500 dark:text-gray-400">Custo:</span>
+                              <span className="ml-1 text-gray-900 dark:text-white">
+                                {(part.unitCost ?? 0).toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}
+                              </span>
+                            </div>
+                            <div>
+                              <span className="text-gray-500 dark:text-gray-400">Preço:</span>
+                              <span className="ml-1 text-gray-900 dark:text-white">
+                                {(part.unitPrice ?? 0).toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}
+                              </span>
+                            </div>
+                          </div>
                         </div>
-                      </td>
-                      <td className="px-4 py-3 text-sm text-gray-600">{part.sku}</td>
-                      <td className="px-4 py-3 text-sm text-gray-600">{part.manufacturer ?? "-"}</td>
-                      <td className="px-4 py-3 text-sm text-gray-600">
-                        {(part.unitCost ?? 0).toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}
-                      </td>
-                      <td className="px-4 py-3 text-sm text-gray-600">
-                        {(part.unitPrice ?? 0).toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}
-                      </td>
-                      <td className="px-4 py-3">
-                        <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
-                          part.active 
-                            ? 'bg-green-100 text-green-800' 
-                            : 'bg-gray-100 text-gray-800'
-                        }`}>
-                          {part.active ? '✓ Ativa' : '✗ Inativa'}
-                        </span>
-                      </td>
-                      <td className="px-4 py-3 text-right">
                         <RoleGuard roles={['ADMIN']}>
-                          <div className="flex justify-end gap-2">
+                          <div className="flex flex-col gap-1 ml-2">
                             <button
                               type="button"
                               onClick={() => {
                                 setSelectedPart(part);
                                 setIsEditPartModalOpen(true);
                               }}
-                              className="rounded-md border border-gray-200 px-3 py-1 text-xs font-medium text-gray-600 transition-colors hover:bg-gray-100"
+                              className="rounded-md border border-gray-200 dark:border-gray-600 px-2 py-1 text-xs font-medium text-gray-600 dark:text-gray-300 transition-colors hover:bg-gray-100 dark:hover:bg-gray-700"
                             >
                               Editar
                             </button>
                             <button
                               type="button"
                               onClick={() => handleDeletePart(part)}
-                              className="rounded-md border border-red-200 px-3 py-1 text-xs font-medium text-red-600 transition-colors hover:bg-red-50"
+                              className="rounded-md border border-red-200 dark:border-red-600 px-2 py-1 text-xs font-medium text-red-600 dark:text-red-400 transition-colors hover:bg-red-50 dark:hover:bg-red-900"
                             >
                               Remover
                             </button>
                           </div>
                         </RoleGuard>
-                      </td>
-                    </tr>
+                      </div>
+                    </div>
                   ))}
-
                   {filteredParts.length === 0 && (
-                    <tr>
-                      <td colSpan={7} className="px-4 py-10 text-center text-sm text-gray-500">
-                        Nenhuma peça encontrada com os filtros aplicados.
-                      </td>
-                    </tr>
+                    <div className="p-6 text-center text-sm text-gray-500 dark:text-gray-400">
+                      Nenhuma peça encontrada com os filtros aplicados.
+                    </div>
                   )}
-                </tbody>
-              </table>
-            </div>
-          </div>
-        </section>
-      )}
+                </div>
+              </div>
 
-      {activeTab === "items" && (
-        <section className="space-y-6 mt-30 w-full">
-          <RoleGuard roles={['ADMIN']}>
-            <div className="rounded-lg border border-blue-200 bg-blue-50 p-4 shadow-sm">
-              <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-                <div>
-                  <div className="flex items-center gap-2">
-                    <h3 className="flex items-center gap-2 text-sm font-semibold text-blue-800">
-                      <span>📋</span>
-                      Cadastro em Massa de Itens de Estoque
-                    </h3>
+              {/* Desktop view */}
+              <div className="hidden sm:block overflow-x-auto">
+                <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+                  <thead className="bg-gray-50 dark:bg-gray-700">
+                    <tr>
+                      <th className="px-3 sm:px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-300">Peça</th>
+                      <th className="px-3 sm:px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-300 hidden lg:table-cell">SKU</th>
+                      <th className="px-3 sm:px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-300 hidden xl:table-cell">Fabricante</th>
+                      <th className="px-3 sm:px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-300 hidden md:table-cell">Custo</th>
+                      <th className="px-3 sm:px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-300 hidden md:table-cell">Preço</th>
+                      <th className="px-3 sm:px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-300">Status</th>
+                      <th className="px-3 sm:px-4 py-3 text-right text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-300">Ações</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-gray-200 dark:divide-gray-700 bg-white dark:bg-gray-800">
+                    {filteredParts.map(part => (
+                      <tr key={part.id} className="hover:bg-gray-50 dark:hover:bg-gray-700">
+                        <td className="px-3 sm:px-4 py-3">
+                          <div className="flex flex-col">
+                            <span className="font-semibold text-gray-900 dark:text-white">{part.name}</span>
+                            {part.description && <span className="text-xs text-gray-500 dark:text-gray-400 line-clamp-1">{part.description}</span>}
+                            <div className="text-xs text-gray-500 dark:text-gray-400 lg:hidden">
+                              SKU: {part.sku} {part.manufacturer && `• ${part.manufacturer}`}
+                            </div>
+                          </div>
+                        </td>
+                        <td className="px-3 sm:px-4 py-3 text-sm text-gray-600 dark:text-gray-300 hidden lg:table-cell">{part.sku}</td>
+                        <td className="px-3 sm:px-4 py-3 text-sm text-gray-600 dark:text-gray-300 hidden xl:table-cell">{part.manufacturer ?? "-"}</td>
+                        <td className="px-3 sm:px-4 py-3 text-sm text-gray-600 dark:text-gray-300 hidden md:table-cell">
+                          {(part.unitCost ?? 0).toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}
+                        </td>
+                        <td className="px-3 sm:px-4 py-3 text-sm text-gray-600 dark:text-gray-300 hidden md:table-cell">
+                          {(part.unitPrice ?? 0).toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}
+                        </td>
+                        <td className="px-3 sm:px-4 py-3">
+                          <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
+                            part.active 
+                              ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200' 
+                              : 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-200'
+                          }`}>
+                            {part.active ? '✓ Ativa' : '✗ Inativa'}
+                          </span>
+                          <div className="text-xs text-gray-500 dark:text-gray-400 md:hidden mt-1">
+                            Custo: {(part.unitCost ?? 0).toLocaleString("pt-BR", { style: "currency", currency: "BRL" })} • 
+                            Preço: {(part.unitPrice ?? 0).toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}
+                          </div>
+                        </td>
+                        <td className="px-3 sm:px-4 py-3 text-right">
+                          <RoleGuard roles={['ADMIN']}>
+                            <div className="flex justify-end gap-1 sm:gap-2">
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setSelectedPart(part);
+                                  setIsEditPartModalOpen(true);
+                                }}
+                                className="rounded-md border border-gray-200 dark:border-gray-600 px-2 sm:px-3 py-1 text-xs font-medium text-gray-600 dark:text-gray-300 transition-colors hover:bg-gray-100 dark:hover:bg-gray-700"
+                              >
+                                Editar
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => handleDeletePart(part)}
+                                className="rounded-md border border-red-200 dark:border-red-600 px-2 sm:px-3 py-1 text-xs font-medium text-red-600 dark:text-red-400 transition-colors hover:bg-red-50 dark:hover:bg-red-900"
+                              >
+                                Remover
+                              </button>
+                            </div>
+                          </RoleGuard>
+                        </td>
+                      </tr>
+                    ))}
+
+                    {filteredParts.length === 0 && (
+                      <tr>
+                        <td colSpan={7} className="px-4 py-10 text-center text-sm text-gray-500 dark:text-gray-400">
+                          Nenhuma peça encontrada com os filtros aplicados.
+                        </td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </section>
+        )}
+
+        {activeTab === "items" && (
+          <section className="space-y-4 sm:space-y-6">
+            <RoleGuard roles={['ADMIN']}>
+              <div className="rounded-lg border border-blue-200 dark:border-blue-600 bg-blue-50 dark:bg-blue-900 p-4 shadow-sm">
+                <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <h3 className="flex items-center gap-2 text-sm font-semibold text-blue-800 dark:text-blue-200">
+                        <span>📋</span>
+                        <span className="hidden sm:inline">Cadastro em Massa de Itens de Estoque</span>
+                        <span className="sm:hidden">Importação em Massa</span>
+                      </h3>
+                      <button
+                        type="button"
+                        onClick={() => setIsInstructionsModalOpen(true)}
+                        className="flex items-center gap-1 rounded-lg border border-blue-400 dark:border-blue-500 bg-blue-100 dark:bg-blue-800 px-2 py-0.5 text-xs font-medium text-blue-700 dark:text-blue-200 transition-colors hover:bg-blue-200 dark:hover:bg-blue-700"
+                        title="Ajuda para importação em massa"
+                      >
+                        ℹ️ Ajuda
+                      </button>
+                    </div>
+                    <p className="text-xs text-blue-600 dark:text-blue-300 mt-1">
+                      Importe vários itens de estoque de uma vez usando planilhas Excel ou CSV
+                    </p>
+                    <p className="text-xs text-yellow-700 dark:text-yellow-300 mt-1 font-medium">
+                      ⚠️ Você precisará do <strong>ID da Peça</strong> para cada item (veja as instruções)
+                    </p>
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    <button
+                      type="button"
+                      onClick={() => downloadTemplate("xlsx")}
+                      disabled={!!downloadingTemplate}
+                      className="flex items-center gap-1 sm:gap-2 rounded-lg border border-green-300 dark:border-green-600 bg-green-50 dark:bg-green-900 px-3 sm:px-4 py-2 text-xs sm:text-sm font-medium text-green-700 dark:text-green-200 transition-colors hover:bg-green-100 dark:hover:bg-green-800 disabled:opacity-50"
+                    >
+                      <span>📥</span>
+                      <span className="hidden xs:inline">Baixar Template Excel</span>
+                      <span className="xs:hidden">Excel</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => downloadTemplate("csv")}
+                      disabled={!!downloadingTemplate}
+                      className="flex items-center gap-1 sm:gap-2 rounded-lg border border-green-300 dark:border-green-600 bg-green-50 dark:bg-green-900 px-3 sm:px-4 py-2 text-xs sm:text-sm font-medium text-green-700 dark:text-green-200 transition-colors hover:bg-green-100 dark:hover:bg-green-800 disabled:opacity-50"
+                    >
+                      <span>📥</span>
+                      <span className="hidden xs:inline">Baixar Template CSV</span>
+                      <span className="xs:hidden">CSV</span>
+                    </button>
                     <button
                       type="button"
                       onClick={() => setIsInstructionsModalOpen(true)}
-                      className="flex items-center gap-1 rounded-lg border border-blue-400 bg-blue-100 px-2 py-0.5 text-xs font-medium text-blue-700 transition-colors hover:bg-blue-200"
-                      title="Ajuda para importação em massa"
+                      className="flex items-center gap-1 sm:gap-2 rounded-lg border border-blue-300 dark:border-blue-600 bg-blue-100 dark:bg-blue-800 px-3 sm:px-4 py-2 text-xs sm:text-sm font-medium text-blue-700 dark:text-blue-200 transition-colors hover:bg-blue-200 dark:hover:bg-blue-700"
                     >
-                      ℹ️ Ajuda
+                      <span>📖</span>
+                      <span className="hidden xs:inline">Ver Instruções</span>
+                      <span className="xs:hidden">Ajuda</span>
                     </button>
                   </div>
-                  <p className="text-xs text-blue-600 mt-1">
-                    Importe vários itens de estoque de uma vez usando planilhas Excel ou CSV
-                  </p>
-                  <p className="text-xs text-yellow-700 mt-1 font-medium">
-                    ⚠️ Você precisará do <strong>ID da Peça</strong> para cada item (veja as instruções)
-                  </p>
                 </div>
-                <div className="flex flex-wrap gap-2">
-                  <button
-                    type="button"
-                    onClick={() => downloadTemplate("xlsx")}
-                    disabled={!!downloadingTemplate}
-                    className="flex items-center gap-2 rounded-lg border border-green-300 bg-green-50 px-4 py-2 text-sm font-medium text-green-700 transition-colors hover:bg-green-100 disabled:opacity-50"
-                  >
-                    📥 Baixar Template Excel
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => downloadTemplate("csv")}
-                    disabled={!!downloadingTemplate}
-                    className="flex items-center gap-2 rounded-lg border border-green-300 bg-green-50 px-4 py-2 text-sm font-medium text-green-700 transition-colors hover:bg-green-100 disabled:opacity-50"
-                  >
-                    📥 Baixar Template CSV
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setIsInstructionsModalOpen(true)}
-                    className="flex items-center gap-2 rounded-lg border border-blue-300 bg-blue-100 px-4 py-2 text-sm font-medium text-blue-700 transition-colors hover:bg-blue-200"
-                  >
-                    📖 Ver Instruções
-                  </button>
-                </div>
-              </div>
-            </div>
-          </RoleGuard>
-
-          <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
-            <SectionCard title="Itens monitorados" value={String(totalItems)} />
-            <SectionCard title="Itens críticos" value={String(criticalParts.length)} highlight={criticalParts.length > 0} />
-          </div>
-
-          <div className="rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
-            <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-              <input
-                value={search}
-                onChange={event => setSearch(event.target.value)}
-                placeholder="Buscar por peça, localização ou status"
-                className="w-full rounded-lg border border-gray-300 px-4 py-2 text-sm focus:border-orangeWheel-500 focus:outline-none focus:ring-2 focus:ring-orangeWheel-200 md:w-80"
-              />
-              <RoleGuard roles={["ADMIN"]}>
-                <div className="flex gap-2">
-                  <button
-                    type="button"
-                    onClick={() => setIsCreateModalOpen(true)}
-                    className="inline-flex items-center gap-2 rounded-lg bg-orangeWheel-500 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-orangeWheel-600"
-                  >
-                    ➕ Novo item
-                  </button>
-                </div>
-              </RoleGuard>
-            </div>
-
-            {isLoadingItems ? (
-              <div className="flex h-40 items-center justify-center">
-                <div className="h-10 w-10 animate-spin rounded-full border-4 border-orangeWheel-500 border-t-transparent" />
-              </div>
-            ) : itemsError ? (
-              <div className="mt-4 rounded-md border border-red-200 bg-red-50 p-4 text-sm text-red-700">
-                Não foi possível carregar os itens de estoque.
-              </div>
-            ) : (
-              <div className="mt-4 overflow-hidden rounded-lg border">
-                <div className="overflow-x-auto">
-                  <table className="min-w-full divide-y divide-gray-200">
-                    <thead className="bg-gray-50">
-                      <tr>
-                        <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">Peça</th>
-                        <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">Quantidade</th>
-                        <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">Reservado</th>
-                        <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">Mínimo</th>
-                        <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">Custo</th>
-                        <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">Preço</th>
-                        <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">Localização</th>
-                        <th className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wider text-gray-500">Ações</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-gray-200 bg-white">
-                      {filteredItems.map(item => {
-                        return (
-                          <tr key={item.id}>
-                            <td className="px-4 py-3">
-                              <div className="flex flex-col gap-1">
-                                <div className="flex items-center gap-2">
-                                  <span className="font-semibold text-gray-900">{item.partName}</span>
-                                </div>
-                                <div className="text-xs text-gray-500">
-                                  <span>ID Peça: {item.partId}</span>
-                                  {item.partCode && <span className="ml-2">SKU: {item.partCode}</span>}
-                                  {item.manufacturer && <span className="ml-2">{item.manufacturer}</span>}
-                                </div>
-                              </div>
-                            </td>
-                            <td className="px-4 py-3 text-sm text-gray-600">{item.quantity}</td>
-                            <td className="px-4 py-3 text-sm text-gray-600">{item.reservedQuantity}</td>
-                            <td className="px-4 py-3 text-sm text-gray-600">{item.minimumQuantity}</td>
-                            <td className="px-4 py-3 text-sm text-gray-600">{formatCurrency(item.unitCost ?? 0)}</td>
-                            <td className="px-4 py-3 text-sm text-gray-600">{formatCurrency(item.salePrice ?? 0)}</td>
-                            <td className="px-4 py-3 text-sm text-gray-600">{item.location}</td>
-                            <td className="px-4 py-3 text-left text-sm">
-                              <RoleGuard roles={["ADMIN"]}>
-                                <div className="flex justify-end gap-2">
-                                  <button
-                                    type="button"
-                                    onClick={() => {
-                                      setSelectedItem(item);
-                                      setIsEditModalOpen(true);
-                                    }}
-                                    className="rounded-md border border-gray-200 px-3 py-1 text-xs font-medium text-gray-600 transition-colors hover:bg-gray-100"
-                                  >
-                                    Editar
-                                  </button>
-                                  <button
-                                    type="button"
-                                    onClick={() => handleDeleteItem(item)}
-                                    className="rounded-md border border-red-200 px-3 py-1 text-xs font-medium text-red-600 transition-colors hover:bg-red-50"
-                                  >
-                                    Remover
-                                  </button>
-                                </div>
-                              </RoleGuard>
-                            </td>
-                          </tr>
-                        );
-                      })}
-
-                      {filteredItems.length === 0 && (
-                        <tr>
-                          <td colSpan={8} className="px-4 py-8 text-center text-sm text-gray-500">
-                            Nenhum item encontrado para os filtros aplicados.
-                          </td>
-                        </tr>
-                      )}
-                    </tbody>
-                  </table>
-                </div>
-              </div>
-            )}
-          </div>
-
-          {criticalParts.length > 0 && (
-            <div className="rounded-lg border border-orangeWheel-200 bg-orangeWheel-50 p-4">
-              <h3 className="mb-2 text-sm font-semibold text-orangeWheel-700">Peças com estoque crítico</h3>
-              <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-3">
-                {criticalParts.map(report => {
-                  const criticality = report.availableQuantity < report.minimumQuantity ? "CRITICAL" : 
-                                     report.availableQuantity < report.minimumQuantity * 1.5 ? "WARNING" : "STABLE";
-                  return (
-                    <div key={report.partId} className="rounded-lg border border-orangeWheel-200 bg-white p-4 shadow-sm">
-                      <div className="flex items-center justify-between">
-                        <p className="text-sm font-semibold text-gray-800">{report.partName}</p>
-                        <span
-                          className={`rounded-full px-2 py-0.5 text-xs font-semibold ${
-                            criticality === "CRITICAL"
-                              ? "bg-red-100 text-red-600"
-                              : criticality === "WARNING"
-                                ? "bg-amber-100 text-amber-700"
-                                : "bg-emerald-100 text-emerald-700"
-                          }`}
-                        >
-                          {criticality}
-                        </span>
-                      </div>
-                      <p className="mt-2 text-xs text-gray-500">
-                        Disponível: <span className="font-semibold">{report.availableQuantity}</span> | Mínimo:{" "}
-                        <span className="font-semibold">{report.minimumQuantity}</span>
-                      </p>
-                      {report.partSku && (
-                        <p className="mt-1 text-xs text-gray-500">SKU: {report.partSku}</p>
-                      )}
-                      {report.vehicleModel && (
-                        <p className="mt-1 text-xs text-gray-500">Modelo: {report.vehicleModel}</p>
-                      )}
-                      <p className="mt-2 text-xs text-gray-500">
-                        Total: {report.totalQuantity} | Reservado: {report.reservedQuantity} | Consumido: {report.totalConsumed}
-                      </p>
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-          )}
-        </section>
-      )}
-
-      {activeTab === "movements" && (
-        <section className="space-y-6 mt-30 w-full">
-          <div className="grid gap-4 md:grid-cols-2">
-            <RoleGuard roles={["ADMIN"]}>
-              <div className="space-y-4 rounded-lg border border-gray-200 bg-white p-4 shadow-sm">
-                <h3 className="text-base font-semibold text-gray-800">Registrar movimentação</h3>
-                <MovementForm
-                  title="Entrada de estoque"
-                  description="Atualize o estoque com novas peças recebidas."
-                  isLoading={entryMutation.isPending}
-                  onSubmit={async payload => {
-                    const { partId, location, quantity, unitCost, unitPrice, referenceCode, notes } = payload as {
-                      partId: number;
-                      location: string;
-                      quantity: number;
-                      unitCost?: number;
-                      unitPrice?: number;
-                      referenceCode?: string;
-                      notes?: string;
-                    };
-                    await entryMutation.mutateAsync({
-                      partId,
-                      location,
-                      quantity,
-                      unitCost,
-                      salePrice: unitPrice,
-                      referenceCode,
-                      notes,
-                    });
-                  }}
-                  fields={[
-                    {
-                      name: 'partId',
-                      type: 'select',
-                      label: 'Peça',
-                      required: true,
-                      options: parts.map(part => ({
-                        value: part.id,
-                        label: `${part.name} (SKU: ${part.sku})`
-                      }))
-                    },
-                    {
-                      name: 'location',
-                      type: 'text',
-                      label: 'Localização',
-                      placeholder: 'Ex: Prateleira A1',
-                      required: true
-                    },
-                    {
-                      name: 'quantity',
-                      type: 'number',
-                      label: 'Quantidade',
-                      required: true
-                    },
-                    {
-                      name: 'unitCost',
-                      type: 'number',
-                      label: 'Custo unitário (R$)',
-                      required: false
-                    },
-                    {
-                      name: 'unitPrice',
-                      type: 'number',
-                      label: 'Preço de venda (R$)',
-                      required: false
-                    },
-                    {
-                      name: 'referenceCode',
-                      type: 'text',
-                      label: 'Código de referência',
-                      placeholder: 'Ex: NF-2024-001',
-                      required: false
-                    },
-                    {
-                      name: 'notes',
-                      type: 'textarea',
-                      label: 'Observações',
-                      required: false
-                    }
-                  ]}
-                />
-                <MovementForm
-                  title="Reserva para OS"
-                  description="Reserve peças para uma ordem de serviço."
-                  isLoading={reserveMutation.isPending}
-                  onSubmit={async payload => {
-                    const { serviceOrderItemId, quantity, notes } = payload as {
-                      serviceOrderItemId: number;
-                      quantity: number;
-                      notes?: string;
-                    };
-                    await reserveMutation.mutateAsync({ serviceOrderItemId, quantity, notes });
-                  }}
-                  fields={[
-                    {
-                      name: 'serviceOrderItemId',
-                      type: 'select',
-                      label: 'Item da OS',
-                      required: true,
-                      options: serviceOrderItems.map(item => ({
-                        value: item.id,
-                        label: `OS ${item.serviceOrderNumber} - ${item.description} (${item.itemType})`
-                      }))
-                    },
-                    {
-                      name: 'quantity',
-                      type: 'number',
-                      label: 'Quantidade',
-                      required: true
-                    },
-                    {
-                      name: 'notes',
-                      type: 'textarea',
-                      label: 'Observações',
-                      required: false
-                    }
-                  ]}
-                />
-                <MovementForm
-                  title="Consumo de reserva"
-                  description="Confirme o consumo das peças reservadas."
-                  isLoading={consumeMutation.isPending}
-                  onSubmit={async payload => {
-                    const { serviceOrderItemId, quantity, notes } = payload as {
-                      serviceOrderItemId: number;
-                      quantity: number;
-                      notes?: string;
-                    };
-                    await consumeMutation.mutateAsync({ serviceOrderItemId, quantity, notes });
-                  }}
-                  fields={[
-                    {
-                      name: 'serviceOrderItemId',
-                      type: 'select',
-                      label: 'Item da OS',
-                      required: true,
-                      options: serviceOrderItems.map(item => ({
-                        value: item.id,
-                        label: `OS ${item.serviceOrderNumber} - ${item.description} (${item.itemType})`
-                      }))
-                    },
-                    {
-                      name: 'quantity',
-                      type: 'number',
-                      label: 'Quantidade',
-                      required: true
-                    },
-                    {
-                      name: 'notes',
-                      type: 'textarea',
-                      label: 'Observações',
-                      required: false
-                    }
-                  ]}
-                />
-                <MovementForm
-                  title="Cancelar reserva"
-                  description="Libere peças reservadas para outras OS."
-                  isLoading={cancelReservationMutation.isPending}
-                  onSubmit={async payload => {
-                    const { serviceOrderItemId, quantity, notes } = payload as {
-                      serviceOrderItemId: number;
-                      quantity: number;
-                      notes?: string;
-                    };
-                    await cancelReservationMutation.mutateAsync({ serviceOrderItemId, quantity, notes });
-                  }}
-                  fields={[
-                    {
-                      name: 'serviceOrderItemId',
-                      type: 'select',
-                      label: 'Item da OS',
-                      required: true,
-                      options: serviceOrderItems.map(item => ({
-                        value: item.id,
-                        label: `OS ${item.serviceOrderNumber} - ${item.description} (${item.itemType})`
-                      }))
-                    },
-                    {
-                      name: 'quantity',
-                      type: 'number',
-                      label: 'Quantidade',
-                      required: true
-                    },
-                    {
-                      name: 'notes',
-                      type: 'textarea',
-                      label: 'Observações',
-                      required: false
-                    }
-                  ]}
-                />
-                <MovementForm
-                  title="Devolução"
-                  description="Registre a devolução de peças ao estoque."
-                  isLoading={returnMutation.isPending}
-                  onSubmit={async payload => {
-                    const { serviceOrderItemId, quantity, notes } = payload as {
-                      serviceOrderItemId: number;
-                      quantity: number;
-                      notes?: string;
-                    };
-                    await returnMutation.mutateAsync({ serviceOrderItemId, quantity, notes });
-                  }}
-                  fields={[
-                    {
-                      name: 'serviceOrderItemId',
-                      type: 'select',
-                      label: 'Item da OS',
-                      required: true,
-                      options: serviceOrderItems.map(item => ({
-                        value: item.id,
-                        label: `OS ${item.serviceOrderNumber} - ${item.description} (${item.itemType})`
-                      }))
-                    },
-                    {
-                      name: 'quantity',
-                      type: 'number',
-                      label: 'Quantidade',
-                      required: true
-                    },
-                    {
-                      name: 'notes',
-                      type: 'textarea',
-                      label: 'Observações',
-                      required: false
-                    }
-                  ]}
-                />
               </div>
             </RoleGuard>
 
-            <div className="space-y-4 rounded-lg border border-gray-200 bg-white p-4 shadow-sm">
-              <div className="flex items-center justify-between">
-                <h3 className="text-base font-semibold text-gray-800">Movimentações recentes</h3>
-              <button
-                type="button"
-                onClick={() => void movementsQuery.refetch()}
-                className="rounded-md border border-gray-200 px-3 py-1 text-xs font-medium text-gray-600 transition-colors hover:bg-gray-100"
-              >
-                Atualizar
-              </button>
+            <div className="grid grid-cols-1 gap-3 sm:gap-4 sm:grid-cols-2 lg:grid-cols-3">
+              <div className="rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 p-3 sm:p-4 shadow-sm">
+                <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400">Itens monitorados</p>
+                <p className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white">{totalItems}</p>
+              </div>
+              <div className="rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 p-3 sm:p-4 shadow-sm sm:col-span-2 lg:col-span-1">
+                <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400">Itens críticos</p>
+                <p className={`text-xl sm:text-2xl font-bold ${criticalParts.length > 0 ? 'text-orangeWheel-600 dark:text-orangeWheel-400' : 'text-gray-900 dark:text-white'}`}>
+                  {criticalParts.length}
+                </p>
+              </div>
+            </div>
+
+            <div className="rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 p-4 sm:p-6 shadow-sm">
+              <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+                <input
+                  value={search}
+                  onChange={event => setSearch(event.target.value)}
+                  placeholder="Buscar por peça, localização..."
+                  className="w-full rounded-lg border border-gray-300 dark:border-gray-600 px-3 sm:px-4 py-2 text-sm focus:border-orangeWheel-500 focus:outline-none focus:ring-2 focus:ring-orangeWheel-200 dark:bg-gray-700 dark:text-white lg:w-80"
+                />
+                <RoleGuard roles={["ADMIN"]}>
+                  <div className="flex gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setIsCreateModalOpen(true)}
+                      className="inline-flex items-center gap-1 sm:gap-2 rounded-lg bg-orangeWheel-500 px-3 sm:px-4 py-2 text-xs sm:text-sm font-semibold text-white transition-colors hover:bg-orangeWheel-600"
+                    >
+                      <span>➕</span>
+                      <span className="hidden xs:inline">Novo item</span>
+                      <span className="xs:hidden">Novo</span>
+                    </button>
+                  </div>
+                </RoleGuard>
               </div>
 
-              <div className="grid gap-3 md:grid-cols-2">
-                <div className="flex flex-col text-sm">
-                  <label className="text-xs font-medium text-gray-600">Item de estoque</label>
-                  <select
-                    value={movementFilters.itemId ?? ""}
-                    onChange={event => setMovementFilters(prev => ({ ...prev, itemId: event.target.value ? Number(event.target.value) : undefined }))}
-                    className="mt-1 rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-orangeWheel-500 focus:outline-none focus:ring-2 focus:ring-orangeWheel-200"
-                  >
-                    <option value="">Todos os itens</option>
-                    {items.map(item => (
-                      <option key={item.id} value={item.id}>
-                        {item.partName} - {item.location}
-                      </option>
-                    ))}
-                  </select>
+              {isLoadingItems ? (
+                <div className="flex h-40 items-center justify-center">
+                  <div className="h-10 w-10 animate-spin rounded-full border-4 border-orangeWheel-500 border-t-transparent" />
                 </div>
+              ) : itemsError ? (
+                <div className="mt-4 rounded-md border border-red-200 dark:border-red-600 bg-red-50 dark:bg-red-900 p-4 text-sm text-red-700 dark:text-red-200">
+                  Não foi possível carregar os itens de estoque.
+                </div>
+              ) : (
+                <div className="mt-4 overflow-hidden rounded-lg border border-gray-200 dark:border-gray-700">
+                  {/* Mobile view */}
+                  <div className="block sm:hidden">
+                    <div className="divide-y divide-gray-200 dark:divide-gray-700">
+                      {filteredItems.map(item => (
+                        <div key={item.id} className="p-4">
+                          <div className="flex items-start justify-between">
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-center gap-2 mb-2">
+                                <span className="font-semibold text-gray-900 dark:text-white truncate">{item.partName}</span>
+                                {item.quantity < item.minimumQuantity && (
+                                  <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200">
+                                    Crítico
+                                  </span>
+                                )}
+                              </div>
+                              <div className="text-xs text-gray-500 dark:text-gray-400 mb-2">
+                                ID Peça: {item.partId} • Localização: {item.location}
+                                {item.partCode && ` • SKU: ${item.partCode}`}
+                              </div>
+                              <div className="grid grid-cols-2 gap-2 text-xs">
+                                <div>
+                                  <span className="text-gray-500 dark:text-gray-400">Quantidade:</span>
+                                  <span className="ml-1 font-medium text-gray-900 dark:text-white">{item.quantity}</span>
+                                </div>
+                                <div>
+                                  <span className="text-gray-500 dark:text-gray-400">Reservado:</span>
+                                  <span className="ml-1 font-medium text-gray-900 dark:text-white">{item.reservedQuantity}</span>
+                                </div>
+                                <div>
+                                  <span className="text-gray-500 dark:text-gray-400">Mínimo:</span>
+                                  <span className="ml-1 font-medium text-gray-900 dark:text-white">{item.minimumQuantity}</span>
+                                </div>
+                                <div>
+                                  <span className="text-gray-500 dark:text-gray-400">Custo:</span>
+                                  <span className="ml-1 font-medium text-gray-900 dark:text-white">{formatCurrency(item.unitCost ?? 0)}</span>
+                                </div>
+                              </div>
+                            </div>
+                            <RoleGuard roles={["ADMIN"]}>
+                              <div className="flex flex-col gap-1 ml-2">
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    setSelectedItem(item);
+                                    setIsEditModalOpen(true);
+                                  }}
+                                  className="rounded-md border border-gray-200 dark:border-gray-600 px-2 py-1 text-xs font-medium text-gray-600 dark:text-gray-300 transition-colors hover:bg-gray-100 dark:hover:bg-gray-700"
+                                >
+                                  Editar
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => handleDeleteItem(item)}
+                                  className="rounded-md border border-red-200 dark:border-red-600 px-2 py-1 text-xs font-medium text-red-600 dark:text-red-400 transition-colors hover:bg-red-50 dark:hover:bg-red-900"
+                                >
+                                  Remover
+                                </button>
+                              </div>
+                            </RoleGuard>
+                          </div>
+                        </div>
+                      ))}
+                      {filteredItems.length === 0 && (
+                        <div className="p-6 text-center text-sm text-gray-500 dark:text-gray-400">
+                          Nenhum item encontrado para os filtros aplicados.
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Desktop view */}
+                  <div className="hidden sm:block overflow-x-auto">
+                    <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+                      <thead className="bg-gray-50 dark:bg-gray-700">
+                        <tr>
+                          <th className="px-3 sm:px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-300">Peça</th>
+                          <th className="px-3 sm:px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-300">Quantidade</th>
+                          <th className="px-3 sm:px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-300 hidden md:table-cell">Reservado</th>
+                          <th className="px-3 sm:px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-300 hidden lg:table-cell">Mínimo</th>
+                          <th className="px-3 sm:px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-300 hidden xl:table-cell">Custo</th>
+                          <th className="px-3 sm:px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-300 hidden xl:table-cell">Preço</th>
+                          <th className="px-3 sm:px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-300 hidden lg:table-cell">Localização</th>
+                          <th className="px-3 sm:px-4 py-3 text-right text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-300">Ações</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-gray-200 dark:divide-gray-700 bg-white dark:bg-gray-800">
+                        {filteredItems.map(item => {
+                          const isCritical = item.quantity < item.minimumQuantity;
+                          return (
+                            <tr key={item.id} className="hover:bg-gray-50 dark:hover:bg-gray-700">
+                              <td className="px-3 sm:px-4 py-3">
+                                <div className="flex flex-col gap-1">
+                                  <div className="flex items-center gap-2">
+                                    <span className="font-semibold text-gray-900 dark:text-white">{item.partName}</span>
+                                    {isCritical && (
+                                      <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200">
+                                        Crítico
+                                      </span>
+                                    )}
+                                  </div>
+                                  <div className="text-xs text-gray-500 dark:text-gray-400">
+                                    <span>ID Peça: {item.partId}</span>
+                                    {item.partCode && <span className="ml-2">SKU: {item.partCode}</span>}
+                                    {item.manufacturer && <span className="ml-2">{item.manufacturer}</span>}
+                                    <div className="md:hidden mt-1">
+                                      Reservado: {item.reservedQuantity} • Localização: {item.location}
+                                    </div>
+                                  </div>
+                                </div>
+                              </td>
+                              <td className="px-3 sm:px-4 py-3">
+                                <span className={`text-sm font-medium ${isCritical ? 'text-red-600 dark:text-red-400' : 'text-gray-900 dark:text-white'}`}>
+                                  {item.quantity}
+                                </span>
+                                <div className="text-xs text-gray-500 dark:text-gray-400 lg:hidden">
+                                  Mín: {item.minimumQuantity}
+                                </div>
+                              </td>
+                              <td className="px-3 sm:px-4 py-3 text-sm text-gray-600 dark:text-gray-300 hidden md:table-cell">{item.reservedQuantity}</td>
+                              <td className="px-3 sm:px-4 py-3 text-sm text-gray-600 dark:text-gray-300 hidden lg:table-cell">{item.minimumQuantity}</td>
+                              <td className="px-3 sm:px-4 py-3 text-sm text-gray-600 dark:text-gray-300 hidden xl:table-cell">{formatCurrency(item.unitCost ?? 0)}</td>
+                              <td className="px-3 sm:px-4 py-3 text-sm text-gray-600 dark:text-gray-300 hidden xl:table-cell">{formatCurrency(item.salePrice ?? 0)}</td>
+                              <td className="px-3 sm:px-4 py-3 text-sm text-gray-600 dark:text-gray-300 hidden lg:table-cell">{item.location}</td>
+                              <td className="px-3 sm:px-4 py-3 text-right text-sm">
+                                <RoleGuard roles={["ADMIN"]}>
+                                  <div className="flex justify-end gap-1 sm:gap-2">
+                                    <button
+                                      type="button"
+                                      onClick={() => {
+                                        setSelectedItem(item);
+                                        setIsEditModalOpen(true);
+                                      }}
+                                      className="rounded-md border border-gray-200 dark:border-gray-600 px-2 sm:px-3 py-1 text-xs font-medium text-gray-600 dark:text-gray-300 transition-colors hover:bg-gray-100 dark:hover:bg-gray-700"
+                                    >
+                                      Editar
+                                    </button>
+                                    <button
+                                      type="button"
+                                      onClick={() => handleDeleteItem(item)}
+                                      className="rounded-md border border-red-200 dark:border-red-600 px-2 sm:px-3 py-1 text-xs font-medium text-red-600 dark:text-red-400 transition-colors hover:bg-red-50 dark:hover:bg-red-900"
+                                    >
+                                      Remover
+                                    </button>
+                                  </div>
+                                </RoleGuard>
+                              </td>
+                            </tr>
+                          );
+                        })}
+
+                        {filteredItems.length === 0 && (
+                          <tr>
+                            <td colSpan={8} className="px-4 py-8 text-center text-sm text-gray-500 dark:text-gray-400">
+                              Nenhum item encontrado para os filtros aplicados.
+                            </td>
+                          </tr>
+                        )}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {criticalParts.length > 0 && (
+              <div className="rounded-lg border border-orangeWheel-200 dark:border-orangeWheel-600 bg-orangeWheel-50 dark:bg-orangeWheel-900 p-4">
+                <h3 className="mb-2 text-sm sm:text-base font-semibold text-orangeWheel-700 dark:text-orangeWheel-200">Peças com estoque crítico</h3>
+                <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                  {criticalParts.map(report => {
+                    const criticality = report.availableQuantity < report.minimumQuantity ? "CRITICAL" : 
+                                       report.availableQuantity < report.minimumQuantity * 1.5 ? "WARNING" : "STABLE";
+                    return (
+                      <div key={report.partId} className="rounded-lg border border-orangeWheel-200 dark:border-orangeWheel-600 bg-white dark:bg-gray-800 p-3 sm:p-4 shadow-sm">
+                        <div className="flex items-center justify-between mb-2">
+                          <p className="text-xs sm:text-sm font-semibold text-gray-800 dark:text-white truncate pr-2">{report.partName}</p>
+                          <span
+                            className={`rounded-full px-2 py-0.5 text-xs font-semibold whitespace-nowrap ${
+                              criticality === "CRITICAL"
+                                ? "bg-red-100 text-red-600 dark:bg-red-900 dark:text-red-200"
+                                : criticality === "WARNING"
+                                  ? "bg-amber-100 text-amber-700 dark:bg-amber-900 dark:text-amber-200"
+                                  : "bg-emerald-100 text-emerald-700 dark:bg-emerald-900 dark:text-emerald-200"
+                            }`}
+                          >
+                            {criticality === "CRITICAL" ? "Crítico" : criticality === "WARNING" ? "Atenção" : "OK"}
+                          </span>
+                        </div>
+                        <div className="space-y-1">
+                          <p className="text-xs text-gray-500 dark:text-gray-400">
+                            <span className="font-medium">Disponível:</span> {report.availableQuantity} | 
+                            <span className="font-medium"> Mínimo:</span> {report.minimumQuantity}
+                          </p>
+                          {report.partSku && (
+                            <p className="text-xs text-gray-500 dark:text-gray-400">SKU: {report.partSku}</p>
+                          )}
+                          {report.vehicleModel && (
+                            <p className="text-xs text-gray-500 dark:text-gray-400">Modelo: {report.vehicleModel}</p>
+                          )}
+                          <p className="text-xs text-gray-500 dark:text-gray-400">
+                            Total: {report.totalQuantity} | Reservado: {report.reservedQuantity} | Consumido: {report.totalConsumed}
+                          </p>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+          </section>
+        )}
+
+        {activeTab === "movements" && (
+          <section className="space-y-6">
+            <div className="grid gap-4 md:grid-cols-2">
+              <RoleGuard roles={["ADMIN"]}>
+                <div className="space-y-4 rounded-lg border border-gray-200 bg-white p-4 shadow-sm">
+                  <h3 className="text-base font-semibold text-gray-800">Registrar movimentação</h3>
+                  <MovementForm
+                    title="Entrada de estoque"
+                    description="Atualize o estoque com novas peças recebidas."
+                    isLoading={entryMutation.isPending}
+                    onSubmit={async payload => {
+                      const { partId, location, quantity, unitCost, unitPrice, referenceCode, notes } = payload as {
+                        partId: number;
+                        location: string;
+                        quantity: number;
+                        unitCost?: number;
+                        unitPrice?: number;
+                        referenceCode?: string;
+                        notes?: string;
+                      };
+                      await entryMutation.mutateAsync({
+                        partId,
+                        location,
+                        quantity,
+                        unitCost,
+                        salePrice: unitPrice,
+                        referenceCode,
+                        notes,
+                      });
+                    }}
+                    fields={[
+                      {
+                        name: 'partId',
+                        type: 'select',
+                        label: 'Peça',
+                        required: true,
+                        options: parts.map(part => ({
+                          value: part.id,
+                          label: `${part.name} (SKU: ${part.sku})`
+                        }))
+                      },
+                      {
+                        name: 'location',
+                        type: 'text',
+                        label: 'Localização',
+                        placeholder: 'Ex: Prateleira A1',
+                        required: true
+                      },
+                      {
+                        name: 'quantity',
+                        type: 'number',
+                        label: 'Quantidade',
+                        required: true
+                      },
+                      {
+                        name: 'unitCost',
+                        type: 'number',
+                        label: 'Custo unitário (R$)',
+                        required: false
+                      },
+                      {
+                        name: 'unitPrice',
+                        type: 'number',
+                        label: 'Preço de venda (R$)',
+                        required: false
+                      },
+                      {
+                        name: 'referenceCode',
+                        type: 'text',
+                        label: 'Código de referência',
+                        placeholder: 'Ex: NF-2024-001',
+                        required: false
+                      },
+                      {
+                        name: 'notes',
+                        type: 'textarea',
+                        label: 'Observações',
+                        required: false
+                      }
+                    ]}
+                  />
+                  <MovementForm
+                    title="Reserva para OS"
+                    description="Reserve peças para uma ordem de serviço."
+                    isLoading={reserveMutation.isPending}
+                    onSubmit={async payload => {
+                      const { serviceOrderItemId, quantity, notes } = payload as {
+                        serviceOrderItemId: number;
+                        quantity: number;
+                        notes?: string;
+                      };
+                      await reserveMutation.mutateAsync({ serviceOrderItemId, quantity, notes });
+                    }}
+                    fields={[
+                      {
+                        name: 'serviceOrderItemId',
+                        type: 'select',
+                        label: 'Item da OS',
+                        required: true,
+                        options: serviceOrderItems.map(item => ({
+                          value: item.id,
+                          label: `OS ${item.serviceOrderNumber} - ${item.description} (${item.itemType})`
+                        }))
+                      },
+                      {
+                        name: 'quantity',
+                        type: 'number',
+                        label: 'Quantidade',
+                        required: true
+                      },
+                      {
+                        name: 'notes',
+                        type: 'textarea',
+                        label: 'Observações',
+                        required: false
+                      }
+                    ]}
+                  />
+                  <MovementForm
+                    title="Consumo de reserva"
+                    description="Confirme o consumo das peças reservadas."
+                    isLoading={consumeMutation.isPending}
+                    onSubmit={async payload => {
+                      const { serviceOrderItemId, quantity, notes } = payload as {
+                        serviceOrderItemId: number;
+                        quantity: number;
+                        notes?: string;
+                      };
+                      await consumeMutation.mutateAsync({ serviceOrderItemId, quantity, notes });
+                    }}
+                    fields={[
+                      {
+                        name: 'serviceOrderItemId',
+                        type: 'select',
+                        label: 'Item da OS',
+                        required: true,
+                        options: serviceOrderItems.map(item => ({
+                          value: item.id,
+                          label: `OS ${item.serviceOrderNumber} - ${item.description} (${item.itemType})`
+                        }))
+                      },
+                      {
+                        name: 'quantity',
+                        type: 'number',
+                        label: 'Quantidade',
+                        required: true
+                      },
+                      {
+                        name: 'notes',
+                        type: 'textarea',
+                        label: 'Observações',
+                        required: false
+                      }
+                    ]}
+                  />
+                  <MovementForm
+                    title="Cancelar reserva"
+                    description="Libere peças reservadas para outras OS."
+                    isLoading={cancelReservationMutation.isPending}
+                    onSubmit={async payload => {
+                      const { serviceOrderItemId, quantity, notes } = payload as {
+                        serviceOrderItemId: number;
+                        quantity: number;
+                        notes?: string;
+                      };
+                      await cancelReservationMutation.mutateAsync({ serviceOrderItemId, quantity, notes });
+                    }}
+                    fields={[
+                      {
+                        name: 'serviceOrderItemId',
+                        type: 'select',
+                        label: 'Item da OS',
+                        required: true,
+                        options: serviceOrderItems.map(item => ({
+                          value: item.id,
+                          label: `OS ${item.serviceOrderNumber} - ${item.description} (${item.itemType})`
+                        }))
+                      },
+                      {
+                        name: 'quantity',
+                        type: 'number',
+                        label: 'Quantidade',
+                        required: true
+                      },
+                      {
+                        name: 'notes',
+                        type: 'textarea',
+                        label: 'Observações',
+                        required: false
+                      }
+                    ]}
+                  />
+                  <MovementForm
+                    title="Devolução"
+                    description="Registre a devolução de peças ao estoque."
+                    isLoading={returnMutation.isPending}
+                    onSubmit={async payload => {
+                      const { serviceOrderItemId, quantity, notes } = payload as {
+                        serviceOrderItemId: number;
+                        quantity: number;
+                        notes?: string;
+                      };
+                      await returnMutation.mutateAsync({ serviceOrderItemId, quantity, notes });
+                    }}
+                    fields={[
+                      {
+                        name: 'serviceOrderItemId',
+                        type: 'select',
+                        label: 'Item da OS',
+                        required: true,
+                        options: serviceOrderItems.map(item => ({
+                          value: item.id,
+                          label: `OS ${item.serviceOrderNumber} - ${item.description} (${item.itemType})`
+                        }))
+                      },
+                      {
+                        name: 'quantity',
+                        type: 'number',
+                        label: 'Quantidade',
+                        required: true
+                      },
+                      {
+                        name: 'notes',
+                        type: 'textarea',
+                        label: 'Observações',
+                        required: false
+                      }
+                    ]}
+                  />
+                </div>
+              </RoleGuard>
+
+              <div className="space-y-4 rounded-lg border border-gray-200 bg-white p-4 shadow-sm">
+                <div className="flex items-center justify-between">
+                  <h3 className="text-base font-semibold text-gray-800">Movimentações recentes</h3>
+                  <button
+                    type="button"
+                    onClick={() => void movementsQuery.refetch()}
+                    className="rounded-md border border-gray-200 px-3 py-1 text-xs font-medium text-gray-600 transition-colors hover:bg-gray-100"
+                  >
+                    Atualizar
+                  </button>
+                </div>
+
+                <div className="grid gap-3 md:grid-cols-2">
+                  <div className="flex flex-col text-sm">
+                    <label className="text-xs font-medium text-gray-600">Item de estoque</label>
+                    <select
+                      value={movementFilters.itemId ?? ""}
+                      onChange={event => setMovementFilters(prev => ({ ...prev, itemId: event.target.value ? Number(event.target.value) : undefined }))}
+                      className="mt-1 rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-orangeWheel-500 focus:outline-none focus:ring-2 focus:ring-orangeWheel-200"
+                    >
+                      <option value="">Todos os itens</option>
+                      {items.map(item => (
+                        <option key={item.id} value={item.id}>
+                          {item.partName} - {item.location}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  <div className="flex flex-col text-sm">
+                    <label className="text-xs font-medium text-gray-600">Peça</label>
+                    <select
+                      value={movementFilters.partId ?? ""}
+                      onChange={event => setMovementFilters(prev => ({ ...prev, partId: event.target.value ? Number(event.target.value) : undefined }))}
+                      className="mt-1 rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-orangeWheel-500 focus:outline-none focus:ring-2 focus:ring-orangeWheel-200"
+                    >
+                      <option value="">Todas as peças</option>
+                      {parts.map(part => (
+                        <option key={part.id} value={part.id}>
+                          {part.name} (SKU: {part.sku})
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  <div className="flex flex-col text-sm">
+                    <label className="text-xs font-medium text-gray-600">Ordem de Serviço</label>
+                    <select
+                      value={movementFilters.serviceOrderId ?? ""}
+                      onChange={event => setMovementFilters(prev => ({ ...prev, serviceOrderId: event.target.value ? Number(event.target.value) : undefined }))}
+                      className="mt-1 rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-orangeWheel-500 focus:outline-none focus:ring-2 focus:ring-orangeWheel-200"
+                    >
+                      <option value="">Todas as OS</option>
+                      {serviceOrders.map(order => (
+                        <option key={order.id} value={order.id}>
+                          {order.orderNumber} - {order.clientName}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  <div className="flex flex-col text-sm">
+                    <label className="text-xs font-medium text-gray-600">Veículo</label>
+                    <select
+                      value={movementFilters.vehicleId ?? ""}
+                      onChange={event => setMovementFilters(prev => ({ ...prev, vehicleId: event.target.value ? Number(event.target.value) : undefined }))}
+                      className="mt-1 rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-orangeWheel-500 focus:outline-none focus:ring-2 focus:ring-orangeWheel-200"
+                    >
+                      <option value="">Todos os veículos</option>
+                      {vehicles.map(vehicle => (
+                        <option key={vehicle.id} value={vehicle.id}>
+                          {vehicle.model} - {vehicle.licensePlate}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+
+                <div className="mt-2 max-h-96 space-y-3 overflow-y-auto pr-2">
+                  {isFetchingMovements ? (
+                    <div className="flex h-32 items-center justify-center">
+                      <div className="h-8 w-8 animate-spin rounded-full border-4 border-orangeWheel-500 border-t-transparent" />
+                    </div>
+                  ) : movements.length === 0 ? (
+                    <div className="rounded-md border border-dashed border-gray-300 p-6 text-center text-sm text-gray-500">
+                      Nenhuma movimentação encontrada para os filtros atuais.
+                    </div>
+                  ) : (
+                    movements.map(movement => (
+                      <article key={movement.id} className="rounded-lg border border-gray-200 bg-gray-50 p-3">
+                        <div className="flex items-center justify-between">
+                          <span className="text-sm font-semibold text-gray-800">{movement.movementType}</span>
+                          <span className="text-xs text-gray-500">
+                            {new Date(movement.movementDate).toLocaleString("pt-BR")}
+                          </span>
+                        </div>
+                        <p className="text-sm text-gray-600">Quantidade: {movement.quantity}</p>
+                        {movement.partName && (
+                          <p className="text-xs text-gray-500">Peça: {movement.partName}</p>
+                        )}
+                        {movement.serviceOrderId && (
+                          <p className="text-xs text-gray-500">OS relacionada: {movement.serviceOrderId}</p>
+                        )}
+                        {movement.notes && (
+                          <p className="text-xs text-gray-400">Observações: {movement.notes}</p>
+                        )}
+                      </article>
+                    ))
+                  )}
+                </div>
+              </div>
+            </div>
+          </section>
+        )}
+
+        {activeTab === "recommendations" && (
+          <section className="space-y-6">
+            <div className="rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
+              <div className="mb-4 grid gap-4 md:grid-cols-4">
                 <div className="flex flex-col text-sm">
-                  <label className="text-xs font-medium text-gray-600">Peça</label>
+                  <label className="text-xs font-medium text-gray-600">Veículo</label>
                   <select
-                    value={movementFilters.partId ?? ""}
-                    onChange={event => setMovementFilters(prev => ({ ...prev, partId: event.target.value ? Number(event.target.value) : undefined }))}
+                    value={recommendationFilters.vehicleId ?? ""}
+                    onChange={event => setRecommendationFilters(prev => ({ ...prev, vehicleId: event.target.value ? Number(event.target.value) : undefined }))}
                     className="mt-1 rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-orangeWheel-500 focus:outline-none focus:ring-2 focus:ring-orangeWheel-200"
                   >
-                    <option value="">Todas as peças</option>
-                    {parts.map(part => (
-                      <option key={part.id} value={part.id}>
-                        {part.name} (SKU: {part.sku})
+                    <option value="">Todos os veículos</option>
+                    {vehicles.map(vehicle => (
+                      <option key={vehicle.id} value={vehicle.id}>
+                        {vehicle.model} - {vehicle.licensePlate}
                       </option>
                     ))}
                   </select>
@@ -1058,8 +1336,8 @@ function InventoryDashboardContent() {
                 <div className="flex flex-col text-sm">
                   <label className="text-xs font-medium text-gray-600">Ordem de Serviço</label>
                   <select
-                    value={movementFilters.serviceOrderId ?? ""}
-                    onChange={event => setMovementFilters(prev => ({ ...prev, serviceOrderId: event.target.value ? Number(event.target.value) : undefined }))}
+                    value={recommendationFilters.serviceOrderId ?? ""}
+                    onChange={event => setRecommendationFilters(prev => ({ ...prev, serviceOrderId: event.target.value ? Number(event.target.value) : undefined }))}
                     className="mt-1 rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-orangeWheel-500 focus:outline-none focus:ring-2 focus:ring-orangeWheel-200"
                   >
                     <option value="">Todas as OS</option>
@@ -1071,13 +1349,122 @@ function InventoryDashboardContent() {
                   </select>
                 </div>
                 <div className="flex flex-col text-sm">
-                  <label className="text-xs font-medium text-gray-600">Veículo</label>
+                  <label className="text-xs font-medium text-gray-600">Limite</label>
+                  <input
+                    type="number"
+                    min={1}
+                    max={50}
+                    value={recommendationFilters.limit ?? 5}
+                    onChange={event => setRecommendationFilters(prev => ({ ...prev, limit: event.target.value ? Number(event.target.value) : undefined }))}
+                    className="mt-1 rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-orangeWheel-500 focus:outline-none focus:ring-2 focus:ring-orangeWheel-200"
+                  />
+                </div>
+                <div className="flex flex-col text-sm">
+                  <label className="text-xs font-medium text-gray-600">Pipeline</label>
                   <select
-                    value={movementFilters.vehicleId ?? ""}
-                    onChange={event => setMovementFilters(prev => ({ ...prev, vehicleId: event.target.value ? Number(event.target.value) : undefined }))}
+                    value={recommendationFilters.pipelineId ?? ""}
+                    onChange={event => setRecommendationFilters(prev => ({
+                      ...prev,
+                      pipelineId: event.target.value || undefined,
+                    }))}
                     className="mt-1 rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-orangeWheel-500 focus:outline-none focus:ring-2 focus:ring-orangeWheel-200"
                   >
-                    <option value="">Todos os veículos</option>
+                    <option value="">Padrão</option>
+                    {pipelines.map(pipeline => (
+                      <option key={pipeline.id} value={pipeline.id}>
+                        {pipeline.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => void recommendationsQuery.refetch()}
+                  className="self-end rounded-lg border border-gray-200 px-4 py-2 text-sm font-medium text-gray-600 transition-colors hover:bg-gray-100"
+                >
+                  Aplicar filtros
+                </button>
+              </div>
+
+              {isFetchingRecommendations ? (
+                <div className="flex h-40 items-center justify-center">
+                  <div className="h-10 w-10 animate-spin rounded-full border-4 border-orangeWheel-500 border-t-transparent" />
+                </div>
+              ) : recommendations.length === 0 ? (
+                <div className="rounded-md border border-dashed border-gray-300 p-6 text-center text-sm text-gray-500">
+                  Nenhuma recomendação encontrada para os filtros selecionados.
+                </div>
+              ) : (
+                <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                  {recommendations.map((recommendation, index) => (
+                    <article key={`${recommendation.partId}-${index}`} className="flex flex-col gap-3 rounded-lg border border-gray-200 bg-white p-4 shadow-sm">
+                      <header className="flex items-start justify-between gap-2">
+                        <div>
+                          <h3 className="text-base font-semibold text-gray-800">
+                            {recommendation.partName ?? `Peça ${recommendation.partId}`}
+                          </h3>
+                          {recommendation.partSku && (
+                            <p className="text-xs text-gray-400">SKU: {recommendation.partSku}</p>
+                          )}
+                        </div>
+                        {recommendation.fromFallback && (
+                          <span className="rounded-full bg-purple-100 px-2 py-0.5 text-xs font-semibold text-purple-600">
+                            Fallback
+                          </span>
+                        )}
+                      </header>
+                      {recommendation.rationale && (
+                        <p className="text-xs text-gray-500">{recommendation.rationale}</p>
+                      )}
+                      <div className="mt-auto space-y-1 text-xs text-gray-500">
+                        {recommendation.historicalQuantity && (
+                          <p>
+                            Quantidade histórica: <span className="font-semibold">{recommendation.historicalQuantity}</span>
+                          </p>
+                        )}
+                        {typeof recommendation.confidence === "number" && (
+                          <p>Confiança: {(recommendation.confidence * 100).toFixed(0)}%</p>
+                        )}
+                        {recommendation.lastMovementDate && (
+                          <p>Última movimentação: {new Date(recommendation.lastMovementDate).toLocaleDateString("pt-BR")}</p>
+                        )}
+                      </div>
+                    </article>
+                  ))}
+                </div>
+              )}
+            </div>
+          </section>
+        )}
+
+        {activeTab === "availability" && (
+          <section className="space-y-6">
+            <div className="rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
+              <h3 className="mb-4 text-base font-semibold text-gray-800">Consultar disponibilidade</h3>
+              <div className="grid gap-4 md:grid-cols-3">
+                <div className="flex flex-col text-sm">
+                  <label className="text-xs font-medium text-gray-600">Peça</label>
+                  <select
+                    value={availabilityIds.partId ?? ""}
+                    onChange={event => setAvailabilityIds(prev => ({ ...prev, partId: event.target.value ? Number(event.target.value) : undefined }))}
+                    className="mt-1 rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-orangeWheel-500 focus:outline-none focus:ring-2 focus:ring-orangeWheel-200"
+                  >
+                    <option value="">Selecione uma peça...</option>
+                    {parts.map(part => (
+                      <option key={part.id} value={part.id}>
+                        {part.name} (SKU: {part.sku})
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <div className="flex flex-col text-sm">
+                  <label className="text-xs font-medium text-gray-600">Veículo</label>
+                  <select
+                    value={availabilityIds.vehicleId ?? ""}
+                    onChange={event => setAvailabilityIds(prev => ({ ...prev, vehicleId: event.target.value ? Number(event.target.value) : undefined }))}
+                    className="mt-1 rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-orangeWheel-500 focus:outline-none focus:ring-2 focus:ring-orangeWheel-200"
+                  >
+                    <option value="">Selecione um veículo...</option>
                     {vehicles.map(vehicle => (
                       <option key={vehicle.id} value={vehicle.id}>
                         {vehicle.model} - {vehicle.licensePlate}
@@ -1085,400 +1472,204 @@ function InventoryDashboardContent() {
                     ))}
                   </select>
                 </div>
-              </div>
-
-              <div className="mt-2 max-h-96 space-y-3 overflow-y-auto pr-2">
-                {isFetchingMovements ? (
-                  <div className="flex h-32 items-center justify-center">
-                    <div className="h-8 w-8 animate-spin rounded-full border-4 border-orangeWheel-500 border-t-transparent" />
-                  </div>
-                ) : movements.length === 0 ? (
-                  <div className="rounded-md border border-dashed border-gray-300 p-6 text-center text-sm text-gray-500">
-                    Nenhuma movimentação encontrada para os filtros atuais.
-                  </div>
-                ) : (
-                  movements.map(movement => (
-                    <article key={movement.id} className="rounded-lg border border-gray-200 bg-gray-50 p-3">
-                      <div className="flex items-center justify-between">
-                        <span className="text-sm font-semibold text-gray-800">{movement.movementType}</span>
-                        <span className="text-xs text-gray-500">
-                          {new Date(movement.movementDate).toLocaleString("pt-BR")}
-                        </span>
-                      </div>
-                      <p className="text-sm text-gray-600">Quantidade: {movement.quantity}</p>
-                      {movement.partName && (
-                        <p className="text-xs text-gray-500">Peça: {movement.partName}</p>
-                      )}
-                      {movement.serviceOrderId && (
-                        <p className="text-xs text-gray-500">OS relacionada: {movement.serviceOrderId}</p>
-                      )}
-                      {movement.notes && (
-                        <p className="text-xs text-gray-400">Observações: {movement.notes}</p>
-                      )}
-                    </article>
-                  ))
-                )}
-              </div>
-            </div>
-          </div>
-        </section>
-      )}
-
-      {activeTab === "recommendations" && (
-        <section className="space-y-6 mt-30 w-full">
-          <div className="rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
-            <div className="mb-4 grid gap-4 md:grid-cols-4">
-              <div className="flex flex-col text-sm">
-                <label className="text-xs font-medium text-gray-600">Veículo</label>
-                <select
-                  value={recommendationFilters.vehicleId ?? ""}
-                  onChange={event => setRecommendationFilters(prev => ({ ...prev, vehicleId: event.target.value ? Number(event.target.value) : undefined }))}
-                  className="mt-1 rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-orangeWheel-500 focus:outline-none focus:ring-2 focus:ring-orangeWheel-200"
-                >
-                  <option value="">Todos os veículos</option>
-                  {vehicles.map(vehicle => (
-                    <option key={vehicle.id} value={vehicle.id}>
-                      {vehicle.model} - {vehicle.licensePlate}
-                    </option>
-                  ))}
-                </select>
-              </div>
-              <div className="flex flex-col text-sm">
-                <label className="text-xs font-medium text-gray-600">Ordem de Serviço</label>
-                <select
-                  value={recommendationFilters.serviceOrderId ?? ""}
-                  onChange={event => setRecommendationFilters(prev => ({ ...prev, serviceOrderId: event.target.value ? Number(event.target.value) : undefined }))}
-                  className="mt-1 rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-orangeWheel-500 focus:outline-none focus:ring-2 focus:ring-orangeWheel-200"
-                >
-                  <option value="">Todas as OS</option>
-                  {serviceOrders.map(order => (
-                    <option key={order.id} value={order.id}>
-                      {order.orderNumber} - {order.clientName}
-                    </option>
-                  ))}
-                </select>
-              </div>
-              <div className="flex flex-col text-sm">
-                <label className="text-xs font-medium text-gray-600">Limite</label>
-                <input
-                  type="number"
-                  min={1}
-                  max={50}
-                  value={recommendationFilters.limit ?? 5}
-                  onChange={event => setRecommendationFilters(prev => ({ ...prev, limit: event.target.value ? Number(event.target.value) : undefined }))}
-                  className="mt-1 rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-orangeWheel-500 focus:outline-none focus:ring-2 focus:ring-orangeWheel-200"
-                />
-              </div>
-              <div className="flex flex-col text-sm">
-                <label className="text-xs font-medium text-gray-600">Pipeline</label>
-                <select
-                  value={recommendationFilters.pipelineId ?? ""}
-                  onChange={event => setRecommendationFilters(prev => ({
-                    ...prev,
-                    pipelineId: event.target.value || undefined,
-                  }))}
-                  className="mt-1 rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-orangeWheel-500 focus:outline-none focus:ring-2 focus:ring-orangeWheel-200"
-                >
-                  <option value="">Padrão</option>
-                  {pipelines.map(pipeline => (
-                    <option key={pipeline.id} value={pipeline.id}>
-                      {pipeline.name}
-                    </option>
-                  ))}
-                </select>
+                <div className="flex flex-col text-sm">
+                  <label className="text-xs font-medium text-gray-600">Cliente</label>
+                  <select
+                    value={availabilityIds.clientId ?? ""}
+                    onChange={event => setAvailabilityIds(prev => ({ ...prev, clientId: event.target.value ? Number(event.target.value) : undefined }))}
+                    className="mt-1 rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-orangeWheel-500 focus:outline-none focus:ring-2 focus:ring-orangeWheel-200"
+                  >
+                    <option value="">Selecione um cliente...</option>
+                    {serviceOrders.map(order => order.clientName).filter((name, index, self) => name && self.indexOf(name) === index).map((clientName, idx) => {
+                      const order = serviceOrders.find(o => o.clientName === clientName);
+                      return (
+                        <option key={idx} value={order?.clientId}>
+                          {clientName}
+                        </option>
+                      );
+                    })}
+                  </select>
+                </div>
               </div>
               <button
                 type="button"
-                onClick={() => void recommendationsQuery.refetch()}
-                className="self-end rounded-lg border border-gray-200 px-4 py-2 text-sm font-medium text-gray-600 transition-colors hover:bg-gray-100"
+                onClick={() => void handleRefreshAvailability()}
+                className="mt-4 inline-flex items-center gap-2 rounded-lg bg-orangeWheel-500 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-orangeWheel-600"
               >
-                Aplicar filtros
+                Consultar
               </button>
-            </div>
 
-            {isFetchingRecommendations ? (
-              <div className="flex h-40 items-center justify-center">
-                <div className="h-10 w-10 animate-spin rounded-full border-4 border-orangeWheel-500 border-t-transparent" />
-              </div>
-            ) : recommendations.length === 0 ? (
-              <div className="rounded-md border border-dashed border-gray-300 p-6 text-center text-sm text-gray-500">
-                Nenhuma recomendação encontrada para os filtros selecionados.
-              </div>
-            ) : (
-              <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-                {recommendations.map((recommendation, index) => (
-                  <article key={`${recommendation.partId}-${index}`} className="flex flex-col gap-3 rounded-lg border border-gray-200 bg-white p-4 shadow-sm">
-                    <header className="flex items-start justify-between gap-2">
-                      <div>
-                        <h3 className="text-base font-semibold text-gray-800">
-                          {recommendation.partName ?? `Peça ${recommendation.partId}`}
-                        </h3>
-                        {recommendation.partSku && (
-                          <p className="text-xs text-gray-400">SKU: {recommendation.partSku}</p>
-                        )}
-                      </div>
-                      {recommendation.fromFallback && (
-                        <span className="rounded-full bg-purple-100 px-2 py-0.5 text-xs font-semibold text-purple-600">
-                          Fallback
-                        </span>
-                      )}
-                    </header>
-                    {recommendation.rationale && (
-                      <p className="text-xs text-gray-500">{recommendation.rationale}</p>
-                    )}
-                    <div className="mt-auto space-y-1 text-xs text-gray-500">
-                      {recommendation.historicalQuantity && (
-                        <p>
-                          Quantidade histórica: <span className="font-semibold">{recommendation.historicalQuantity}</span>
-                        </p>
-                      )}
-                      {typeof recommendation.confidence === "number" && (
-                        <p>Confiança: {(recommendation.confidence * 100).toFixed(0)}%</p>
-                      )}
-                      {recommendation.lastMovementDate && (
-                        <p>Última movimentação: {new Date(recommendation.lastMovementDate).toLocaleDateString("pt-BR")}</p>
-                      )}
+              <div className="mt-6 space-y-4">
+                {availabilityData.part && (
+                  <AvailabilityCard title="Disponibilidade da peça" data={availabilityData.part} />
+                )}
+                {availabilityData.vehicle && availabilityData.vehicle.length > 0 && (
+                  <div className="space-y-2">
+                    <h4 className="text-sm font-semibold text-gray-800">Disponibilidade para o veículo</h4>
+                    <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                      {availabilityData.vehicle.map((item, idx) => (
+                        <AvailabilityCard key={idx} title={item.partName ?? `Peça ${item.partId}`} data={item} />
+                      ))}
                     </div>
-                  </article>
-                ))}
-              </div>
-            )}
-          </div>
-        </section>
-      )}
-
-      {activeTab === "availability" && (
-        <section className="space-y-6 mt-30 w-full">
-          <div className="rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
-            <h3 className="mb-4 text-base font-semibold text-gray-800">Consultar disponibilidade</h3>
-            <div className="grid gap-4 md:grid-cols-3">
-              <div className="flex flex-col text-sm">
-                <label className="text-xs font-medium text-gray-600">Peça</label>
-                <select
-                  value={availabilityIds.partId ?? ""}
-                  onChange={event => setAvailabilityIds(prev => ({ ...prev, partId: event.target.value ? Number(event.target.value) : undefined }))}
-                  className="mt-1 rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-orangeWheel-500 focus:outline-none focus:ring-2 focus:ring-orangeWheel-200"
-                >
-                  <option value="">Selecione uma peça...</option>
-                  {parts.map(part => (
-                    <option key={part.id} value={part.id}>
-                      {part.name} (SKU: {part.sku})
-                    </option>
-                  ))}
-                </select>
-              </div>
-              <div className="flex flex-col text-sm">
-                <label className="text-xs font-medium text-gray-600">Veículo</label>
-                <select
-                  value={availabilityIds.vehicleId ?? ""}
-                  onChange={event => setAvailabilityIds(prev => ({ ...prev, vehicleId: event.target.value ? Number(event.target.value) : undefined }))}
-                  className="mt-1 rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-orangeWheel-500 focus:outline-none focus:ring-2 focus:ring-orangeWheel-200"
-                >
-                  <option value="">Selecione um veículo...</option>
-                  {vehicles.map(vehicle => (
-                    <option key={vehicle.id} value={vehicle.id}>
-                      {vehicle.model} - {vehicle.licensePlate}
-                    </option>
-                  ))}
-                </select>
-              </div>
-              <div className="flex flex-col text-sm">
-                <label className="text-xs font-medium text-gray-600">Cliente</label>
-                <select
-                  value={availabilityIds.clientId ?? ""}
-                  onChange={event => setAvailabilityIds(prev => ({ ...prev, clientId: event.target.value ? Number(event.target.value) : undefined }))}
-                  className="mt-1 rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-orangeWheel-500 focus:outline-none focus:ring-2 focus:ring-orangeWheel-200"
-                >
-                  <option value="">Selecione um cliente...</option>
-                  {serviceOrders.map(order => order.clientName).filter((name, index, self) => name && self.indexOf(name) === index).map((clientName, idx) => {
-                    const order = serviceOrders.find(o => o.clientName === clientName);
-                    return (
-                      <option key={idx} value={order?.clientId}>
-                        {clientName}
-                      </option>
-                    );
-                  })}
-                </select>
-              </div>
-            </div>
-            <button
-              type="button"
-              onClick={() => void handleRefreshAvailability()}
-              className="mt-4 inline-flex items-center gap-2 rounded-lg bg-orangeWheel-500 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-orangeWheel-600"
-            >
-              Consultar
-            </button>
-
-            <div className="mt-6 space-y-4">
-              {availabilityData.part && (
-                <AvailabilityCard title="Disponibilidade da peça" data={availabilityData.part} />
-              )}
-              {availabilityData.vehicle && availabilityData.vehicle.length > 0 && (
-                <div className="space-y-2">
-                  <h4 className="text-sm font-semibold text-gray-800">Disponibilidade para o veículo</h4>
-                  <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-                    {availabilityData.vehicle.map((item, idx) => (
-                      <AvailabilityCard key={idx} title={item.partName ?? `Peça ${item.partId}`} data={item} />
-                    ))}
                   </div>
-                </div>
-              )}
-              {availabilityData.client && availabilityData.client.length > 0 && (
-                <div className="space-y-2">
-                  <h4 className="text-sm font-semibold text-gray-800">Disponibilidade para o cliente</h4>
-                  <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-                    {availabilityData.client.map((item, idx) => (
-                      <AvailabilityCard key={idx} title={item.partName ?? `Peça ${item.partId}`} data={item} />
-                    ))}
+                )}
+                {availabilityData.client && availabilityData.client.length > 0 && (
+                  <div className="space-y-2">
+                    <h4 className="text-sm font-semibold text-gray-800">Disponibilidade para o cliente</h4>
+                    <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                      {availabilityData.client.map((item, idx) => (
+                        <AvailabilityCard key={idx} title={item.partName ?? `Peça ${item.partId}`} data={item} />
+                      ))}
+                    </div>
                   </div>
-                </div>
-              )}
-              {!availabilityData.part && !availabilityData.vehicle && !availabilityData.client && (
-                <div className="rounded-md border border-dashed border-gray-300 p-6 text-center text-sm text-gray-500">
-                  Informe pelo menos um identificador para consultar.
-                </div>
-              )}
-            </div>
-          </div>
-        </section>
-      )}
-
-      {activeTab === "history" && (
-        <section className="space-y-6 mt-30 w-full">
-          <div className="rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
-            <h3 className="mb-4 text-base font-semibold text-gray-800">Histórico de consumo</h3>
-            <div className="grid gap-4 md:grid-cols-2">
-              <div className="flex flex-col text-sm">
-                <label className="text-xs font-medium text-gray-600">Veículo</label>
-                <select
-                  value={historyIds.vehicleId ?? ""}
-                  onChange={event => setHistoryIds(prev => ({ ...prev, vehicleId: event.target.value ? Number(event.target.value) : undefined }))}
-                  className="mt-1 rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-orangeWheel-500 focus:outline-none focus:ring-2 focus:ring-orangeWheel-200"
-                >
-                  <option value="">Selecione um veículo...</option>
-                  {vehicles.map(vehicle => (
-                    <option key={vehicle.id} value={vehicle.id}>
-                      {vehicle.model} - {vehicle.licensePlate}
-                    </option>
-                  ))}
-                </select>
+                )}
+                {!availabilityData.part && !availabilityData.vehicle && !availabilityData.client && (
+                  <div className="rounded-md border border-dashed border-gray-300 p-6 text-center text-sm text-gray-500">
+                    Informe pelo menos um identificador para consultar.
+                  </div>
+                )}
               </div>
-              <div className="flex flex-col text-sm">
-                <label className="text-xs font-medium text-gray-600">Cliente</label>
-                <select
-                  value={historyIds.clientId ?? ""}
-                  onChange={event => setHistoryIds(prev => ({ ...prev, clientId: event.target.value ? Number(event.target.value) : undefined }))}
-                  className="mt-1 rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-orangeWheel-500 focus:outline-none focus:ring-2 focus:ring-orangeWheel-200"
-                >
-                  <option value="">Selecione um cliente...</option>
-                  {serviceOrders.map(order => order.clientName).filter((name, index, self) => name && self.indexOf(name) === index).map((clientName, idx) => {
-                    const order = serviceOrders.find(o => o.clientName === clientName);
-                    return (
-                      <option key={idx} value={order?.clientId}>
-                        {clientName}
+            </div>
+          </section>
+        )}
+
+        {activeTab === "history" && (
+          <section className="space-y-6">
+            <div className="rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
+              <h3 className="mb-4 text-base font-semibold text-gray-800">Histórico de consumo</h3>
+              <div className="grid gap-4 md:grid-cols-2">
+                <div className="flex flex-col text-sm">
+                  <label className="text-xs font-medium text-gray-600">Veículo</label>
+                  <select
+                    value={historyIds.vehicleId ?? ""}
+                    onChange={event => setHistoryIds(prev => ({ ...prev, vehicleId: event.target.value ? Number(event.target.value) : undefined }))}
+                    className="mt-1 rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-orangeWheel-500 focus:outline-none focus:ring-2 focus:ring-orangeWheel-200"
+                  >
+                    <option value="">Selecione um veículo...</option>
+                    {vehicles.map(vehicle => (
+                      <option key={vehicle.id} value={vehicle.id}>
+                        {vehicle.model} - {vehicle.licensePlate}
                       </option>
-                    );
-                  })}
-                </select>
+                    ))}
+                  </select>
+                </div>
+                <div className="flex flex-col text-sm">
+                  <label className="text-xs font-medium text-gray-600">Cliente</label>
+                  <select
+                    value={historyIds.clientId ?? ""}
+                    onChange={event => setHistoryIds(prev => ({ ...prev, clientId: event.target.value ? Number(event.target.value) : undefined }))}
+                    className="mt-1 rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-orangeWheel-500 focus:outline-none focus:ring-2 focus:ring-orangeWheel-200"
+                  >
+                    <option value="">Selecione um cliente...</option>
+                    {serviceOrders.map(order => order.clientName).filter((name, index, self) => name && self.indexOf(name) === index).map((clientName, idx) => {
+                      const order = serviceOrders.find(o => o.clientName === clientName);
+                      return (
+                        <option key={idx} value={order?.clientId}>
+                          {clientName}
+                        </option>
+                      );
+                    })}
+                  </select>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => void handleRefreshHistory()}
+                className="mt-4 inline-flex items-center gap-2 rounded-lg bg-orangeWheel-500 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-orangeWheel-600"
+              >
+                Consultar histórico
+              </button>
+
+              <div className="mt-6 grid gap-4 md:grid-cols-2">
+                {historyData.vehicle && (
+                  <HistoryCard title="Consumo por veículo" entries={historyData.vehicle} />
+                )}
+                {historyData.client && (
+                  <HistoryCard title="Consumo por cliente" entries={historyData.client} />
+                )}
+                {!historyData.vehicle && !historyData.client && (
+                  <div className="rounded-md border border-dashed border-gray-300 p-6 text-center text-sm text-gray-500">
+                    Nenhum histórico carregado. Informe um veículo ou cliente.
+                  </div>
+                )}
               </div>
             </div>
-            <button
-              type="button"
-              onClick={() => void handleRefreshHistory()}
-              className="mt-4 inline-flex items-center gap-2 rounded-lg bg-orangeWheel-500 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-orangeWheel-600"
-            >
-              Consultar histórico
-            </button>
+          </section>
+        )}
 
-            <div className="mt-6 grid gap-4 md:grid-cols-2">
-              {historyData.vehicle && (
-                <HistoryCard title="Consumo por veículo" entries={historyData.vehicle} />
-              )}
-              {historyData.client && (
-                <HistoryCard title="Consumo por cliente" entries={historyData.client} />
-              )}
-              {!historyData.vehicle && !historyData.client && (
-                <div className="rounded-md border border-dashed border-gray-300 p-6 text-center text-sm text-gray-500">
-                  Nenhum histórico carregado. Informe um veículo ou cliente.
-                </div>
-              )}
-            </div>
-          </div>
-        </section>
-      )}
+        <InventoryItemModal
+          isOpen={isCreateModalOpen}
+          onClose={() => setIsCreateModalOpen(false)}
+          onSubmit={async data => {
+            const payload: InventoryItemCreateDTO = {
+              partId: data.partId,
+              minimumQuantity: data.minimumQuantity,
+              location: data.location ?? "",
+              unitCost: data.averageCost,
+              salePrice: data.salePrice,
+            };
+            await createItemMutation.mutateAsync(payload);
+          }}
+          title="Adicionar item ao estoque"
+          isSubmitting={createItemMutation.isPending}
+        />
 
-      <InventoryItemModal
-        isOpen={isCreateModalOpen}
-        onClose={() => setIsCreateModalOpen(false)}
-        onSubmit={async data => {
-          const payload: InventoryItemCreateDTO = {
-            partId: data.partId,
-            minimumQuantity: data.minimumQuantity,
-            location: data.location ?? "",
-            unitCost: data.averageCost,
-            salePrice: data.salePrice,
-          };
-          await createItemMutation.mutateAsync(payload);
-        }}
-        title="Adicionar item ao estoque"
-        isSubmitting={createItemMutation.isPending}
-      />
+        <InventoryItemModal
+          isOpen={isEditModalOpen}
+          onClose={() => setIsEditModalOpen(false)}
+          onSubmit={async data => {
+            if (!selectedItem) return;
+            const payload: InventoryItemUpdateDTO = {
+              minimumQuantity: data.minimumQuantity,
+              quantity: data.initialQuantity,
+              location: data.location,
+              unitCost: data.averageCost,
+              salePrice: data.salePrice,
+            };
+            await updateItemMutation.mutateAsync({ id: selectedItem.id, data: payload });
+          }}
+          title="Editar item de estoque"
+          initialData={selectedItem}
+          isSubmitting={updateItemMutation.isPending}
+        />
 
-      <InventoryItemModal
-        isOpen={isEditModalOpen}
-        onClose={() => setIsEditModalOpen(false)}
-        onSubmit={async data => {
-          if (!selectedItem) return;
-          const payload: InventoryItemUpdateDTO = {
-            minimumQuantity: data.minimumQuantity,
-            quantity: data.initialQuantity,
-            location: data.location,
-            unitCost: data.averageCost,
-            salePrice: data.salePrice,
-          };
-          await updateItemMutation.mutateAsync({ id: selectedItem.id, data: payload });
-        }}
-        title="Editar item de estoque"
-        initialData={selectedItem}
-        isSubmitting={updateItemMutation.isPending}
-      />
+        {/* Modais de Peças */}
+        <PartFormModal
+          isOpen={isCreatePartModalOpen}
+          onClose={() => setIsCreatePartModalOpen(false)}
+          onSubmit={async data => {
+            await createPartMutation.mutateAsync(data);
+          }}
+          title="Cadastrar nova peça"
+          isSubmitting={createPartMutation.isPending}
+        />
 
-      {/* Modais de Peças */}
-      <PartFormModal
-        isOpen={isCreatePartModalOpen}
-        onClose={() => setIsCreatePartModalOpen(false)}
-        onSubmit={async data => {
-          await createPartMutation.mutateAsync(data);
-        }}
-        title="Cadastrar nova peça"
-        isSubmitting={createPartMutation.isPending}
-      />
+        <PartFormModal
+          isOpen={isEditPartModalOpen}
+          onClose={() => setIsEditPartModalOpen(false)}
+          onSubmit={async data => {
+            if (!selectedPart) return;
+            await updatePartMutation.mutateAsync({ id: selectedPart.id, data });
+          }}
+          title="Editar peça"
+          initialData={selectedPart}
+          isSubmitting={updatePartMutation.isPending}
+        />
 
-      <PartFormModal
-        isOpen={isEditPartModalOpen}
-        onClose={() => setIsEditPartModalOpen(false)}
-        onSubmit={async data => {
-          if (!selectedPart) return;
-          await updatePartMutation.mutateAsync({ id: selectedPart.id, data });
-        }}
-        title="Editar peça"
-        initialData={selectedPart}
-        isSubmitting={updatePartMutation.isPending}
-      />
+        <PartImportModal
+          isOpen={isImportPartModalOpen}
+          onClose={() => setIsImportPartModalOpen(false)}
+          onUpload={handleImportParts}
+        />
 
-      <PartImportModal
-        isOpen={isImportPartModalOpen}
-        onClose={() => setIsImportPartModalOpen(false)}
-        onUpload={handleImportParts}
-      />
-
-      <ImportInstructionsModal
-        type="inventory"
-        isOpen={isInstructionsModalOpen}
-        onClose={() => setIsInstructionsModalOpen(false)}
-        onDownloadTemplate={downloadTemplate}
-        isDownloading={downloadingTemplate}
-      />
+        <ImportInstructionsModal
+          type="inventory"
+          isOpen={isInstructionsModalOpen}
+          onClose={() => setIsInstructionsModalOpen(false)}
+          onDownloadTemplate={downloadTemplate}
+          isDownloading={downloadingTemplate}
+        />
+      </div>
     </div>
   );
 }
