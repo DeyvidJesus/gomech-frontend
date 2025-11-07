@@ -37,11 +37,13 @@ export function AddVehicleModal({ isOpen, onClose }: AddVehicleModalProps) {
     mutationFn: (data: Partial<Vehicle>) => vehiclesApi.create(data as Vehicle),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["vehicles"] });
-      queryClient.invalidateQueries({ queryKey: ["clients"] }); // Atualizar clientes também
+      queryClient.invalidateQueries({ queryKey: ["vehicles-list"] });
+      queryClient.invalidateQueries({ queryKey: ["vehicles-stats"] });
+      queryClient.invalidateQueries({ queryKey: ["clients"] });
       onClose();
     },
     onError: (error: any) => {
-      console.error('Erro ao criar veículo:', error); // Para debug
+      console.error('Erro ao criar veículo:', error);
       setError(error?.response?.data?.message || "Erro ao cadastrar veículo. Tente novamente.");
     },
   });

@@ -26,7 +26,10 @@ export function CreateClientModal({ isOpen, onClose }: CreateClientModalProps) {
   const mutation = useMutation({
     mutationFn: (data: Partial<Client>) => clientsApi.create(data as Client),
     onSuccess: () => {
+      // Invalidar todas as queries relacionadas a clientes
       queryClient.invalidateQueries({ queryKey: ["clients"] });
+      queryClient.invalidateQueries({ queryKey: ["clients-list"] });
+      queryClient.invalidateQueries({ queryKey: ["clients-stats"] });
       onClose();
     },
     onError: (error: any) => {

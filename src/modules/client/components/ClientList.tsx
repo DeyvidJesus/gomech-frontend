@@ -12,27 +12,28 @@ import type { PageResponse } from "../../../shared/types/pagination";
 import axios from "../../../shared/services/axios";
 import { ImportInstructionsModal } from "../../../shared/components/ImportInstructionsModal";
 import { PageTutorial } from "@/modules/tutorial/components/PageTutorial";
+import { showErrorAlert, showSuccessToast } from "@/shared/utils/errorHandler";
 
 export function ClientList() {
   const queryClient = useQueryClient();
   const [page, setPage] = useState(0);
   const [pageSize, setPageSize] = useState(10);
+  const [sortBy, setSortBy] = useState<string>("name");
+  const [sortDirection, setSortDirection] = useState<"ASC" | "DESC">("ASC");
   
-  // Query separada para estatísticas (não recarrega ao trocar de página)
   const { data: statsData } = useQuery<PageResponse<Client>>({
     queryKey: ["clients-stats"],
     queryFn: async () => {
       const res = await clientsApi.getAllPaginated({ page: 0, size: 1 });
       return res.data;
     },
-    staleTime: 60000, // Cache por 1 minuto
+    staleTime: 60000,
   });
 
-  // Query para lista paginada (recarrega ao trocar de página)
   const { data: clientsPage, isLoading: isLoadingList, error } = useQuery<PageResponse<Client>>({
-    queryKey: ["clients-list", page, pageSize],
+    queryKey: ["clients-list", page, pageSize, sortBy, sortDirection],
     queryFn: async () => {
-      const res = await clientsApi.getAllPaginated({ page, size: pageSize, sortBy: "name", direction: "ASC" });
+      const res = await clientsApi.getAllPaginated({ page, size: pageSize, sortBy, direction: sortDirection });
       return res.data;
     },
   });
@@ -67,18 +68,21 @@ export function ClientList() {
       window.URL.revokeObjectURL(url);
     } catch (error) {
       console.error("Erro ao baixar template:", error);
-      alert("Erro ao baixar template");
+      showErrorAlert(error, "Erro ao baixar template");
     } finally {
       setDownloadingTemplate(null);
     }
   };
 
-  // Mutations para deletar
   const deleteMutation = useMutation({
     mutationFn: (id: number) => clientsApi.delete(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["clients-list"] });
       queryClient.invalidateQueries({ queryKey: ["clients-stats"] });
+      showSuccessToast("Cliente removido com sucesso!");
+    },
+    onError: (error: any) => {
+      showErrorAlert(error, "Erro ao remover cliente");
     },
   });
 
@@ -88,9 +92,11 @@ export function ClientList() {
       queryClient.invalidateQueries({ queryKey: ["clients-list"] });
       queryClient.invalidateQueries({ queryKey: ["clients-stats"] });
     },
+    onError: (error: any) => {
+      showErrorAlert(error, "Erro ao importar clientes");
+    },
   });
 
-  // Handlers
   const handleAdd = () => {
     setShowCreate(true);
   };
@@ -120,6 +126,21 @@ export function ClientList() {
 
   const handleCloseCreate = () => {
     setShowCreate(false);
+  };
+
+  const handleSort = (field: string) => {
+    if (sortBy === field) {
+      setSortDirection(sortDirection === "ASC" ? "DESC" : "ASC");
+    } else {
+      setSortBy(field);
+      setSortDirection("ASC");
+    }
+    setPage(0); // Reset para primeira página ao mudar ordenação
+  };
+
+  const getSortIcon = (field: string) => {
+    if (sortBy !== field) return "⇅";
+    return sortDirection === "ASC" ? "↑" : "↓";
   };
 
   const handleImportClients = async (file: File) => {
@@ -157,13 +178,12 @@ export function ClientList() {
       window.URL.revokeObjectURL(url);
     } catch (exportError) {
       console.error("Erro ao exportar clientes", exportError);
-      window.alert("Não foi possível exportar os clientes. Tente novamente mais tarde.");
+      showErrorAlert(exportError, "Não foi possível exportar os clientes. Tente novamente mais tarde.");
     } finally {
       setIsExporting(false);
     }
   };
 
-  // Estado de erro
   const tutorial = (
     <PageTutorial
       tutorialKey="clients-management"
@@ -341,14 +361,32 @@ export function ClientList() {
                 </colgroup>
                 <thead className="bg-gray-50">
                   <tr>
-                    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
-                      Cliente
+                    <th 
+                      className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider cursor-pointer hover:bg-gray-100 transition-colors select-none"
+                      onClick={() => handleSort("name")}
+                      title="Clique para ordenar por nome"
+                    >
+                      <div className="flex items-center gap-1">
+                        Cliente <span className="text-orangeWheel-500">{getSortIcon("name")}</span>
+                      </div>
                     </th>
-                    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
-                      Contato
+                    <th 
+                      className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider cursor-pointer hover:bg-gray-100 transition-colors select-none"
+                      onClick={() => handleSort("email")}
+                      title="Clique para ordenar por email"
+                    >
+                      <div className="flex items-center gap-1">
+                        Contato <span className="text-orangeWheel-500">{getSortIcon("email")}</span>
+                      </div>
                     </th>
-                    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
-                      Data
+                    <th 
+                      className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider cursor-pointer hover:bg-gray-100 transition-colors select-none"
+                      onClick={() => handleSort("createdAt")}
+                      title="Clique para ordenar por data"
+                    >
+                      <div className="flex items-center gap-1">
+                        Data <span className="text-orangeWheel-500">{getSortIcon("createdAt")}</span>
+                      </div>
                     </th>
                     <th className="px-4 py-3 text-right text-xs font-semibold text-gray-600 uppercase tracking-wider">
                       Ações
@@ -410,6 +448,34 @@ export function ClientList() {
                   ))}
                 </tbody>
               </table>
+            </div>
+          </div>
+
+          {/* Mobile Sorting */}
+          <div className="lg:hidden bg-white rounded-lg shadow-sm border border-gray-200 p-3 mb-3">
+            <label className="text-xs font-semibold text-gray-600 uppercase tracking-wider mb-2 block">
+              Ordenar por:
+            </label>
+            <div className="flex gap-2">
+              <select 
+                value={sortBy}
+                onChange={(e) => {
+                  setSortBy(e.target.value);
+                  setPage(0);
+                }}
+                className="flex-1 px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-orangeWheel-500"
+              >
+                <option value="name">Nome</option>
+                <option value="email">Email</option>
+                <option value="createdAt">Data de Cadastro</option>
+              </select>
+              <button
+                onClick={() => setSortDirection(sortDirection === "ASC" ? "DESC" : "ASC")}
+                className="px-4 py-2 bg-orangeWheel-500 text-white rounded-lg text-lg hover:bg-orangeWheel-600 transition-colors"
+                title={`Ordem: ${sortDirection === "ASC" ? "Crescente" : "Decrescente"}`}
+              >
+                {sortDirection === "ASC" ? "↑" : "↓"}
+              </button>
             </div>
           </div>
 

@@ -8,6 +8,7 @@ import { statusDisplayMapping } from "../types/serviceOrder";
 import EditServiceOrderModal from "./EditServiceOrderModal";
 import AddServiceOrderItemModal from "./Item/AddServiceOrderItemModal";
 import { PageTutorial } from "@/modules/tutorial/components/PageTutorial";
+import { showErrorAlert, showSuccessToast } from "@/shared/utils/errorHandler";
 
 export default function ServiceOrderDetailsPage() {
   const navigate = useNavigate();
@@ -40,6 +41,9 @@ export default function ServiceOrderDetailsPage() {
       queryClient.invalidateQueries({ queryKey: ["serviceOrder", serviceOrderId] });
       queryClient.invalidateQueries({ queryKey: ["serviceOrders"] });
     },
+    onError: (error: any) => {
+      showErrorAlert(error, "Erro ao atualizar status da ordem de serviço");
+    },
   });
 
   // Mutation para aplicar/desaplicar item
@@ -49,6 +53,12 @@ export default function ServiceOrderDetailsPage() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["serviceOrderItems", serviceOrderId] });
       queryClient.invalidateQueries({ queryKey: ["serviceOrder", serviceOrderId] });
+      // Atualiza inventário quando aplicar/desaplicar items que afetam estoque
+      queryClient.invalidateQueries({ queryKey: ["inventory", "items"] });
+      queryClient.invalidateQueries({ queryKey: ["inventory", "movements"] });
+    },
+    onError: (error: any) => {
+      showErrorAlert(error, "Erro ao aplicar/desaplicar item");
     },
   });
 
@@ -58,11 +68,13 @@ export default function ServiceOrderDetailsPage() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["serviceOrderItems", serviceOrderId] });
       queryClient.invalidateQueries({ queryKey: ["serviceOrder", serviceOrderId] });
+      // Atualiza inventário caso item deletado tivesse estoque reservado
+      queryClient.invalidateQueries({ queryKey: ["inventory", "items"] });
+      queryClient.invalidateQueries({ queryKey: ["inventory", "movements"] });
+      showSuccessToast("Item removido com sucesso!");
     },
     onError: (error: any) => {
-      const errorMessage = error?.response?.data?.message || error?.message || "Erro ao deletar item";
-      alert(`❌ Erro ao remover item:\n\n${errorMessage}`);
-      console.error("Erro ao deletar item:", error);
+      showErrorAlert(error, "Erro ao remover item");
     },
   });
 
@@ -403,11 +415,6 @@ export default function ServiceOrderDetailsPage() {
                           {item.applied && (
                             <span className="px-2 py-1 text-xs bg-green-100 text-green-800 rounded">
                               Aplicado
-                            </span>
-                          )}
-                          {item.productCode && (
-                            <span className="px-2 py-1 text-xs bg-gray-100 text-gray-600 rounded">
-                              {item.productCode}
                             </span>
                           )}
                         </div>

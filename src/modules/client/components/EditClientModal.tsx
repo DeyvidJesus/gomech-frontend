@@ -19,7 +19,11 @@ export function EditClientModal({ isOpen, client, onClose }: EditClientModalProp
   const mutation = useMutation({
     mutationFn: (data: Partial<Client>) => clientsApi.update(client.id, data),
     onSuccess: () => {
+      // Invalidar todas as queries relacionadas a clientes
       queryClient.invalidateQueries({ queryKey: ["clients"] });
+      queryClient.invalidateQueries({ queryKey: ["clients-list"] });
+      queryClient.invalidateQueries({ queryKey: ["clients-stats"] });
+      queryClient.invalidateQueries({ queryKey: ["client", client.id] });
       onClose();
     },
     onError: (error: any) => {

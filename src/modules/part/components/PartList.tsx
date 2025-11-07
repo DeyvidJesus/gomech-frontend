@@ -8,6 +8,7 @@ import type { Part, PartCreateDTO, PartUpdateDTO } from "../types/part";
 import { PartFormModal } from "./PartFormModal";
 import { PartImportModal } from "./PartImportModal";
 import { PageTutorial } from "@/modules/tutorial/components/PageTutorial";
+import { showErrorAlert, showSuccessToast } from "@/shared/utils/errorHandler";
 
 export default function PartList() {
   const queryClient = useQueryClient();
@@ -33,6 +34,9 @@ export default function PartList() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["parts"] });
     },
+    onError: (error: any) => {
+      showErrorAlert(error, "Erro ao criar peça");
+    },
   });
 
   const updateMutation = useMutation({
@@ -40,12 +44,19 @@ export default function PartList() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["parts"] });
     },
+    onError: (error: any) => {
+      showErrorAlert(error, "Erro ao atualizar peça");
+    },
   });
 
   const deleteMutation = useMutation({
     mutationFn: (id: number) => partsApi.delete(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["parts"] });
+      showSuccessToast("Peça removida com sucesso!");
+    },
+    onError: (error: any) => {
+      showErrorAlert(error, "Erro ao remover peça");
     },
   });
 
@@ -53,6 +64,9 @@ export default function PartList() {
     mutationFn: (file: File) => partsApi.upload(file),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["parts"] });
+    },
+    onError: (error: any) => {
+      showErrorAlert(error, "Erro ao importar peças");
     },
   });
 
@@ -102,7 +116,7 @@ export default function PartList() {
       window.URL.revokeObjectURL(url);
     } catch (error) {
       console.error("Erro ao baixar template:", error);
-      alert("Erro ao baixar template. Tente novamente.");
+      showErrorAlert(error, "Erro ao baixar template. Tente novamente.");
     } finally {
       setDownloadingTemplate(null);
     }

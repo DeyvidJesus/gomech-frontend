@@ -1,16 +1,16 @@
-import { useMemo, useState, useEffect } from "react";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useMemo, useState, useEffect } from"react";
+import { useMutation, useQuery, useQueryClient } from"@tanstack/react-query";
 
-import RoleGuard from "../../auth/components/RoleGuard";
-import ProtectedRoute from "../../auth/components/ProtectedRoute";
-import { ImportInstructionsModal } from "../../../shared/components/ImportInstructionsModal";
-import { inventoryApi } from "../services/api";
-import { partsApi } from "../../part/services/api";
-import { serviceOrdersApi, serviceOrderItemsApi } from "../../serviceOrder/services/api";
-import { vehiclesApi } from "../../vehicle/services/api";
-import { PartFormModal } from "../../part/components/PartFormModal";
-import { PartImportModal } from "../../part/components/PartImportModal";
-import type { Part, PartCreateDTO, PartUpdateDTO } from "../../part/types/part";
+import RoleGuard from"../../auth/components/RoleGuard";
+import ProtectedRoute from"../../auth/components/ProtectedRoute";
+import { ImportInstructionsModal } from"../../../shared/components/ImportInstructionsModal";
+import { inventoryApi } from"../services/api";
+import { partsApi } from"../../part/services/api";
+import { serviceOrdersApi, serviceOrderItemsApi } from"../../serviceOrder/services/api";
+import { vehiclesApi } from"../../vehicle/services/api";
+import { PartFormModal } from"../../part/components/PartFormModal";
+import { PartImportModal } from"../../part/components/PartImportModal";
+import type { Part, PartCreateDTO, PartUpdateDTO } from"../../part/types/part";
 import type {
   CriticalPartReport,
   InventoryAvailability,
@@ -21,17 +21,18 @@ import type {
   InventoryMovement,
   InventoryRecommendation,
   RecommendationPipeline,
-} from "../types/inventory";
-import { InventoryItemModal } from "./InventoryItemModal";
-import { PageTutorial } from "@/modules/tutorial/components/PageTutorial";
+} from"../types/inventory";
+import { InventoryItemModal } from"./InventoryItemModal";
+import { PageTutorial } from"@/modules/tutorial/components/PageTutorial";
+import { showErrorAlert } from"@/shared/utils/errorHandler";
 
 const tabs = [
-  { id: "parts", label: "Peças" },
-  { id: "items", label: "Itens" },
-  { id: "movements", label: "Movimentações" },
-  { id: "recommendations", label: "Recomendações" },
-  { id: "availability", label: "Disponibilidade" },
-  { id: "history", label: "Histórico" },
+ { id:"parts", label:"Peças" },
+ { id:"items", label:"Itens" },
+ { id:"movements", label:"Movimentações" },
+ { id:"recommendations", label:"Recomendações" },
+ { id:"availability", label:"Disponibilidade" },
+ { id:"history", label:"Histórico" },
 ] as const;
 
 type InventoryTab = (typeof tabs)[number]["id"];
@@ -48,7 +49,7 @@ interface HistoryState {
 }
 
 function formatCurrency(value: number) {
-  return value.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+ return value.toLocaleString("pt-BR", { style:"currency", currency:"BRL" });
 }
 
 
@@ -70,7 +71,6 @@ function InventoryDashboardContent() {
   const [isInstructionsModalOpen, setIsInstructionsModalOpen] = useState(false);
   const [downloadingTemplate, setDownloadingTemplate] = useState<string | null>(null);
   
-  // Estados para gerenciamento de peças
   const [isCreatePartModalOpen, setIsCreatePartModalOpen] = useState(false);
   const [isEditPartModalOpen, setIsEditPartModalOpen] = useState(false);
   const [isImportPartModalOpen, setIsImportPartModalOpen] = useState(false);
@@ -89,7 +89,7 @@ function InventoryDashboardContent() {
   const [historyData, setHistoryData] = useState<HistoryState>({});
 
   const itemsQuery = useQuery<InventoryItem[]>({
-    queryKey: ["inventory", "items"],
+ queryKey: ["inventory","items"],
     queryFn: () => inventoryApi.getItems(),
   });
   const items = itemsQuery.data ?? [];
@@ -99,21 +99,30 @@ function InventoryDashboardContent() {
   const createItemMutation = useMutation({
     mutationFn: (payload: InventoryItemCreateDTO) => inventoryApi.createItem(payload),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["inventory", "items"] });
+ queryClient.invalidateQueries({ queryKey: ["inventory","items"] });
+    },
+    onError: (error: any) => {
+      showErrorAlert(error, "Erro ao criar item no estoque");
     },
   });
 
   const updateItemMutation = useMutation({
     mutationFn: ({ id, data }: { id: number; data: InventoryItemUpdateDTO }) => inventoryApi.updateItem(id, data),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["inventory", "items"] });
+ queryClient.invalidateQueries({ queryKey: ["inventory","items"] });
+    },
+    onError: (error: any) => {
+      showErrorAlert(error, "Erro ao atualizar item no estoque");
     },
   });
 
   const deleteItemMutation = useMutation({
     mutationFn: (id: number) => inventoryApi.deleteItem(id),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["inventory", "items"] });
+ queryClient.invalidateQueries({ queryKey: ["inventory","items"] });
+    },
+    onError: (error: any) => {
+      showErrorAlert(error, "Erro ao remover item do estoque");
     },
   });
 
@@ -124,6 +133,9 @@ function InventoryDashboardContent() {
       queryClient.invalidateQueries({ queryKey: ["parts"] });
       setIsCreatePartModalOpen(false);
     },
+    onError: (error: any) => {
+      showErrorAlert(error, "Erro ao criar peça");
+    },
   });
 
   const updatePartMutation = useMutation({
@@ -132,12 +144,18 @@ function InventoryDashboardContent() {
       queryClient.invalidateQueries({ queryKey: ["parts"] });
       setIsEditPartModalOpen(false);
     },
+    onError: (error: any) => {
+      showErrorAlert(error, "Erro ao atualizar peça");
+    },
   });
 
   const deletePartMutation = useMutation({
     mutationFn: (id: number) => partsApi.delete(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["parts"] });
+    },
+    onError: (error: any) => {
+      showErrorAlert(error, "Erro ao remover peça");
     },
   });
 
@@ -147,50 +165,68 @@ function InventoryDashboardContent() {
       queryClient.invalidateQueries({ queryKey: ["parts"] });
       setIsImportPartModalOpen(false);
     },
+    onError: (error: any) => {
+      showErrorAlert(error, "Erro ao importar peças");
+    },
   });
 
   const entryMutation = useMutation({
     mutationFn: inventoryApi.registerEntry,
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["inventory", "items"] });
-      queryClient.invalidateQueries({ queryKey: ["inventory", "movements"] });
-      queryClient.invalidateQueries({ queryKey: ["inventory", "criticalParts"] });
+ queryClient.invalidateQueries({ queryKey: ["inventory","items"] });
+ queryClient.invalidateQueries({ queryKey: ["inventory","movements"] });
+ queryClient.invalidateQueries({ queryKey: ["inventory","criticalParts"] });
+    },
+    onError: (error: any) => {
+      showErrorAlert(error, "Erro ao registrar entrada no estoque");
     },
   });
   const reserveMutation = useMutation({
     mutationFn: inventoryApi.reserveStock,
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["inventory", "items"] });
-      queryClient.invalidateQueries({ queryKey: ["inventory", "movements"] });
-      queryClient.invalidateQueries({ queryKey: ["inventory", "criticalParts"] });
+ queryClient.invalidateQueries({ queryKey: ["inventory","items"] });
+ queryClient.invalidateQueries({ queryKey: ["inventory","movements"] });
+ queryClient.invalidateQueries({ queryKey: ["inventory","criticalParts"] });
+    },
+    onError: (error: any) => {
+      showErrorAlert(error, "Erro ao reservar estoque");
     },
   });
   const consumeMutation = useMutation({
     mutationFn: inventoryApi.consumeStock,
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["inventory", "items"] });
-      queryClient.invalidateQueries({ queryKey: ["inventory", "movements"] });
-      queryClient.invalidateQueries({ queryKey: ["inventory", "criticalParts"] });
+ queryClient.invalidateQueries({ queryKey: ["inventory","items"] });
+ queryClient.invalidateQueries({ queryKey: ["inventory","movements"] });
+ queryClient.invalidateQueries({ queryKey: ["inventory","criticalParts"] });
+    },
+    onError: (error: any) => {
+      showErrorAlert(error, "Erro ao consumir estoque");
     },
   });
   const cancelReservationMutation = useMutation({
     mutationFn: inventoryApi.cancelReservation,
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["inventory", "items"] });
-      queryClient.invalidateQueries({ queryKey: ["inventory", "movements"] });
-      queryClient.invalidateQueries({ queryKey: ["inventory", "criticalParts"] });
+ queryClient.invalidateQueries({ queryKey: ["inventory","items"] });
+ queryClient.invalidateQueries({ queryKey: ["inventory","movements"] });
+ queryClient.invalidateQueries({ queryKey: ["inventory","criticalParts"] });
+    },
+    onError: (error: any) => {
+      showErrorAlert(error, "Erro ao cancelar reserva");
     },
   });
   const returnMutation = useMutation({
     mutationFn: inventoryApi.registerReturn,
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["inventory", "items"] });
-      queryClient.invalidateQueries({ queryKey: ["inventory", "movements"] });
-      queryClient.invalidateQueries({ queryKey: ["inventory", "criticalParts"] });
+ queryClient.invalidateQueries({ queryKey: ["inventory","items"] });
+ queryClient.invalidateQueries({ queryKey: ["inventory","movements"] });
+ queryClient.invalidateQueries({ queryKey: ["inventory","criticalParts"] });
+    },
+    onError: (error: any) => {
+      showErrorAlert(error, "Erro ao registrar devolução");
     },
   });
 
-  const downloadTemplate = async (format: "xlsx" | "csv") => {
+ const downloadTemplate = async (format:"xlsx" |"csv") => {
     try {
       setDownloadingTemplate(format);
       const response = await inventoryApi.downloadTemplate(format);
@@ -212,27 +248,27 @@ function InventoryDashboardContent() {
   };
 
   const movementsQuery = useQuery<InventoryMovement[]>({
-    queryKey: ["inventory", "movements", movementFilters],
+ queryKey: ["inventory","movements", movementFilters],
     queryFn: () => inventoryApi.listMovements(movementFilters),
   });
   const movements = movementsQuery.data ?? [];
   const isFetchingMovements = movementsQuery.isFetching;
 
   const pipelinesQuery = useQuery<RecommendationPipeline[]>({
-    queryKey: ["inventory", "pipelines"],
+ queryKey: ["inventory","pipelines"],
     queryFn: () => inventoryApi.getRecommendationPipelines(),
   });
   const pipelines = pipelinesQuery.data ?? [];
 
   const recommendationsQuery = useQuery<InventoryRecommendation[]>({
-    queryKey: ["inventory", "recommendations", recommendationFilters],
+ queryKey: ["inventory","recommendations", recommendationFilters],
     queryFn: () => inventoryApi.getRecommendations(recommendationFilters),
   });
   const recommendations = recommendationsQuery.data ?? [];
   const isFetchingRecommendations = recommendationsQuery.isFetching;
 
   const criticalPartsQuery = useQuery<CriticalPartReport[]>({
-    queryKey: ["inventory", "criticalParts"],
+ queryKey: ["inventory","criticalParts"],
     queryFn: () => inventoryApi.getCriticalPartsReport(),
   });
   const criticalParts = criticalPartsQuery.data ?? [];
@@ -308,14 +344,14 @@ function InventoryDashboardContent() {
   const totalParts = parts.length;
 
   const handleDeleteItem = (item: InventoryItem) => {
-    const confirmation = window.confirm(`Remover o item "${item.partName}" do estoque?`);
+ const confirmation = window.confirm(`Remover o item"${item.partName}" do estoque?`);
     if (!confirmation) return;
     deleteItemMutation.mutate(item.id);
   };
 
   const handleDeletePart = (part: Part) => {
     const confirmation = window.confirm(
-      `Tem certeza que deseja remover a peça "${part.name}"? Essa ação não pode ser desfeita.`,
+ `Tem certeza que deseja remover a peça"${part.name}"? Essa ação não pode ser desfeita.`,
     );
     if (!confirmation) return;
     deletePartMutation.mutate(part.id);
@@ -327,7 +363,7 @@ function InventoryDashboardContent() {
 
   // Carregar itens das ordens de serviço quando a aba de movimentações for aberta
   useEffect(() => {
-    if (activeTab === "movements" && serviceOrders.length > 0 && serviceOrderItems.length === 0) {
+ if (activeTab ==="movements" && serviceOrders.length > 0 && serviceOrderItems.length === 0) {
       void loadServiceOrderItems();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -372,37 +408,37 @@ function InventoryDashboardContent() {
       description="Controle peças, itens e movimentações para manter o estoque sempre atualizado."
       steps={[
         {
-          title: 'Abas temáticas',
-          description: 'Navegue entre Peças, Itens, Movimentações e Recomendações para acessar cada módulo rapidamente.',
-          icon: '🗂️',
+ title:'Abas temáticas',
+ description:'Navegue entre Peças, Itens, Movimentações e Recomendações para acessar cada módulo rapidamente.',
+ icon:'🗂️',
         },
         {
-          title: 'Cadastro e importação',
-          description: 'Crie itens manualmente ou importe planilhas para acelerar o cadastro em massa.',
-          icon: '📥',
+ title:'Cadastro e importação',
+ description:'Crie itens manualmente ou importe planilhas para acelerar o cadastro em massa.',
+ icon:'📥',
         },
         {
-          title: 'Integração com OS',
-          description: 'Registre entradas, reservas e consumo para manter o estoque sincronizado com as ordens de serviço.',
-          icon: '🔄',
+ title:'Integração com OS',
+ description:'Registre entradas, reservas e consumo para manter o estoque sincronizado com as ordens de serviço.',
+ icon:'🔄',
         },
       ]}
     />
   );
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+ <div className="min-h-screen bg-gray-50">
       {tutorial}
       <div className="p-4 sm:p-6 lg:p-8">
-        <header className="rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 p-4 sm:p-6 shadow-sm mb-6">
+ <header className="rounded-lg border border-gray-200 bg-white p-4 sm:p-6 shadow-sm mb-6">
           <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
             <div>
-              <h1 className="flex items-center gap-2 text-xl sm:text-2xl font-bold text-orangeWheel-500 dark:text-orangeWheel-400">
+ <h1 className="flex items-center gap-2 text-xl sm:text-2xl font-bold text-orangeWheel-500">
                 <span>📦</span>
                 <span className="hidden xs:inline">Estoque e Peças</span>
                 <span className="xs:hidden">Estoque</span>
               </h1>
-              <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400 mt-1">
+ <p className="text-xs sm:text-sm text-gray-500 mt-1">
                 Gerencie peças, estoque, movimentações e recomendações inteligentes.
               </p>
             </div>
@@ -413,8 +449,8 @@ function InventoryDashboardContent() {
                   onClick={() => setActiveTab(tab.id)}
                   className={`rounded-full px-2 sm:px-3 py-1 sm:py-2 text-xs sm:text-sm font-medium transition-colors whitespace-nowrap ${
                     activeTab === tab.id
-                      ? "bg-orangeWheel-500 text-white shadow"
-                      : "bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600"
+ ?"bg-orangeWheel-500 text-white shadow"
+ :"bg-gray-100 text-gray-600 hover:bg-gray-200"
                   }`}
                 >
                   {tab.label}
@@ -424,17 +460,17 @@ function InventoryDashboardContent() {
           </div>
         </header>
 
-        {activeTab === "parts" && (
+ {activeTab ==="parts" && (
           <section className="space-y-4 sm:space-y-6">
-            <div className="rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 p-4 sm:p-6 shadow-sm">
+ <div className="rounded-lg border border-gray-200 bg-white p-4 sm:p-6 shadow-sm">
               <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
                 <div>
-                  <h2 className="flex items-center gap-2 text-lg sm:text-xl font-bold text-orangeWheel-500 dark:text-orangeWheel-400">
+ <h2 className="flex items-center gap-2 text-lg sm:text-xl font-bold text-orangeWheel-500">
                     <span>🧰</span>
                     <span className="hidden sm:inline">Catálogo de Peças</span>
                     <span className="sm:hidden">Peças</span>
                   </h2>
-                  <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400 mt-1">
+ <p className="text-xs sm:text-sm text-gray-500 mt-1">
                     Gerencie os itens disponíveis para ordens de serviço e estoque.
                   </p>
                 </div>
@@ -445,7 +481,7 @@ function InventoryDashboardContent() {
                     value={partSearch}
                     onChange={event => setPartSearch(event.target.value)}
                     placeholder="Buscar por nome, SKU..."
-                    className="w-full rounded-lg border border-gray-300 dark:border-gray-600 px-3 sm:px-4 py-2 text-sm focus:border-orangeWheel-500 focus:outline-none focus:ring-2 focus:ring-orangeWheel-200 dark:bg-gray-700 dark:text-white sm:w-64"
+ className="w-full rounded-lg border border-gray-300 px-3 sm:px-4 py-2 text-sm focus:border-orangeWheel-500 focus:outline-none focus:ring-2 focus:ring-orangeWheel-200 sm:w-64"
                   />
 
                   <RoleGuard roles={['ADMIN']}>
@@ -453,7 +489,7 @@ function InventoryDashboardContent() {
                       <button
                         type="button"
                         onClick={() => setIsImportPartModalOpen(true)}
-                        className="flex items-center gap-1 sm:gap-2 rounded-lg border border-orangeWheel-200 dark:border-orangeWheel-600 bg-orangeWheel-50 dark:bg-orangeWheel-900 px-3 sm:px-4 py-2 text-xs sm:text-sm font-medium text-orangeWheel-600 dark:text-orangeWheel-300 transition-colors hover:bg-orangeWheel-100 dark:hover:bg-orangeWheel-800"
+ className="flex items-center gap-1 sm:gap-2 rounded-lg border border-orangeWheel-200 bg-orangeWheel-50 px-3 sm:px-4 py-2 text-xs sm:text-sm font-medium text-orangeWheel-600 transition-colors hover:bg-orangeWheel-100"
                       >
                         <span>⬆️</span>
                         <span className="hidden xs:inline">Importar</span>
@@ -473,60 +509,60 @@ function InventoryDashboardContent() {
             </div>
 
             <div className="grid grid-cols-1 gap-3 sm:gap-4 sm:grid-cols-2 lg:grid-cols-3">
-              <div className="rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 p-3 sm:p-4 shadow-sm">
-                <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400">Peças cadastradas</p>
-                <p className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white">{totalParts}</p>
+ <div className="rounded-lg border border-gray-200 bg-white p-3 sm:p-4 shadow-sm">
+ <p className="text-xs sm:text-sm text-gray-500">Peças cadastradas</p>
+ <p className="text-xl sm:text-2xl font-bold text-gray-900">{totalParts}</p>
               </div>
-              <div className="rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 p-3 sm:p-4 shadow-sm">
-                <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400">Peças ativas</p>
-                <p className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white">{parts.filter(part => part.active).length}</p>
+ <div className="rounded-lg border border-gray-200 bg-white p-3 sm:p-4 shadow-sm">
+ <p className="text-xs sm:text-sm text-gray-500">Peças ativas</p>
+ <p className="text-xl sm:text-2xl font-bold text-gray-900">{parts.filter(part => part.active).length}</p>
               </div>
-              <div className="rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 p-3 sm:p-4 shadow-sm sm:col-span-2 lg:col-span-1">
-                <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400">Peças inativas</p>
-                <p className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white">{parts.filter(part => !part.active).length}</p>
+ <div className="rounded-lg border border-gray-200 bg-white p-3 sm:p-4 shadow-sm sm:col-span-2 lg:col-span-1">
+ <p className="text-xs sm:text-sm text-gray-500">Peças inativas</p>
+ <p className="text-xl sm:text-2xl font-bold text-gray-900">{parts.filter(part => !part.active).length}</p>
               </div>
             </div>
 
-            <div className="overflow-hidden rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 shadow-sm">
+ <div className="overflow-hidden rounded-lg border border-gray-200 bg-white shadow-sm">
               {/* Mobile view */}
               <div className="block sm:hidden">
-                <div className="divide-y divide-gray-200 dark:divide-gray-700">
+ <div className="divide-y divide-gray-200">
                   {filteredParts.map(part => (
                     <div key={part.id} className="p-4">
                       <div className="flex items-start justify-between">
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-2 mb-2">
-                            <span className="font-semibold text-gray-900 dark:text-white truncate">{part.name}</span>
+ <span className="font-semibold text-gray-900 truncate">{part.name}</span>
                             <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
                               part.active 
-                                ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200' 
-                                : 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-200'
+ ?'bg-green-100 text-green-800' 
+ :'bg-gray-100 text-gray-800'
                             }`}>
-                              {part.active ? '✓' : '✗'}
+ {part.active ?'✓' :'✗'}
                             </span>
                           </div>
                           {part.description && (
-                            <p className="text-xs text-gray-500 dark:text-gray-400 mb-2 line-clamp-2">{part.description}</p>
+ <p className="text-xs text-gray-500 mb-2 line-clamp-2">{part.description}</p>
                           )}
                           <div className="grid grid-cols-2 gap-2 text-xs">
                             <div>
-                              <span className="text-gray-500 dark:text-gray-400">SKU:</span>
-                              <span className="ml-1 text-gray-900 dark:text-white">{part.sku}</span>
+ <span className="text-gray-500">SKU:</span>
+ <span className="ml-1 text-gray-900">{part.sku}</span>
                             </div>
                             <div>
-                              <span className="text-gray-500 dark:text-gray-400">Fabricante:</span>
-                              <span className="ml-1 text-gray-900 dark:text-white">{part.manufacturer ?? "-"}</span>
+ <span className="text-gray-500">Fabricante:</span>
+ <span className="ml-1 text-gray-900">{part.manufacturer ??"-"}</span>
                             </div>
                             <div>
-                              <span className="text-gray-500 dark:text-gray-400">Custo:</span>
-                              <span className="ml-1 text-gray-900 dark:text-white">
-                                {(part.unitCost ?? 0).toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}
+ <span className="text-gray-500">Custo:</span>
+ <span className="ml-1 text-gray-900">
+ {(part.unitCost ?? 0).toLocaleString("pt-BR", { style:"currency", currency:"BRL" })}
                               </span>
                             </div>
                             <div>
-                              <span className="text-gray-500 dark:text-gray-400">Preço:</span>
-                              <span className="ml-1 text-gray-900 dark:text-white">
-                                {(part.unitPrice ?? 0).toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}
+ <span className="text-gray-500">Preço:</span>
+ <span className="ml-1 text-gray-900">
+ {(part.unitPrice ?? 0).toLocaleString("pt-BR", { style:"currency", currency:"BRL" })}
                               </span>
                             </div>
                           </div>
@@ -539,14 +575,14 @@ function InventoryDashboardContent() {
                                 setSelectedPart(part);
                                 setIsEditPartModalOpen(true);
                               }}
-                              className="rounded-md border border-gray-200 dark:border-gray-600 px-2 py-1 text-xs font-medium text-gray-600 dark:text-gray-300 transition-colors hover:bg-gray-100 dark:hover:bg-gray-700"
+ className="rounded-md border border-gray-200 px-2 py-1 text-xs font-medium text-gray-600 transition-colors hover:bg-gray-100"
                             >
                               Editar
                             </button>
                             <button
                               type="button"
                               onClick={() => handleDeletePart(part)}
-                              className="rounded-md border border-red-200 dark:border-red-600 px-2 py-1 text-xs font-medium text-red-600 dark:text-red-400 transition-colors hover:bg-red-50 dark:hover:bg-red-900"
+ className="rounded-md border border-red-200 px-2 py-1 text-xs font-medium text-red-600 transition-colors hover:bg-red-50"
                             >
                               Remover
                             </button>
@@ -556,7 +592,7 @@ function InventoryDashboardContent() {
                     </div>
                   ))}
                   {filteredParts.length === 0 && (
-                    <div className="p-6 text-center text-sm text-gray-500 dark:text-gray-400">
+ <div className="p-6 text-center text-sm text-gray-500">
                       Nenhuma peça encontrada com os filtros aplicados.
                     </div>
                   )}
@@ -565,49 +601,49 @@ function InventoryDashboardContent() {
 
               {/* Desktop view */}
               <div className="hidden sm:block overflow-x-auto">
-                <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-                  <thead className="bg-gray-50 dark:bg-gray-700">
+ <table className="min-w-full divide-y divide-gray-200">
+ <thead className="bg-gray-50">
                     <tr>
-                      <th className="px-3 sm:px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-300">Peça</th>
-                      <th className="px-3 sm:px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-300 hidden lg:table-cell">SKU</th>
-                      <th className="px-3 sm:px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-300 hidden xl:table-cell">Fabricante</th>
-                      <th className="px-3 sm:px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-300 hidden md:table-cell">Custo</th>
-                      <th className="px-3 sm:px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-300 hidden md:table-cell">Preço</th>
-                      <th className="px-3 sm:px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-300">Status</th>
-                      <th className="px-3 sm:px-4 py-3 text-right text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-300">Ações</th>
+ <th className="px-3 sm:px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">Peça</th>
+ <th className="px-3 sm:px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500 hidden lg:table-cell">SKU</th>
+ <th className="px-3 sm:px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500 hidden xl:table-cell">Fabricante</th>
+ <th className="px-3 sm:px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500 hidden md:table-cell">Custo</th>
+ <th className="px-3 sm:px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500 hidden md:table-cell">Preço</th>
+ <th className="px-3 sm:px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">Status</th>
+ <th className="px-3 sm:px-4 py-3 text-right text-xs font-semibold uppercase tracking-wider text-gray-500">Ações</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-gray-200 dark:divide-gray-700 bg-white dark:bg-gray-800">
+ <tbody className="divide-y divide-gray-200 bg-white">
                     {filteredParts.map(part => (
-                      <tr key={part.id} className="hover:bg-gray-50 dark:hover:bg-gray-700">
+ <tr key={part.id} className="hover:bg-gray-50">
                         <td className="px-3 sm:px-4 py-3">
                           <div className="flex flex-col">
-                            <span className="font-semibold text-gray-900 dark:text-white">{part.name}</span>
-                            {part.description && <span className="text-xs text-gray-500 dark:text-gray-400 line-clamp-1">{part.description}</span>}
-                            <div className="text-xs text-gray-500 dark:text-gray-400 lg:hidden">
+ <span className="font-semibold text-gray-900">{part.name}</span>
+ {part.description && <span className="text-xs text-gray-500 line-clamp-1">{part.description}</span>}
+ <div className="text-xs text-gray-500 lg:hidden">
                               SKU: {part.sku} {part.manufacturer && `• ${part.manufacturer}`}
                             </div>
                           </div>
                         </td>
-                        <td className="px-3 sm:px-4 py-3 text-sm text-gray-600 dark:text-gray-300 hidden lg:table-cell">{part.sku}</td>
-                        <td className="px-3 sm:px-4 py-3 text-sm text-gray-600 dark:text-gray-300 hidden xl:table-cell">{part.manufacturer ?? "-"}</td>
-                        <td className="px-3 sm:px-4 py-3 text-sm text-gray-600 dark:text-gray-300 hidden md:table-cell">
-                          {(part.unitCost ?? 0).toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}
+ <td className="px-3 sm:px-4 py-3 text-sm text-gray-600 hidden lg:table-cell">{part.sku}</td>
+ <td className="px-3 sm:px-4 py-3 text-sm text-gray-600 hidden xl:table-cell">{part.manufacturer ??"-"}</td>
+ <td className="px-3 sm:px-4 py-3 text-sm text-gray-600 hidden md:table-cell">
+ {(part.unitCost ?? 0).toLocaleString("pt-BR", { style:"currency", currency:"BRL" })}
                         </td>
-                        <td className="px-3 sm:px-4 py-3 text-sm text-gray-600 dark:text-gray-300 hidden md:table-cell">
-                          {(part.unitPrice ?? 0).toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}
+ <td className="px-3 sm:px-4 py-3 text-sm text-gray-600 hidden md:table-cell">
+ {(part.unitPrice ?? 0).toLocaleString("pt-BR", { style:"currency", currency:"BRL" })}
                         </td>
                         <td className="px-3 sm:px-4 py-3">
                           <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
                             part.active 
-                              ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200' 
-                              : 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-200'
+ ?'bg-green-100 text-green-800' 
+ :'bg-gray-100 text-gray-800'
                           }`}>
-                            {part.active ? '✓ Ativa' : '✗ Inativa'}
+ {part.active ?'✓ Ativa' :'✗ Inativa'}
                           </span>
-                          <div className="text-xs text-gray-500 dark:text-gray-400 md:hidden mt-1">
-                            Custo: {(part.unitCost ?? 0).toLocaleString("pt-BR", { style: "currency", currency: "BRL" })} • 
-                            Preço: {(part.unitPrice ?? 0).toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}
+ <div className="text-xs text-gray-500 md:hidden mt-1">
+ Custo: {(part.unitCost ?? 0).toLocaleString("pt-BR", { style:"currency", currency:"BRL" })} • 
+ Preço: {(part.unitPrice ?? 0).toLocaleString("pt-BR", { style:"currency", currency:"BRL" })}
                           </div>
                         </td>
                         <td className="px-3 sm:px-4 py-3 text-right">
@@ -619,14 +655,14 @@ function InventoryDashboardContent() {
                                   setSelectedPart(part);
                                   setIsEditPartModalOpen(true);
                                 }}
-                                className="rounded-md border border-gray-200 dark:border-gray-600 px-2 sm:px-3 py-1 text-xs font-medium text-gray-600 dark:text-gray-300 transition-colors hover:bg-gray-100 dark:hover:bg-gray-700"
+ className="rounded-md border border-gray-200 px-2 sm:px-3 py-1 text-xs font-medium text-gray-600 transition-colors hover:bg-gray-100"
                               >
                                 Editar
                               </button>
                               <button
                                 type="button"
                                 onClick={() => handleDeletePart(part)}
-                                className="rounded-md border border-red-200 dark:border-red-600 px-2 sm:px-3 py-1 text-xs font-medium text-red-600 dark:text-red-400 transition-colors hover:bg-red-50 dark:hover:bg-red-900"
+ className="rounded-md border border-red-200 px-2 sm:px-3 py-1 text-xs font-medium text-red-600 transition-colors hover:bg-red-50"
                               >
                                 Remover
                               </button>
@@ -638,7 +674,7 @@ function InventoryDashboardContent() {
 
                     {filteredParts.length === 0 && (
                       <tr>
-                        <td colSpan={7} className="px-4 py-10 text-center text-sm text-gray-500 dark:text-gray-400">
+ <td colSpan={7} className="px-4 py-10 text-center text-sm text-gray-500">
                           Nenhuma peça encontrada com os filtros aplicados.
                         </td>
                       </tr>
@@ -650,14 +686,14 @@ function InventoryDashboardContent() {
           </section>
         )}
 
-        {activeTab === "items" && (
+ {activeTab ==="items" && (
           <section className="space-y-4 sm:space-y-6">
             <RoleGuard roles={['ADMIN']}>
-              <div className="rounded-lg border border-blue-200 dark:border-blue-600 bg-blue-50 dark:bg-blue-900 p-4 shadow-sm">
+ <div className="rounded-lg border border-blue-200 bg-blue-50 p-4 shadow-sm">
                 <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
                   <div>
                     <div className="flex items-center gap-2">
-                      <h3 className="flex items-center gap-2 text-sm font-semibold text-blue-800 dark:text-blue-200">
+ <h3 className="flex items-center gap-2 text-sm font-semibold text-blue-800">
                         <span>📋</span>
                         <span className="hidden sm:inline">Cadastro em Massa de Itens de Estoque</span>
                         <span className="sm:hidden">Importação em Massa</span>
@@ -665,16 +701,16 @@ function InventoryDashboardContent() {
                       <button
                         type="button"
                         onClick={() => setIsInstructionsModalOpen(true)}
-                        className="flex items-center gap-1 rounded-lg border border-blue-400 dark:border-blue-500 bg-blue-100 dark:bg-blue-800 px-2 py-0.5 text-xs font-medium text-blue-700 dark:text-blue-200 transition-colors hover:bg-blue-200 dark:hover:bg-blue-700"
+ className="flex items-center gap-1 rounded-lg border border-blue-400 bg-blue-100 px-2 py-0.5 text-xs font-medium text-blue-700 transition-colors hover:bg-blue-200"
                         title="Ajuda para importação em massa"
                       >
                         ℹ️ Ajuda
                       </button>
                     </div>
-                    <p className="text-xs text-blue-600 dark:text-blue-300 mt-1">
+ <p className="text-xs text-blue-600 mt-1">
                       Importe vários itens de estoque de uma vez usando planilhas Excel ou CSV
                     </p>
-                    <p className="text-xs text-yellow-700 dark:text-yellow-300 mt-1 font-medium">
+ <p className="text-xs text-yellow-700 mt-1 font-medium">
                       ⚠️ Você precisará do <strong>ID da Peça</strong> para cada item (veja as instruções)
                     </p>
                   </div>
@@ -683,7 +719,7 @@ function InventoryDashboardContent() {
                       type="button"
                       onClick={() => downloadTemplate("xlsx")}
                       disabled={!!downloadingTemplate}
-                      className="flex items-center gap-1 sm:gap-2 rounded-lg border border-green-300 dark:border-green-600 bg-green-50 dark:bg-green-900 px-3 sm:px-4 py-2 text-xs sm:text-sm font-medium text-green-700 dark:text-green-200 transition-colors hover:bg-green-100 dark:hover:bg-green-800 disabled:opacity-50"
+ className="flex items-center gap-1 sm:gap-2 rounded-lg border border-green-300 bg-green-50 px-3 sm:px-4 py-2 text-xs sm:text-sm font-medium text-green-700 transition-colors hover:bg-green-100 disabled:opacity-50"
                     >
                       <span>📥</span>
                       <span className="hidden xs:inline">Baixar Template Excel</span>
@@ -693,7 +729,7 @@ function InventoryDashboardContent() {
                       type="button"
                       onClick={() => downloadTemplate("csv")}
                       disabled={!!downloadingTemplate}
-                      className="flex items-center gap-1 sm:gap-2 rounded-lg border border-green-300 dark:border-green-600 bg-green-50 dark:bg-green-900 px-3 sm:px-4 py-2 text-xs sm:text-sm font-medium text-green-700 dark:text-green-200 transition-colors hover:bg-green-100 dark:hover:bg-green-800 disabled:opacity-50"
+ className="flex items-center gap-1 sm:gap-2 rounded-lg border border-green-300 bg-green-50 px-3 sm:px-4 py-2 text-xs sm:text-sm font-medium text-green-700 transition-colors hover:bg-green-100 disabled:opacity-50"
                     >
                       <span>📥</span>
                       <span className="hidden xs:inline">Baixar Template CSV</span>
@@ -702,7 +738,7 @@ function InventoryDashboardContent() {
                     <button
                       type="button"
                       onClick={() => setIsInstructionsModalOpen(true)}
-                      className="flex items-center gap-1 sm:gap-2 rounded-lg border border-blue-300 dark:border-blue-600 bg-blue-100 dark:bg-blue-800 px-3 sm:px-4 py-2 text-xs sm:text-sm font-medium text-blue-700 dark:text-blue-200 transition-colors hover:bg-blue-200 dark:hover:bg-blue-700"
+ className="flex items-center gap-1 sm:gap-2 rounded-lg border border-blue-300 bg-blue-100 px-3 sm:px-4 py-2 text-xs sm:text-sm font-medium text-blue-700 transition-colors hover:bg-blue-200"
                     >
                       <span>📖</span>
                       <span className="hidden xs:inline">Ver Instruções</span>
@@ -714,25 +750,25 @@ function InventoryDashboardContent() {
             </RoleGuard>
 
             <div className="grid grid-cols-1 gap-3 sm:gap-4 sm:grid-cols-2 lg:grid-cols-3">
-              <div className="rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 p-3 sm:p-4 shadow-sm">
-                <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400">Itens monitorados</p>
-                <p className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white">{totalItems}</p>
+ <div className="rounded-lg border border-gray-200 bg-white p-3 sm:p-4 shadow-sm">
+ <p className="text-xs sm:text-sm text-gray-500">Itens monitorados</p>
+ <p className="text-xl sm:text-2xl font-bold text-gray-900">{totalItems}</p>
               </div>
-              <div className="rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 p-3 sm:p-4 shadow-sm sm:col-span-2 lg:col-span-1">
-                <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400">Itens críticos</p>
-                <p className={`text-xl sm:text-2xl font-bold ${criticalParts.length > 0 ? 'text-orangeWheel-600 dark:text-orangeWheel-400' : 'text-gray-900 dark:text-white'}`}>
+ <div className="rounded-lg border border-gray-200 bg-white p-3 sm:p-4 shadow-sm sm:col-span-2 lg:col-span-1">
+ <p className="text-xs sm:text-sm text-gray-500">Itens críticos</p>
+                <p className={`text-xl sm:text-2xl font-bold ${criticalParts.length > 0 ? 'text-orangeWheel-600' : 'text-gray-900'}`}>
                   {criticalParts.length}
                 </p>
               </div>
             </div>
 
-            <div className="rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 p-4 sm:p-6 shadow-sm">
+ <div className="rounded-lg border border-gray-200 bg-white p-4 sm:p-6 shadow-sm">
               <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
                 <input
                   value={search}
                   onChange={event => setSearch(event.target.value)}
                   placeholder="Buscar por peça, localização..."
-                  className="w-full rounded-lg border border-gray-300 dark:border-gray-600 px-3 sm:px-4 py-2 text-sm focus:border-orangeWheel-500 focus:outline-none focus:ring-2 focus:ring-orangeWheel-200 dark:bg-gray-700 dark:text-white lg:w-80"
+ className="w-full rounded-lg border border-gray-300 px-3 sm:px-4 py-2 text-sm focus:border-orangeWheel-500 focus:outline-none focus:ring-2 focus:ring-orangeWheel-200 lg:w-80"
                 />
                 <RoleGuard roles={["ADMIN"]}>
                   <div className="flex gap-2">
@@ -754,46 +790,46 @@ function InventoryDashboardContent() {
                   <div className="h-10 w-10 animate-spin rounded-full border-4 border-orangeWheel-500 border-t-transparent" />
                 </div>
               ) : itemsError ? (
-                <div className="mt-4 rounded-md border border-red-200 dark:border-red-600 bg-red-50 dark:bg-red-900 p-4 text-sm text-red-700 dark:text-red-200">
+ <div className="mt-4 rounded-md border border-red-200 bg-red-50 p-4 text-sm text-red-700">
                   Não foi possível carregar os itens de estoque.
                 </div>
               ) : (
-                <div className="mt-4 overflow-hidden rounded-lg border border-gray-200 dark:border-gray-700">
+ <div className="mt-4 overflow-hidden rounded-lg border border-gray-200">
                   {/* Mobile view */}
                   <div className="block sm:hidden">
-                    <div className="divide-y divide-gray-200 dark:divide-gray-700">
+ <div className="divide-y divide-gray-200">
                       {filteredItems.map(item => (
                         <div key={item.id} className="p-4">
                           <div className="flex items-start justify-between">
                             <div className="flex-1 min-w-0">
                               <div className="flex items-center gap-2 mb-2">
-                                <span className="font-semibold text-gray-900 dark:text-white truncate">{item.partName}</span>
+ <span className="font-semibold text-gray-900 truncate">{item.partName}</span>
                                 {item.quantity < item.minimumQuantity && (
-                                  <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200">
+ <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-red-100 text-red-800">
                                     Crítico
                                   </span>
                                 )}
                               </div>
-                              <div className="text-xs text-gray-500 dark:text-gray-400 mb-2">
+ <div className="text-xs text-gray-500 mb-2">
                                 ID Peça: {item.partId} • Localização: {item.location}
                                 {item.partCode && ` • SKU: ${item.partCode}`}
                               </div>
                               <div className="grid grid-cols-2 gap-2 text-xs">
                                 <div>
-                                  <span className="text-gray-500 dark:text-gray-400">Quantidade:</span>
-                                  <span className="ml-1 font-medium text-gray-900 dark:text-white">{item.quantity}</span>
+ <span className="text-gray-500">Quantidade:</span>
+ <span className="ml-1 font-medium text-gray-900">{item.quantity}</span>
                                 </div>
                                 <div>
-                                  <span className="text-gray-500 dark:text-gray-400">Reservado:</span>
-                                  <span className="ml-1 font-medium text-gray-900 dark:text-white">{item.reservedQuantity}</span>
+ <span className="text-gray-500">Reservado:</span>
+ <span className="ml-1 font-medium text-gray-900">{item.reservedQuantity}</span>
                                 </div>
                                 <div>
-                                  <span className="text-gray-500 dark:text-gray-400">Mínimo:</span>
-                                  <span className="ml-1 font-medium text-gray-900 dark:text-white">{item.minimumQuantity}</span>
+ <span className="text-gray-500">Mínimo:</span>
+ <span className="ml-1 font-medium text-gray-900">{item.minimumQuantity}</span>
                                 </div>
                                 <div>
-                                  <span className="text-gray-500 dark:text-gray-400">Custo:</span>
-                                  <span className="ml-1 font-medium text-gray-900 dark:text-white">{formatCurrency(item.unitCost ?? 0)}</span>
+ <span className="text-gray-500">Custo:</span>
+ <span className="ml-1 font-medium text-gray-900">{formatCurrency(item.unitCost ?? 0)}</span>
                                 </div>
                               </div>
                             </div>
@@ -805,14 +841,14 @@ function InventoryDashboardContent() {
                                     setSelectedItem(item);
                                     setIsEditModalOpen(true);
                                   }}
-                                  className="rounded-md border border-gray-200 dark:border-gray-600 px-2 py-1 text-xs font-medium text-gray-600 dark:text-gray-300 transition-colors hover:bg-gray-100 dark:hover:bg-gray-700"
+ className="rounded-md border border-gray-200 px-2 py-1 text-xs font-medium text-gray-600 transition-colors hover:bg-gray-100"
                                 >
                                   Editar
                                 </button>
                                 <button
                                   type="button"
                                   onClick={() => handleDeleteItem(item)}
-                                  className="rounded-md border border-red-200 dark:border-red-600 px-2 py-1 text-xs font-medium text-red-600 dark:text-red-400 transition-colors hover:bg-red-50 dark:hover:bg-red-900"
+ className="rounded-md border border-red-200 px-2 py-1 text-xs font-medium text-red-600 transition-colors hover:bg-red-50"
                                 >
                                   Remover
                                 </button>
@@ -822,7 +858,7 @@ function InventoryDashboardContent() {
                         </div>
                       ))}
                       {filteredItems.length === 0 && (
-                        <div className="p-6 text-center text-sm text-gray-500 dark:text-gray-400">
+ <div className="p-6 text-center text-sm text-gray-500">
                           Nenhum item encontrado para os filtros aplicados.
                         </div>
                       )}
@@ -831,35 +867,35 @@ function InventoryDashboardContent() {
 
                   {/* Desktop view */}
                   <div className="hidden sm:block overflow-x-auto">
-                    <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-                      <thead className="bg-gray-50 dark:bg-gray-700">
+ <table className="min-w-full divide-y divide-gray-200">
+ <thead className="bg-gray-50">
                         <tr>
-                          <th className="px-3 sm:px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-300">Peça</th>
-                          <th className="px-3 sm:px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-300">Quantidade</th>
-                          <th className="px-3 sm:px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-300 hidden md:table-cell">Reservado</th>
-                          <th className="px-3 sm:px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-300 hidden lg:table-cell">Mínimo</th>
-                          <th className="px-3 sm:px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-300 hidden xl:table-cell">Custo</th>
-                          <th className="px-3 sm:px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-300 hidden xl:table-cell">Preço</th>
-                          <th className="px-3 sm:px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-300 hidden lg:table-cell">Localização</th>
-                          <th className="px-3 sm:px-4 py-3 text-right text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-300">Ações</th>
+ <th className="px-3 sm:px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">Peça</th>
+ <th className="px-3 sm:px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">Quantidade</th>
+ <th className="px-3 sm:px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500 hidden md:table-cell">Reservado</th>
+ <th className="px-3 sm:px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500 hidden lg:table-cell">Mínimo</th>
+ <th className="px-3 sm:px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500 hidden xl:table-cell">Custo</th>
+ <th className="px-3 sm:px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500 hidden xl:table-cell">Preço</th>
+ <th className="px-3 sm:px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500 hidden lg:table-cell">Localização</th>
+ <th className="px-3 sm:px-4 py-3 text-right text-xs font-semibold uppercase tracking-wider text-gray-500">Ações</th>
                         </tr>
                       </thead>
-                      <tbody className="divide-y divide-gray-200 dark:divide-gray-700 bg-white dark:bg-gray-800">
+ <tbody className="divide-y divide-gray-200 bg-white">
                         {filteredItems.map(item => {
                           const isCritical = item.quantity < item.minimumQuantity;
                           return (
-                            <tr key={item.id} className="hover:bg-gray-50 dark:hover:bg-gray-700">
+ <tr key={item.id} className="hover:bg-gray-50">
                               <td className="px-3 sm:px-4 py-3">
                                 <div className="flex flex-col gap-1">
                                   <div className="flex items-center gap-2">
-                                    <span className="font-semibold text-gray-900 dark:text-white">{item.partName}</span>
+ <span className="font-semibold text-gray-900">{item.partName}</span>
                                     {isCritical && (
-                                      <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200">
+ <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-red-100 text-red-800">
                                         Crítico
                                       </span>
                                     )}
                                   </div>
-                                  <div className="text-xs text-gray-500 dark:text-gray-400">
+ <div className="text-xs text-gray-500">
                                     <span>ID Peça: {item.partId}</span>
                                     {item.partCode && <span className="ml-2">SKU: {item.partCode}</span>}
                                     {item.manufacturer && <span className="ml-2">{item.manufacturer}</span>}
@@ -870,18 +906,18 @@ function InventoryDashboardContent() {
                                 </div>
                               </td>
                               <td className="px-3 sm:px-4 py-3">
-                                <span className={`text-sm font-medium ${isCritical ? 'text-red-600 dark:text-red-400' : 'text-gray-900 dark:text-white'}`}>
+                <span className={`text-sm font-medium ${isCritical ? 'text-red-600' : 'text-gray-900'}`}>
                                   {item.quantity}
                                 </span>
-                                <div className="text-xs text-gray-500 dark:text-gray-400 lg:hidden">
+ <div className="text-xs text-gray-500 lg:hidden">
                                   Mín: {item.minimumQuantity}
                                 </div>
                               </td>
-                              <td className="px-3 sm:px-4 py-3 text-sm text-gray-600 dark:text-gray-300 hidden md:table-cell">{item.reservedQuantity}</td>
-                              <td className="px-3 sm:px-4 py-3 text-sm text-gray-600 dark:text-gray-300 hidden lg:table-cell">{item.minimumQuantity}</td>
-                              <td className="px-3 sm:px-4 py-3 text-sm text-gray-600 dark:text-gray-300 hidden xl:table-cell">{formatCurrency(item.unitCost ?? 0)}</td>
-                              <td className="px-3 sm:px-4 py-3 text-sm text-gray-600 dark:text-gray-300 hidden xl:table-cell">{formatCurrency(item.salePrice ?? 0)}</td>
-                              <td className="px-3 sm:px-4 py-3 text-sm text-gray-600 dark:text-gray-300 hidden lg:table-cell">{item.location}</td>
+ <td className="px-3 sm:px-4 py-3 text-sm text-gray-600 hidden md:table-cell">{item.reservedQuantity}</td>
+ <td className="px-3 sm:px-4 py-3 text-sm text-gray-600 hidden lg:table-cell">{item.minimumQuantity}</td>
+ <td className="px-3 sm:px-4 py-3 text-sm text-gray-600 hidden xl:table-cell">{formatCurrency(item.unitCost ?? 0)}</td>
+ <td className="px-3 sm:px-4 py-3 text-sm text-gray-600 hidden xl:table-cell">{formatCurrency(item.salePrice ?? 0)}</td>
+ <td className="px-3 sm:px-4 py-3 text-sm text-gray-600 hidden lg:table-cell">{item.location}</td>
                               <td className="px-3 sm:px-4 py-3 text-right text-sm">
                                 <RoleGuard roles={["ADMIN"]}>
                                   <div className="flex justify-end gap-1 sm:gap-2">
@@ -891,14 +927,14 @@ function InventoryDashboardContent() {
                                         setSelectedItem(item);
                                         setIsEditModalOpen(true);
                                       }}
-                                      className="rounded-md border border-gray-200 dark:border-gray-600 px-2 sm:px-3 py-1 text-xs font-medium text-gray-600 dark:text-gray-300 transition-colors hover:bg-gray-100 dark:hover:bg-gray-700"
+ className="rounded-md border border-gray-200 px-2 sm:px-3 py-1 text-xs font-medium text-gray-600 transition-colors hover:bg-gray-100"
                                     >
                                       Editar
                                     </button>
                                     <button
                                       type="button"
                                       onClick={() => handleDeleteItem(item)}
-                                      className="rounded-md border border-red-200 dark:border-red-600 px-2 sm:px-3 py-1 text-xs font-medium text-red-600 dark:text-red-400 transition-colors hover:bg-red-50 dark:hover:bg-red-900"
+ className="rounded-md border border-red-200 px-2 sm:px-3 py-1 text-xs font-medium text-red-600 transition-colors hover:bg-red-50"
                                     >
                                       Remover
                                     </button>
@@ -911,7 +947,7 @@ function InventoryDashboardContent() {
 
                         {filteredItems.length === 0 && (
                           <tr>
-                            <td colSpan={8} className="px-4 py-8 text-center text-sm text-gray-500 dark:text-gray-400">
+ <td colSpan={8} className="px-4 py-8 text-center text-sm text-gray-500">
                               Nenhum item encontrado para os filtros aplicados.
                             </td>
                           </tr>
@@ -924,40 +960,40 @@ function InventoryDashboardContent() {
             </div>
 
             {criticalParts.length > 0 && (
-              <div className="rounded-lg border border-orangeWheel-200 dark:border-orangeWheel-600 bg-orangeWheel-50 dark:bg-orangeWheel-900 p-4">
-                <h3 className="mb-2 text-sm sm:text-base font-semibold text-orangeWheel-700 dark:text-orangeWheel-200">Peças com estoque crítico</h3>
+ <div className="rounded-lg border border-orangeWheel-200 bg-orangeWheel-50 p-4">
+ <h3 className="mb-2 text-sm sm:text-base font-semibold text-orangeWheel-700">Peças com estoque crítico</h3>
                 <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
                   {criticalParts.map(report => {
-                    const criticality = report.availableQuantity < report.minimumQuantity ? "CRITICAL" : 
-                                       report.availableQuantity < report.minimumQuantity * 1.5 ? "WARNING" : "STABLE";
+ const criticality = report.availableQuantity < report.minimumQuantity ?"CRITICAL" : 
+ report.availableQuantity < report.minimumQuantity * 1.5 ?"WARNING" :"STABLE";
                     return (
-                      <div key={report.partId} className="rounded-lg border border-orangeWheel-200 dark:border-orangeWheel-600 bg-white dark:bg-gray-800 p-3 sm:p-4 shadow-sm">
+ <div key={report.partId} className="rounded-lg border border-orangeWheel-200 bg-white p-3 sm:p-4 shadow-sm">
                         <div className="flex items-center justify-between mb-2">
-                          <p className="text-xs sm:text-sm font-semibold text-gray-800 dark:text-white truncate pr-2">{report.partName}</p>
+ <p className="text-xs sm:text-sm font-semibold text-gray-800 truncate pr-2">{report.partName}</p>
                           <span
                             className={`rounded-full px-2 py-0.5 text-xs font-semibold whitespace-nowrap ${
-                              criticality === "CRITICAL"
-                                ? "bg-red-100 text-red-600 dark:bg-red-900 dark:text-red-200"
-                                : criticality === "WARNING"
-                                  ? "bg-amber-100 text-amber-700 dark:bg-amber-900 dark:text-amber-200"
-                                  : "bg-emerald-100 text-emerald-700 dark:bg-emerald-900 dark:text-emerald-200"
+ criticality ==="CRITICAL"
+ ?"bg-red-100 text-red-600"
+ : criticality ==="WARNING"
+ ?"bg-amber-100 text-amber-700"
+ :"bg-emerald-100 text-emerald-700"
                             }`}
                           >
-                            {criticality === "CRITICAL" ? "Crítico" : criticality === "WARNING" ? "Atenção" : "OK"}
+ {criticality ==="CRITICAL" ?"Crítico" : criticality ==="WARNING" ?"Atenção" :"OK"}
                           </span>
                         </div>
                         <div className="space-y-1">
-                          <p className="text-xs text-gray-500 dark:text-gray-400">
+ <p className="text-xs text-gray-500">
                             <span className="font-medium">Disponível:</span> {report.availableQuantity} | 
                             <span className="font-medium"> Mínimo:</span> {report.minimumQuantity}
                           </p>
                           {report.partSku && (
-                            <p className="text-xs text-gray-500 dark:text-gray-400">SKU: {report.partSku}</p>
+ <p className="text-xs text-gray-500">SKU: {report.partSku}</p>
                           )}
                           {report.vehicleModel && (
-                            <p className="text-xs text-gray-500 dark:text-gray-400">Modelo: {report.vehicleModel}</p>
+ <p className="text-xs text-gray-500">Modelo: {report.vehicleModel}</p>
                           )}
-                          <p className="text-xs text-gray-500 dark:text-gray-400">
+ <p className="text-xs text-gray-500">
                             Total: {report.totalQuantity} | Reservado: {report.reservedQuantity} | Consumido: {report.totalConsumed}
                           </p>
                         </div>
@@ -970,7 +1006,7 @@ function InventoryDashboardContent() {
           </section>
         )}
 
-        {activeTab === "movements" && (
+ {activeTab ==="movements" && (
           <section className="space-y-6">
             <div className="grid gap-4 md:grid-cols-2">
               <RoleGuard roles={["ADMIN"]}>
@@ -1002,9 +1038,9 @@ function InventoryDashboardContent() {
                     }}
                     fields={[
                       {
-                        name: 'partId',
-                        type: 'select',
-                        label: 'Peça',
+ name:'partId',
+ type:'select',
+ label:'Peça',
                         required: true,
                         options: parts.map(part => ({
                           value: part.id,
@@ -1012,41 +1048,41 @@ function InventoryDashboardContent() {
                         }))
                       },
                       {
-                        name: 'location',
-                        type: 'text',
-                        label: 'Localização',
-                        placeholder: 'Ex: Prateleira A1',
+ name:'location',
+ type:'text',
+ label:'Localização',
+ placeholder:'Ex: Prateleira A1',
                         required: true
                       },
                       {
-                        name: 'quantity',
-                        type: 'number',
-                        label: 'Quantidade',
+ name:'quantity',
+ type:'number',
+ label:'Quantidade',
                         required: true
                       },
                       {
-                        name: 'unitCost',
-                        type: 'number',
-                        label: 'Custo unitário (R$)',
+ name:'unitCost',
+ type:'number',
+ label:'Custo unitário (R$)',
                         required: false
                       },
                       {
-                        name: 'unitPrice',
-                        type: 'number',
-                        label: 'Preço de venda (R$)',
+ name:'unitPrice',
+ type:'number',
+ label:'Preço de venda (R$)',
                         required: false
                       },
                       {
-                        name: 'referenceCode',
-                        type: 'text',
-                        label: 'Código de referência',
-                        placeholder: 'Ex: NF-2024-001',
+ name:'referenceCode',
+ type:'text',
+ label:'Código de referência',
+ placeholder:'Ex: NF-2024-001',
                         required: false
                       },
                       {
-                        name: 'notes',
-                        type: 'textarea',
-                        label: 'Observações',
+ name:'notes',
+ type:'textarea',
+ label:'Observações',
                         required: false
                       }
                     ]}
@@ -1065,9 +1101,9 @@ function InventoryDashboardContent() {
                     }}
                     fields={[
                       {
-                        name: 'serviceOrderItemId',
-                        type: 'select',
-                        label: 'Item da OS',
+ name:'serviceOrderItemId',
+ type:'select',
+ label:'Item da OS',
                         required: true,
                         options: serviceOrderItems.map(item => ({
                           value: item.id,
@@ -1075,15 +1111,15 @@ function InventoryDashboardContent() {
                         }))
                       },
                       {
-                        name: 'quantity',
-                        type: 'number',
-                        label: 'Quantidade',
+ name:'quantity',
+ type:'number',
+ label:'Quantidade',
                         required: true
                       },
                       {
-                        name: 'notes',
-                        type: 'textarea',
-                        label: 'Observações',
+ name:'notes',
+ type:'textarea',
+ label:'Observações',
                         required: false
                       }
                     ]}
@@ -1102,9 +1138,9 @@ function InventoryDashboardContent() {
                     }}
                     fields={[
                       {
-                        name: 'serviceOrderItemId',
-                        type: 'select',
-                        label: 'Item da OS',
+ name:'serviceOrderItemId',
+ type:'select',
+ label:'Item da OS',
                         required: true,
                         options: serviceOrderItems.map(item => ({
                           value: item.id,
@@ -1112,15 +1148,15 @@ function InventoryDashboardContent() {
                         }))
                       },
                       {
-                        name: 'quantity',
-                        type: 'number',
-                        label: 'Quantidade',
+ name:'quantity',
+ type:'number',
+ label:'Quantidade',
                         required: true
                       },
                       {
-                        name: 'notes',
-                        type: 'textarea',
-                        label: 'Observações',
+ name:'notes',
+ type:'textarea',
+ label:'Observações',
                         required: false
                       }
                     ]}
@@ -1139,9 +1175,9 @@ function InventoryDashboardContent() {
                     }}
                     fields={[
                       {
-                        name: 'serviceOrderItemId',
-                        type: 'select',
-                        label: 'Item da OS',
+ name:'serviceOrderItemId',
+ type:'select',
+ label:'Item da OS',
                         required: true,
                         options: serviceOrderItems.map(item => ({
                           value: item.id,
@@ -1149,15 +1185,15 @@ function InventoryDashboardContent() {
                         }))
                       },
                       {
-                        name: 'quantity',
-                        type: 'number',
-                        label: 'Quantidade',
+ name:'quantity',
+ type:'number',
+ label:'Quantidade',
                         required: true
                       },
                       {
-                        name: 'notes',
-                        type: 'textarea',
-                        label: 'Observações',
+ name:'notes',
+ type:'textarea',
+ label:'Observações',
                         required: false
                       }
                     ]}
@@ -1176,9 +1212,9 @@ function InventoryDashboardContent() {
                     }}
                     fields={[
                       {
-                        name: 'serviceOrderItemId',
-                        type: 'select',
-                        label: 'Item da OS',
+ name:'serviceOrderItemId',
+ type:'select',
+ label:'Item da OS',
                         required: true,
                         options: serviceOrderItems.map(item => ({
                           value: item.id,
@@ -1186,15 +1222,15 @@ function InventoryDashboardContent() {
                         }))
                       },
                       {
-                        name: 'quantity',
-                        type: 'number',
-                        label: 'Quantidade',
+ name:'quantity',
+ type:'number',
+ label:'Quantidade',
                         required: true
                       },
                       {
-                        name: 'notes',
-                        type: 'textarea',
-                        label: 'Observações',
+ name:'notes',
+ type:'textarea',
+ label:'Observações',
                         required: false
                       }
                     ]}
@@ -1218,7 +1254,7 @@ function InventoryDashboardContent() {
                   <div className="flex flex-col text-sm">
                     <label className="text-xs font-medium text-gray-600">Item de estoque</label>
                     <select
-                      value={movementFilters.itemId ?? ""}
+ value={movementFilters.itemId ??""}
                       onChange={event => setMovementFilters(prev => ({ ...prev, itemId: event.target.value ? Number(event.target.value) : undefined }))}
                       className="mt-1 rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-orangeWheel-500 focus:outline-none focus:ring-2 focus:ring-orangeWheel-200"
                     >
@@ -1233,7 +1269,7 @@ function InventoryDashboardContent() {
                   <div className="flex flex-col text-sm">
                     <label className="text-xs font-medium text-gray-600">Peça</label>
                     <select
-                      value={movementFilters.partId ?? ""}
+ value={movementFilters.partId ??""}
                       onChange={event => setMovementFilters(prev => ({ ...prev, partId: event.target.value ? Number(event.target.value) : undefined }))}
                       className="mt-1 rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-orangeWheel-500 focus:outline-none focus:ring-2 focus:ring-orangeWheel-200"
                     >
@@ -1248,7 +1284,7 @@ function InventoryDashboardContent() {
                   <div className="flex flex-col text-sm">
                     <label className="text-xs font-medium text-gray-600">Ordem de Serviço</label>
                     <select
-                      value={movementFilters.serviceOrderId ?? ""}
+ value={movementFilters.serviceOrderId ??""}
                       onChange={event => setMovementFilters(prev => ({ ...prev, serviceOrderId: event.target.value ? Number(event.target.value) : undefined }))}
                       className="mt-1 rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-orangeWheel-500 focus:outline-none focus:ring-2 focus:ring-orangeWheel-200"
                     >
@@ -1263,7 +1299,7 @@ function InventoryDashboardContent() {
                   <div className="flex flex-col text-sm">
                     <label className="text-xs font-medium text-gray-600">Veículo</label>
                     <select
-                      value={movementFilters.vehicleId ?? ""}
+ value={movementFilters.vehicleId ??""}
                       onChange={event => setMovementFilters(prev => ({ ...prev, vehicleId: event.target.value ? Number(event.target.value) : undefined }))}
                       className="mt-1 rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-orangeWheel-500 focus:outline-none focus:ring-2 focus:ring-orangeWheel-200"
                     >
@@ -1314,14 +1350,14 @@ function InventoryDashboardContent() {
           </section>
         )}
 
-        {activeTab === "recommendations" && (
+ {activeTab ==="recommendations" && (
           <section className="space-y-6">
             <div className="rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
               <div className="mb-4 grid gap-4 md:grid-cols-4">
                 <div className="flex flex-col text-sm">
                   <label className="text-xs font-medium text-gray-600">Veículo</label>
                   <select
-                    value={recommendationFilters.vehicleId ?? ""}
+ value={recommendationFilters.vehicleId ??""}
                     onChange={event => setRecommendationFilters(prev => ({ ...prev, vehicleId: event.target.value ? Number(event.target.value) : undefined }))}
                     className="mt-1 rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-orangeWheel-500 focus:outline-none focus:ring-2 focus:ring-orangeWheel-200"
                   >
@@ -1336,7 +1372,7 @@ function InventoryDashboardContent() {
                 <div className="flex flex-col text-sm">
                   <label className="text-xs font-medium text-gray-600">Ordem de Serviço</label>
                   <select
-                    value={recommendationFilters.serviceOrderId ?? ""}
+ value={recommendationFilters.serviceOrderId ??""}
                     onChange={event => setRecommendationFilters(prev => ({ ...prev, serviceOrderId: event.target.value ? Number(event.target.value) : undefined }))}
                     className="mt-1 rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-orangeWheel-500 focus:outline-none focus:ring-2 focus:ring-orangeWheel-200"
                   >
@@ -1362,7 +1398,7 @@ function InventoryDashboardContent() {
                 <div className="flex flex-col text-sm">
                   <label className="text-xs font-medium text-gray-600">Pipeline</label>
                   <select
-                    value={recommendationFilters.pipelineId ?? ""}
+ value={recommendationFilters.pipelineId ??""}
                     onChange={event => setRecommendationFilters(prev => ({
                       ...prev,
                       pipelineId: event.target.value || undefined,
@@ -1422,7 +1458,7 @@ function InventoryDashboardContent() {
                             Quantidade histórica: <span className="font-semibold">{recommendation.historicalQuantity}</span>
                           </p>
                         )}
-                        {typeof recommendation.confidence === "number" && (
+ {typeof recommendation.confidence ==="number" && (
                           <p>Confiança: {(recommendation.confidence * 100).toFixed(0)}%</p>
                         )}
                         {recommendation.lastMovementDate && (
@@ -1437,7 +1473,7 @@ function InventoryDashboardContent() {
           </section>
         )}
 
-        {activeTab === "availability" && (
+ {activeTab ==="availability" && (
           <section className="space-y-6">
             <div className="rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
               <h3 className="mb-4 text-base font-semibold text-gray-800">Consultar disponibilidade</h3>
@@ -1445,7 +1481,7 @@ function InventoryDashboardContent() {
                 <div className="flex flex-col text-sm">
                   <label className="text-xs font-medium text-gray-600">Peça</label>
                   <select
-                    value={availabilityIds.partId ?? ""}
+ value={availabilityIds.partId ??""}
                     onChange={event => setAvailabilityIds(prev => ({ ...prev, partId: event.target.value ? Number(event.target.value) : undefined }))}
                     className="mt-1 rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-orangeWheel-500 focus:outline-none focus:ring-2 focus:ring-orangeWheel-200"
                   >
@@ -1460,7 +1496,7 @@ function InventoryDashboardContent() {
                 <div className="flex flex-col text-sm">
                   <label className="text-xs font-medium text-gray-600">Veículo</label>
                   <select
-                    value={availabilityIds.vehicleId ?? ""}
+ value={availabilityIds.vehicleId ??""}
                     onChange={event => setAvailabilityIds(prev => ({ ...prev, vehicleId: event.target.value ? Number(event.target.value) : undefined }))}
                     className="mt-1 rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-orangeWheel-500 focus:outline-none focus:ring-2 focus:ring-orangeWheel-200"
                   >
@@ -1475,7 +1511,7 @@ function InventoryDashboardContent() {
                 <div className="flex flex-col text-sm">
                   <label className="text-xs font-medium text-gray-600">Cliente</label>
                   <select
-                    value={availabilityIds.clientId ?? ""}
+ value={availabilityIds.clientId ??""}
                     onChange={event => setAvailabilityIds(prev => ({ ...prev, clientId: event.target.value ? Number(event.target.value) : undefined }))}
                     className="mt-1 rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-orangeWheel-500 focus:outline-none focus:ring-2 focus:ring-orangeWheel-200"
                   >
@@ -1533,7 +1569,7 @@ function InventoryDashboardContent() {
           </section>
         )}
 
-        {activeTab === "history" && (
+ {activeTab ==="history" && (
           <section className="space-y-6">
             <div className="rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
               <h3 className="mb-4 text-base font-semibold text-gray-800">Histórico de consumo</h3>
@@ -1541,7 +1577,7 @@ function InventoryDashboardContent() {
                 <div className="flex flex-col text-sm">
                   <label className="text-xs font-medium text-gray-600">Veículo</label>
                   <select
-                    value={historyIds.vehicleId ?? ""}
+ value={historyIds.vehicleId ??""}
                     onChange={event => setHistoryIds(prev => ({ ...prev, vehicleId: event.target.value ? Number(event.target.value) : undefined }))}
                     className="mt-1 rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-orangeWheel-500 focus:outline-none focus:ring-2 focus:ring-orangeWheel-200"
                   >
@@ -1556,7 +1592,7 @@ function InventoryDashboardContent() {
                 <div className="flex flex-col text-sm">
                   <label className="text-xs font-medium text-gray-600">Cliente</label>
                   <select
-                    value={historyIds.clientId ?? ""}
+ value={historyIds.clientId ??""}
                     onChange={event => setHistoryIds(prev => ({ ...prev, clientId: event.target.value ? Number(event.target.value) : undefined }))}
                     className="mt-1 rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-orangeWheel-500 focus:outline-none focus:ring-2 focus:ring-orangeWheel-200"
                   >
@@ -1603,7 +1639,7 @@ function InventoryDashboardContent() {
           onSubmit={async data => {
             const payload: InventoryItemCreateDTO = {
               partId: data.partId,
-              minimumQuantity: data.minimumQuantity,
+              initialQuantity: data.initialQuantity,
               location: data.location ?? "",
               unitCost: data.averageCost,
               salePrice: data.salePrice,
@@ -1681,7 +1717,7 @@ interface FieldOption {
 
 interface FieldConfig {
   name: string;
-  type: 'text' | 'number' | 'textarea' | 'select';
+ type:'text' |'number' |'textarea' |'select';
   label: string;
   placeholder?: string;
   required?: boolean;
@@ -1701,7 +1737,7 @@ function MovementForm({
   onSubmit: (payload: Record<string, number | string | undefined>) => Promise<void> | void;
   isLoading?: boolean;
 }) {
-  const [formState, setFormState] = useState<Record<string, string>>(Object.fromEntries(fields.map(field => [field.name, ""])));
+ const [formState, setFormState] = useState<Record<string, string>>(Object.fromEntries(fields.map(field => [field.name,""])));
   const [error, setError] = useState<string | null>(null);
 
   const handleChange = (fieldName: string, value: string) => {
@@ -1716,8 +1752,8 @@ function MovementForm({
 
     for (const field of fields) {
       const rawValue = formState[field.name];
-      const isTextField = field.type === 'text' || field.type === 'textarea';
-      const isNumericField = field.type === 'number';
+ const isTextField = field.type ==='text' || field.type ==='textarea';
+ const isNumericField = field.type ==='number';
       const isRequiredField = field.required ?? false;
 
       if (!rawValue && isRequiredField) {
@@ -1732,17 +1768,17 @@ function MovementForm({
           return;
         }
 
-        if (field.name === "quantity" && numericValue < 1) {
+ if (field.name ==="quantity" && numericValue < 1) {
           setError("A quantidade mínima é 1");
           return;
         }
 
-        if (["itemId", "partId", "serviceOrderItemId"].includes(field.name) && numericValue <= 0) {
+ if (["itemId","partId","serviceOrderItemId"].includes(field.name) && numericValue <= 0) {
           setError("Valores devem ser maiores que zero");
           return;
         }
 
-        if (["unitCost", "unitPrice"].includes(field.name) && numericValue < 0) {
+ if (["unitCost","unitPrice"].includes(field.name) && numericValue < 0) {
           setError("Valores monetários não podem ser negativos");
           return;
         }
@@ -1755,16 +1791,16 @@ function MovementForm({
       }
 
       // Para selects, sempre adicionar o valor convertido
-      if (field.type === 'select' && rawValue) {
+ if (field.type ==='select' && rawValue) {
         payload[field.name] = Number(rawValue);
       }
     }
 
     try {
       await onSubmit(payload);
-      setFormState(Object.fromEntries(fields.map(field => [field.name, ""])));
+ setFormState(Object.fromEntries(fields.map(field => [field.name,""])));
     } catch (submitError: any) {
-      const message = submitError?.response?.data?.message ?? 'Não foi possível registrar a movimentação.';
+ const message = submitError?.response?.data?.message ??'Não foi possível registrar a movimentação.';
       setError(message);
     }
   };
@@ -1779,20 +1815,20 @@ function MovementForm({
         {fields.map(field => (
           <div key={field.name} className="flex flex-col text-sm">
             <label className="text-xs font-medium text-gray-600">
-              {field.label}{field.required && " *"}
+ {field.label}{field.required &&" *"}
             </label>
-            {field.type === 'textarea' ? (
+ {field.type ==='textarea' ? (
               <textarea
                 rows={2}
-                value={formState[field.name] ?? ""}
+ value={formState[field.name] ??""}
                 onChange={event => handleChange(field.name, event.target.value)}
                 placeholder={field.placeholder}
                 required={field.required}
                 className="mt-1 rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-orangeWheel-500 focus:outline-none focus:ring-2 focus:ring-orangeWheel-200"
               />
-            ) : field.type === 'select' ? (
+ ) : field.type ==='select' ? (
               <select
-                value={formState[field.name] ?? ""}
+ value={formState[field.name] ??""}
                 onChange={event => handleChange(field.name, event.target.value)}
                 required={field.required}
                 className="mt-1 rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-orangeWheel-500 focus:outline-none focus:ring-2 focus:ring-orangeWheel-200"
@@ -1804,10 +1840,10 @@ function MovementForm({
                   </option>
                 ))}
               </select>
-            ) : field.type === 'text' ? (
+ ) : field.type ==='text' ? (
               <input
                 type="text"
-                value={formState[field.name] ?? ""}
+ value={formState[field.name] ??""}
                 onChange={event => handleChange(field.name, event.target.value)}
                 placeholder={field.placeholder}
                 required={field.required}
@@ -1816,17 +1852,17 @@ function MovementForm({
             ) : (
               <input
                 type="number"
-                step={["unitCost", "unitPrice"].includes(field.name) ? "0.01" : "1"}
+ step={["unitCost","unitPrice"].includes(field.name) ?"0.01" :"1"}
                 min={
-                  field.name === "quantity"
+ field.name ==="quantity"
                     ? 1
-                    : ["unitCost", "unitPrice"].includes(field.name)
+ : ["unitCost","unitPrice"].includes(field.name)
                       ? 0
-                      : ["itemId", "partId", "serviceOrderItemId"].includes(field.name)
+ : ["itemId","partId","serviceOrderItemId"].includes(field.name)
                         ? 1
                         : undefined
                 }
-                value={formState[field.name] ?? ""}
+ value={formState[field.name] ??""}
                 onChange={event => handleChange(field.name, event.target.value)}
                 placeholder={field.placeholder}
                 required={field.required}

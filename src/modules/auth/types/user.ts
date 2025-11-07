@@ -4,6 +4,11 @@ export interface Organization {
   id: number
   name: string
   slug: string
+  active?: boolean
+  contactEmail?: string
+  contactPhone?: string
+  address?: string
+  document?: string
 }
 
 export interface AuthTokens {

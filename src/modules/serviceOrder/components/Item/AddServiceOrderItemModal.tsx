@@ -7,6 +7,7 @@ import Button from "../../../../shared/components/Button";
 import type { ServiceOrderItemCreateDTO } from "../../types/serviceOrder";
 import type { PartCreateDTO } from "../../../part/types/part";
 import { itemTypeDisplayMapping } from "../../types/serviceOrder";
+import { extractErrorMessage } from "@/shared/utils/errorHandler";
 
 interface AddServiceOrderItemModalProps {
   isOpen: boolean;
@@ -24,7 +25,6 @@ export default function AddServiceOrderItemModal({ isOpen, serviceOrderId, onClo
     description: '',
     quantity: 1,
     unitPrice: 0,
-    productCode: '',
     requiresStock: false,
     observations: '',
     inventoryItemId: undefined,
@@ -57,7 +57,7 @@ export default function AddServiceOrderItemModal({ isOpen, serviceOrderId, onClo
       setShowPartForm(false);
     },
     onError: (error: any) => {
-      setError(error?.response?.data?.message || "Erro ao criar peça. Tente novamente.");
+      setError(extractErrorMessage(error, "Erro ao criar peça. Tente novamente."));
     },
   });
 
@@ -67,10 +67,13 @@ export default function AddServiceOrderItemModal({ isOpen, serviceOrderId, onClo
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["serviceOrderItems", serviceOrderId] });
       queryClient.invalidateQueries({ queryKey: ["serviceOrder", serviceOrderId] });
+      // Atualiza inventário caso item tenha peça/estoque associado
+      queryClient.invalidateQueries({ queryKey: ["inventory", "items"] });
+      queryClient.invalidateQueries({ queryKey: ["inventory", "movements"] });
       onClose();
     },
     onError: (error: any) => {
-      setError(error?.response?.data?.message || "Erro ao adicionar item. Tente novamente.");
+      setError(extractErrorMessage(error, "Erro ao adicionar item. Tente novamente."));
     },
   });
 
@@ -180,39 +183,23 @@ export default function AddServiceOrderItemModal({ isOpen, serviceOrderId, onClo
             </div>
           )}
 
-          {/* Tipo e Código do Produto */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Tipo *
-              </label>
-              <select
-                name="itemType"
-                value={form.itemType}
-                onChange={handleChange}
-                className="w-full border border-gray-300 rounded-lg px-3 sm:px-4 py-2 sm:py-3 focus:outline-none focus:ring-2 focus:ring-orange-500 text-sm sm:text-base"
-                required
-              >
-                <option value="SERVICE">Serviço</option>
-                <option value="PART">Peça</option>
-                <option value="MATERIAL">Material</option>
-                <option value="LABOR">Mão de Obra</option>
-              </select>
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Código do Produto
-              </label>
-              <input
-                type="text"
-                name="productCode"
-                value={form.productCode}
-                onChange={handleChange}
-                className="w-full border border-gray-300 rounded-lg px-3 sm:px-4 py-2 sm:py-3 focus:outline-none focus:ring-2 focus:ring-orange-500 text-sm sm:text-base"
-                placeholder="Ex: PC001, SRV025"
-              />
-            </div>
+          {/* Tipo */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Tipo *
+            </label>
+            <select
+              name="itemType"
+              value={form.itemType}
+              onChange={handleChange}
+              className="w-full border border-gray-300 rounded-lg px-3 sm:px-4 py-2 sm:py-3 focus:outline-none focus:ring-2 focus:ring-orange-500 text-sm sm:text-base"
+              required
+            >
+              <option value="SERVICE">Serviço</option>
+              <option value="PART">Peça</option>
+              <option value="MATERIAL">Material</option>
+              <option value="LABOR">Mão de Obra</option>
+            </select>
           </div>
 
           {/* Seleção ou criação de peça (apenas se itemType for PART) */}
@@ -385,21 +372,6 @@ export default function AddServiceOrderItemModal({ isOpen, serviceOrderId, onClo
                 required
               />
             </div>
-          </div>
-
-          {/* Controle de Estoque */}
-          <div className="flex items-center gap-3">
-            <input
-              type="checkbox"
-              id="requiresStock"
-              name="requiresStock"
-              checked={form.requiresStock ?? false}
-              onChange={handleChange}
-              className="w-4 h-4 text-orange-600 bg-gray-100 border-gray-300 rounded focus:ring-orange-500"
-            />
-            <label htmlFor="requiresStock" className="text-sm font-medium text-gray-700">
-              Este item requer controle de estoque
-            </label>
           </div>
 
           {/* Observações */}

@@ -12,9 +12,17 @@ import { VehicleImportModal } from "./VehicleImportModal";
 import axios from "../../../shared/services/axios";
 import { ImportInstructionsModal } from "../../../shared/components/ImportInstructionsModal";
 import { PageTutorial } from "@/modules/tutorial/components/PageTutorial";
+import { Pagination } from "../../../shared/components/Pagination";
+import type { PageResponse } from "../../../shared/types/pagination";
+import { showErrorAlert, showSuccessToast } from "@/shared/utils/errorHandler";
 
 export function VehicleList() {
   const queryClient = useQueryClient();
+  const [page, setPage] = useState(0);
+  const [pageSize, setPageSize] = useState(10);
+  const [sortBy, setSortBy] = useState<string>("licensePlate");
+  const [sortDirection, setSortDirection] = useState<"ASC" | "DESC">("ASC");
+  
   const { data: clients } = useQuery<Client[]>({
     queryKey: ["clients"],
     queryFn: async () => {
@@ -22,13 +30,28 @@ export function VehicleList() {
       return res.data;
     },
   });
-  const { data, isLoading, error } = useQuery<Vehicle[]>({
-    queryKey: ["vehicles"],
+  
+  // Query separada para estatísticas (não recarrega ao trocar de página)
+  const { data: statsData } = useQuery<PageResponse<Vehicle>>({
+    queryKey: ["vehicles-stats"],
     queryFn: async () => {
-      const res = await vehiclesApi.getAll();
+      const res = await vehiclesApi.getAllPaginated({ page: 0, size: 1 });
+      return res.data;
+    },
+    staleTime: 60000, // Cache por 1 minuto
+  });
+
+  // Query para lista paginada (recarrega ao trocar de página)
+  const { data: vehiclesPage, isLoading: isLoadingList, error } = useQuery<PageResponse<Vehicle>>({
+    queryKey: ["vehicles-list", page, pageSize, sortBy, sortDirection],
+    queryFn: async () => {
+      const res = await vehiclesApi.getAllPaginated({ page, size: pageSize, sortBy, direction: sortDirection });
       return res.data;
     },
   });
+
+  const vehicles = vehiclesPage?.content || [];
+  const totalVehicles = statsData?.totalElements || vehiclesPage?.totalElements || 0;
 
   const [selectedVehicle, setSelectedVehicle] = useState<Vehicle | null>(null);
   const [showEdit, setShowEdit] = useState(false);
@@ -58,7 +81,7 @@ export function VehicleList() {
       window.URL.revokeObjectURL(url);
     } catch (error) {
       console.error("Erro ao baixar template:", error);
-      alert("Erro ao baixar template");
+      showErrorAlert(error, "Erro ao baixar template");
     } finally {
       setDownloadingTemplate(null);
     }
@@ -66,12 +89,27 @@ export function VehicleList() {
 
   const deleteMutation = useMutation({
     mutationFn: (id: number) => vehiclesApi.delete(id),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["vehicles"] }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["vehicles"] });
+      queryClient.invalidateQueries({ queryKey: ["vehicles-list"] });
+      queryClient.invalidateQueries({ queryKey: ["vehicles-stats"] });
+      showSuccessToast("Veículo removido com sucesso!");
+    },
+    onError: (error: any) => {
+      showErrorAlert(error, "Erro ao remover veículo");
+    },
   });
 
   const importMutation = useMutation({
     mutationFn: (file: File) => vehiclesApi.upload(file),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["vehicles"] }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["vehicles"] });
+      queryClient.invalidateQueries({ queryKey: ["vehicles-list"] });
+      queryClient.invalidateQueries({ queryKey: ["vehicles-stats"] });
+    },
+    onError: (error: any) => {
+      showErrorAlert(error, "Erro ao importar veículos");
+    },
   });
 
   const handleAdd = () => {
@@ -115,6 +153,21 @@ export function VehicleList() {
     setSelectedVehicle(null);
   };
 
+  const handleSort = (field: string) => {
+    if (sortBy === field) {
+      setSortDirection(sortDirection === "ASC" ? "DESC" : "ASC");
+    } else {
+      setSortBy(field);
+      setSortDirection("ASC");
+    }
+    setPage(0); // Reset para primeira página ao mudar ordenação
+  };
+
+  const getSortIcon = (field: string) => {
+    if (sortBy !== field) return "⇅";
+    return sortDirection === "ASC" ? "↑" : "↓";
+  };
+
   const handleImportVehicles = async (file: File) => {
     await importMutation.mutateAsync(file);
   };
@@ -150,24 +203,13 @@ export function VehicleList() {
       window.URL.revokeObjectURL(url);
     } catch (exportError) {
       console.error("Erro ao exportar veículos", exportError);
-      window.alert("Não foi possível exportar os veículos. Tente novamente mais tarde.");
+      showErrorAlert(exportError, "Não foi possível exportar os veículos. Tente novamente mais tarde.");
     } finally {
       setIsExporting(false);
     }
   };
 
 
-  // Estados de carregamento e erro
-  if (isLoading) {
-    return (
-      <div className="flex items-center justify-center h-48 sm:h-64">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-8 w-8 sm:h-12 sm:w-12 border-b-2 border-orangeWheel-500 mb-4 mx-auto"></div>
-          <p className="text-gray-600 text-sm sm:text-lg">Carregando veículos...</p>
-        </div>
-      </div>
-    );
-  }
 
   const tutorial = (
     <PageTutorial
@@ -210,7 +252,6 @@ export function VehicleList() {
   return (
     <div className="space-y-4 sm:space-y-6">
       {tutorial}
-      {/* Header */}
       <div className="bg-white rounded-lg p-4 sm:p-6 shadow-sm border border-gray-200">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
@@ -262,13 +303,12 @@ export function VehicleList() {
         </div>
       </div>
 
-      {/* Estatísticas */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
         <div className="bg-gradient-to-r from-orangeWheel-500 to-orangeWheel-600 rounded-lg p-4 sm:p-6 text-white">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-orange-100 text-xs sm:text-sm font-medium">Total de Veículos</p>
-              <p className="text-2xl sm:text-3xl font-bold">{data?.length || 0}</p>
+              <p className="text-2xl sm:text-3xl font-bold">{totalVehicles}</p>
             </div>
             <div className="text-2xl sm:text-4xl opacity-80">🚗</div>
           </div>
@@ -278,7 +318,7 @@ export function VehicleList() {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-gray-300 text-xs sm:text-sm font-medium">Veículos Ativos</p>
-              <p className="text-2xl sm:text-3xl font-bold">{data?.length || 0}</p>
+              <p className="text-2xl sm:text-3xl font-bold">{totalVehicles}</p>
             </div>
             <div className="text-2xl sm:text-4xl opacity-80">✅</div>
           </div>
@@ -287,16 +327,32 @@ export function VehicleList() {
         <div className="bg-gradient-to-r from-orangeWheel-400 to-orangeWheel-500 rounded-lg p-4 sm:p-6 text-white sm:col-span-2 lg:col-span-1">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-orange-100 text-xs sm:text-sm font-medium">Novos este Mês</p>
-              <p className="text-2xl sm:text-3xl font-bold">+{Math.ceil((data?.length || 0) * 0.2)}</p>
+              <p className="text-orange-100 text-xs sm:text-sm font-medium">Itens por Página</p>
+              <select 
+                value={pageSize}
+                onChange={(e) => {
+                  setPageSize(Number(e.target.value));
+                  setPage(0);
+                }}
+                className="mt-1 bg-transparent text-white border border-white/30 rounded px-2 py-1 text-xl font-bold focus:outline-none focus:ring-2 focus:ring-white/50"
+              >
+                <option value={5} className="text-gray-900">5</option>
+                <option value={10} className="text-gray-900">10</option>
+                <option value={20} className="text-gray-900">20</option>
+                <option value={50} className="text-gray-900">50</option>
+              </select>
             </div>
-            <div className="text-2xl sm:text-4xl opacity-80">📈</div>
+            <div className="text-2xl sm:text-4xl opacity-80">📄</div>
           </div>
         </div>
       </div>
 
-      {/* Lista de Veículos */}
-      {!data || data.length === 0 ? (
+      {isLoadingList && !vehiclesPage ? (
+        <div className="bg-white rounded-lg p-8 sm:p-12 text-center shadow-sm border border-gray-200">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orangeWheel-500 mb-4 mx-auto"></div>
+          <p className="text-gray-600">Carregando veículos...</p>
+        </div>
+      ) : !vehicles || vehicles.length === 0 ? (
         <div className="bg-white rounded-lg p-8 sm:p-12 text-center shadow-sm border border-gray-200">
           <div className="text-gray-400 text-4xl sm:text-6xl mb-4">🚗</div>
           <h3 className="text-lg sm:text-xl font-semibold text-gray-700 mb-2">Nenhum veículo encontrado</h3>
@@ -311,7 +367,12 @@ export function VehicleList() {
       ) : (
         <>
           {/* Desktop Table */}
-          <div className="hidden lg:block bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
+          <div className="hidden lg:block bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden relative">
+            {isLoadingList && (
+              <div className="absolute inset-0 bg-white bg-opacity-75 flex items-center justify-center z-10">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-orangeWheel-500"></div>
+              </div>
+            )}
             <div className="overflow-x-auto">
               <table className="w-full table-fixed divide-y divide-gray-200">
                 <colgroup>
@@ -323,17 +384,41 @@ export function VehicleList() {
                 </colgroup>
                 <thead className="bg-gray-50">
                   <tr>
-                    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
-                      Veículo
+                    <th 
+                      className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider cursor-pointer hover:bg-gray-100 transition-colors select-none"
+                      onClick={() => handleSort("licensePlate")}
+                      title="Clique para ordenar por placa"
+                    >
+                      <div className="flex items-center gap-1">
+                        Veículo <span className="text-orangeWheel-500">{getSortIcon("licensePlate")}</span>
+                      </div>
                     </th>
-                    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
-                      Marca/Modelo
+                    <th 
+                      className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider cursor-pointer hover:bg-gray-100 transition-colors select-none"
+                      onClick={() => handleSort("brand")}
+                      title="Clique para ordenar por marca"
+                    >
+                      <div className="flex items-center gap-1">
+                        Marca/Modelo <span className="text-orangeWheel-500">{getSortIcon("brand")}</span>
+                      </div>
                     </th>
-                    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
-                      Ano
+                    <th 
+                      className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider cursor-pointer hover:bg-gray-100 transition-colors select-none"
+                      onClick={() => handleSort("year")}
+                      title="Clique para ordenar por ano"
+                    >
+                      <div className="flex items-center gap-1">
+                        Ano <span className="text-orangeWheel-500">{getSortIcon("year")}</span>
+                      </div>
                     </th>
-                    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
-                      Cliente
+                    <th 
+                      className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider cursor-pointer hover:bg-gray-100 transition-colors select-none"
+                      onClick={() => handleSort("clientId")}
+                      title="Clique para ordenar por cliente"
+                    >
+                      <div className="flex items-center gap-1">
+                        Cliente <span className="text-orangeWheel-500">{getSortIcon("clientId")}</span>
+                      </div>
                     </th>
                     <th className="px-4 py-3 text-right text-xs font-semibold text-gray-600 uppercase tracking-wider">
                       Ações
@@ -341,7 +426,7 @@ export function VehicleList() {
                   </tr>
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
-                  {data.map((vehicle: Vehicle) => (
+                  {vehicles.map((vehicle: Vehicle) => (
                     <tr key={vehicle.id} className="hover:bg-orangeWheel-50 transition-colors">
                       <td className="px-4 py-3">
                         <div className="flex items-center">
@@ -411,9 +496,43 @@ export function VehicleList() {
             </div>
           </div>
 
+          {/* Mobile Sorting */}
+          <div className="lg:hidden bg-white rounded-lg shadow-sm border border-gray-200 p-3 mb-3">
+            <label className="text-xs font-semibold text-gray-600 uppercase tracking-wider mb-2 block">
+              Ordenar por:
+            </label>
+            <div className="flex gap-2">
+              <select 
+                value={sortBy}
+                onChange={(e) => {
+                  setSortBy(e.target.value);
+                  setPage(0);
+                }}
+                className="flex-1 px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-orangeWheel-500"
+              >
+                <option value="licensePlate">Placa</option>
+                <option value="brand">Marca</option>
+                <option value="year">Ano</option>
+                <option value="clientId">Cliente</option>
+              </select>
+              <button
+                onClick={() => setSortDirection(sortDirection === "ASC" ? "DESC" : "ASC")}
+                className="px-4 py-2 bg-orangeWheel-500 text-white rounded-lg text-lg hover:bg-orangeWheel-600 transition-colors"
+                title={`Ordem: ${sortDirection === "ASC" ? "Crescente" : "Decrescente"}`}
+              >
+                {sortDirection === "ASC" ? "↑" : "↓"}
+              </button>
+            </div>
+          </div>
+
           {/* Mobile Cards */}
-          <div className="lg:hidden space-y-3">
-            {data.map((vehicle: Vehicle) => (
+          <div className="lg:hidden space-y-3 relative">
+            {isLoadingList && (
+              <div className="absolute inset-0 bg-white bg-opacity-75 flex items-center justify-center z-10">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-orangeWheel-500"></div>
+              </div>
+            )}
+            {vehicles.map((vehicle: Vehicle) => (
               <div key={vehicle.id} className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
                 <div className="flex items-start justify-between mb-3">
                   <div className="flex items-center gap-3">
@@ -484,6 +603,17 @@ export function VehicleList() {
           </div>
         </>
       )}
+
+      {/* Paginação */}
+      {vehiclesPage && vehiclesPage.totalPages > 1 && (
+        <Pagination
+          currentPage={page}
+          totalPages={vehiclesPage.totalPages}
+          onPageChange={setPage}
+          isLoading={isLoadingList}
+        />
+      )}
+
       {/* Modais de edição e criação */}
       {showAdd && (
         <AddVehicleModal isOpen={showAdd} onClose={handleCloseAdd} />
