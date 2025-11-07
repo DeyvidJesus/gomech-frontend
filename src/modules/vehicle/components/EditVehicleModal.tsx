@@ -28,12 +28,14 @@ export function EditVehicleModal({ isOpen, vehicle, onClose }: EditVehicleModalP
     mutationFn: (data: Partial<Vehicle>) => vehiclesApi.update(vehicle.id, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["vehicles"] });
+      queryClient.invalidateQueries({ queryKey: ["vehicles-list"] });
+      queryClient.invalidateQueries({ queryKey: ["vehicles-stats"] });
       queryClient.invalidateQueries({ queryKey: ["vehicle", vehicle.id] });
-      queryClient.invalidateQueries({ queryKey: ["clients"] }); // Atualizar clientes também
+      queryClient.invalidateQueries({ queryKey: ["clients"] });
       onClose();
     },
     onError: (error: any) => {
-      console.error('Erro ao atualizar veículo:', error); // Para debug
+      console.error('Erro ao atualizar veículo:', error);
       setError(error?.response?.data?.message || "Erro ao atualizar veículo. Tente novamente.");
     },
   });

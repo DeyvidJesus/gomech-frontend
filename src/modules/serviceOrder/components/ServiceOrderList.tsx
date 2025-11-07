@@ -6,22 +6,47 @@ import type { ServiceOrder, ServiceOrderStatus } from "../types/serviceOrder";
 import { statusDisplayMapping } from "../types/serviceOrder";
 import CreateServiceOrderModal from "./CreateServiceOrderModal";
 import { PageTutorial } from "@/modules/tutorial/components/PageTutorial";
+import { Pagination } from "../../../shared/components/Pagination";
+import type { PageResponse } from "../../../shared/types/pagination";
 
 export default function ServiceOrderList() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [showCreate, setShowCreate] = useState(false);
   const [statusFilter, setStatusFilter] = useState<ServiceOrderStatus | 'all'>('all');
+  const [page, setPage] = useState(0);
+  const [pageSize, setPageSize] = useState(10);
+  const [sortBy, setSortBy] = useState<string>("orderNumber");
+  const [sortDirection, setSortDirection] = useState<"ASC" | "DESC">("DESC");
 
-  const { data: serviceOrders = [], isLoading, error } = useQuery({
-    queryKey: ["serviceOrders"],
-    queryFn: () => serviceOrdersApi.getAll().then(res => res.data),
+  // Query separada para estatísticas (não recarrega ao trocar de página)
+  const { data: statsData } = useQuery<PageResponse<ServiceOrder>>({
+    queryKey: ["service-orders-stats"],
+    queryFn: async () => {
+      const res = await serviceOrdersApi.getAllPaginated({ page: 0, size: 1 });
+      return res.data;
+    },
+    staleTime: 60000, // Cache por 1 minuto
   });
+
+  // Query para lista paginada (recarrega ao trocar de página)
+  const { data: serviceOrdersPage, isLoading, error } = useQuery<PageResponse<ServiceOrder>>({
+    queryKey: ["service-orders-list", page, pageSize, sortBy, sortDirection],
+    queryFn: async () => {
+      const res = await serviceOrdersApi.getAllPaginated({ page, size: pageSize, sortBy, direction: sortDirection });
+      return res.data;
+    },
+  });
+
+  const serviceOrders = serviceOrdersPage?.content || [];
+  const totalServiceOrders = statsData?.totalElements || serviceOrdersPage?.totalElements || 0;
 
   const deleteMutation = useMutation({
     mutationFn: (id: number) => serviceOrdersApi.delete(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["serviceOrders"] });
+      queryClient.invalidateQueries({ queryKey: ["service-orders-list"] });
+      queryClient.invalidateQueries({ queryKey: ["service-orders-stats"] });
     },
     onError: (error: any) => {
       alert(error?.response?.data?.message || "Erro ao deletar ordem de serviço");
@@ -31,6 +56,21 @@ export default function ServiceOrderList() {
   const filteredOrders = serviceOrders.filter(order => 
     statusFilter === 'all' || order.status === statusFilter
   );
+
+  const handleSort = (field: string) => {
+    if (sortBy === field) {
+      setSortDirection(sortDirection === "ASC" ? "DESC" : "ASC");
+    } else {
+      setSortBy(field);
+      setSortDirection("ASC");
+    }
+    setPage(0); // Reset para primeira página ao mudar ordenação
+  };
+
+  const getSortIcon = (field: string) => {
+    if (sortBy !== field) return "⇅";
+    return sortDirection === "ASC" ? "↑" : "↓";
+  };
 
   const handleView = (order: ServiceOrder) => {
     navigate({ to: `/service-orders/${order.id}` });
@@ -139,7 +179,7 @@ export default function ServiceOrderList() {
             <div>
               <p className="text-gray-600 text-xs sm:text-sm font-medium">Total</p>
               <p className="text-lg sm:text-2xl font-bold text-gray-900">
-                {serviceOrders.length}
+                {totalServiceOrders}
               </p>
             </div>
             <div className="w-8 h-8 sm:w-10 sm:h-10 bg-gray-100 rounded-lg flex items-center justify-center">
@@ -255,11 +295,51 @@ export default function ServiceOrderList() {
                 </colgroup>
                 <thead className="bg-gray-50 border-b border-gray-200">
                   <tr>
-                    <th className="text-left py-3 px-4 font-medium text-gray-700 text-xs uppercase tracking-wider">OS</th>
-                    <th className="text-left py-3 px-4 font-medium text-gray-700 text-xs uppercase tracking-wider">Cliente</th>
-                    <th className="text-left py-3 px-4 font-medium text-gray-700 text-xs uppercase tracking-wider">Veículo</th>
-                    <th className="text-left py-3 px-4 font-medium text-gray-700 text-xs uppercase tracking-wider">Status</th>
-                    <th className="text-left py-3 px-4 font-medium text-gray-700 text-xs uppercase tracking-wider">Valor</th>
+                    <th 
+                      className="text-left py-3 px-4 font-medium text-gray-700 text-xs uppercase tracking-wider cursor-pointer hover:bg-gray-100 transition-colors select-none"
+                      onClick={() => handleSort("orderNumber")}
+                      title="Clique para ordenar por número da OS"
+                    >
+                      <div className="flex items-center gap-1">
+                        OS <span className="text-orangeWheel-500">{getSortIcon("orderNumber")}</span>
+                      </div>
+                    </th>
+                    <th 
+                      className="text-left py-3 px-4 font-medium text-gray-700 text-xs uppercase tracking-wider cursor-pointer hover:bg-gray-100 transition-colors select-none"
+                      onClick={() => handleSort("clientName")}
+                      title="Clique para ordenar por cliente"
+                    >
+                      <div className="flex items-center gap-1">
+                        Cliente <span className="text-orangeWheel-500">{getSortIcon("clientName")}</span>
+                      </div>
+                    </th>
+                    <th 
+                      className="text-left py-3 px-4 font-medium text-gray-700 text-xs uppercase tracking-wider cursor-pointer hover:bg-gray-100 transition-colors select-none"
+                      onClick={() => handleSort("vehicleInfo")}
+                      title="Clique para ordenar por veículo"
+                    >
+                      <div className="flex items-center gap-1">
+                        Veículo <span className="text-orangeWheel-500">{getSortIcon("vehicleInfo")}</span>
+                      </div>
+                    </th>
+                    <th 
+                      className="text-left py-3 px-4 font-medium text-gray-700 text-xs uppercase tracking-wider cursor-pointer hover:bg-gray-100 transition-colors select-none"
+                      onClick={() => handleSort("status")}
+                      title="Clique para ordenar por status"
+                    >
+                      <div className="flex items-center gap-1">
+                        Status <span className="text-orangeWheel-500">{getSortIcon("status")}</span>
+                      </div>
+                    </th>
+                    <th 
+                      className="text-left py-3 px-4 font-medium text-gray-700 text-xs uppercase tracking-wider cursor-pointer hover:bg-gray-100 transition-colors select-none"
+                      onClick={() => handleSort("totalCost")}
+                      title="Clique para ordenar por valor"
+                    >
+                      <div className="flex items-center gap-1">
+                        Valor <span className="text-orangeWheel-500">{getSortIcon("totalCost")}</span>
+                      </div>
+                    </th>
                     <th className="text-center py-3 px-4 font-medium text-gray-700 text-xs uppercase tracking-wider">Ações</th>
                   </tr>
                 </thead>
@@ -329,6 +409,35 @@ export default function ServiceOrderList() {
                   ))}
                 </tbody>
               </table>
+            </div>
+
+            {/* Mobile Sorting */}
+            <div className="lg:hidden bg-white rounded-lg shadow-sm border border-gray-200 p-3 mb-3 mx-4">
+              <label className="text-xs font-semibold text-gray-600 uppercase tracking-wider mb-2 block">
+                Ordenar por:
+              </label>
+              <div className="flex gap-2">
+                <select 
+                  value={sortBy}
+                  onChange={(e) => {
+                    setSortBy(e.target.value);
+                    setPage(0);
+                  }}
+                  className="flex-1 px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-orangeWheel-500"
+                >
+                  <option value="orderNumber">Número da OS</option>
+                  <option value="clientName">Cliente</option>
+                  <option value="status">Status</option>
+                  <option value="totalCost">Valor Total</option>
+                </select>
+                <button
+                  onClick={() => setSortDirection(sortDirection === "ASC" ? "DESC" : "ASC")}
+                  className="px-4 py-2 bg-orangeWheel-500 text-white rounded-lg text-lg hover:bg-orangeWheel-600 transition-colors"
+                  title={`Ordem: ${sortDirection === "ASC" ? "Crescente" : "Decrescente"}`}
+                >
+                  {sortDirection === "ASC" ? "↑" : "↓"}
+                </button>
+              </div>
             </div>
 
             {/* Mobile/Tablet: Cards */}
@@ -431,6 +540,16 @@ export default function ServiceOrderList() {
           </>
         )}
       </div>
+
+      {/* Paginação */}
+      {serviceOrdersPage && serviceOrdersPage.totalPages > 1 && (
+        <Pagination
+          currentPage={page}
+          totalPages={serviceOrdersPage.totalPages}
+          onPageChange={setPage}
+          isLoading={isLoading}
+        />
+      )}
 
       {/* Modal de criação */}
       <CreateServiceOrderModal 

@@ -57,7 +57,6 @@ function ensureAuthorizationHeader(config: any) {
     }
   }
 
-  // Adiciona o organization_id em todas as requisições
   const auth = getCachedAuth() ?? loadPersistedAuth()
   if (auth?.organization?.id) {
     config.headers['X-Organization-ID'] = auth.organization.id.toString()
