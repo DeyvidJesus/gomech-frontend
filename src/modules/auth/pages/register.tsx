@@ -56,6 +56,7 @@ function Register() {
       email,
       password,
       role,
+      organizationId: 1,
       ...(mfaEnabled ? { mfaEnabled: true } : {}),
     };
 

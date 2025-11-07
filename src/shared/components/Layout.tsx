@@ -38,9 +38,8 @@ export function Layout() {
     }
   }, [isDesktop])
 
-  const containerClassName = `bg-gray-50 text-gray-900 min-h-screen flex flex-col${
-    isSidebarOpen && !isDesktop ? ' overflow-hidden' : ''
-  }`
+  const containerClassName = `bg-gray-50 text-gray-900 min-h-screen flex flex-col${isSidebarOpen && !isDesktop ? ' overflow-hidden' : ''
+    }`
 
   return (
     <ProtectedRoute>
@@ -69,7 +68,7 @@ export function Layout() {
           <div className="w-10" /> {/* Spacer para centralizar o logo */}
         </header>
 
-        <div className="flex flex-1">          
+        <div className="flex flex-1">
           <Sidebar isOpen={isSidebarOpen} onClose={closeSidebar} isDesktop={isDesktop} />
 
           <main className="flex-1 py-4 px-3 sm:px-4 lg:px-5 lg:ml-[230px]">

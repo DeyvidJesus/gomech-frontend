@@ -1,51 +1,70 @@
-import { useEffect, type ReactNode } from 'react';
-import { useAuth } from '../hooks/useAuth';
-import { useNavigate } from '@tanstack/react-router';
+import { Navigate } from '@tanstack/react-router'
+import { useAuth } from '../hooks/useAuth'
+import { RoleHelper } from '../utils/roleHelpers'
+import type { UserRole } from '../types/user'
 
 interface ProtectedRouteProps {
-  children: ReactNode;
-  requiredRole?: 'USER' | 'ADMIN';
-  fallback?: ReactNode;
+  children: React.ReactNode
+  requiredRole?: UserRole
+  fallbackPath?: string
 }
 
-export default function ProtectedRoute({ 
-  children, 
+/**
+ * Componente para proteger rotas que requerem autenticação
+ * e/ou roles específicos
+ */
+export default function ProtectedRoute({
+  children,
   requiredRole,
-  fallback = (
-    <div className='flex h-screen items-center justify-center text-lg text-[#e74c3c]'>
-      Acesso negado - Você não tem permissão para acessar esta página
-    </div>
-  )
+  fallbackPath = '/login',
 }: ProtectedRouteProps) {
-  const { data, isLoading } = useAuth();
-  const navigate = useNavigate();
+  const { data: authData, isLoading } = useAuth()
 
-  useEffect(() => {
-    if (!isLoading && !data) {
-      navigate({ to: '/login' });
-      return;
-    }
-  }, [data, isLoading]);
-
+  // Aguarda carregamento
   if (isLoading) {
     return (
-      <div className='flex h-screen items-center justify-center text-lg'>
-        Carregando...
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <div className="w-16 h-16 border-4 border-orange-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+          <p className="text-gray-600">Verificando permissões...</p>
+        </div>
       </div>
-    );
+    )
   }
 
-  if (!data) {
-    return null;
+  // Não autenticado
+  if (!authData?.accessToken) {
+    return <Navigate to={fallbackPath} />
   }
 
-  if (requiredRole) {
-    console.log(data)
-    const userRole = data?.role;
-    if (userRole !== requiredRole && userRole !== 'ADMIN') {
-      return <>{fallback}</>;
+  // Verificar role se necessário
+  if (requiredRole && authData.role !== requiredRole) {
+    // Se requer ADMIN mas usuário não é ADMIN
+    if (requiredRole === 'ADMIN' && !RoleHelper.isAdmin(authData.role)) {
+      return (
+        <div className="min-h-screen flex items-center justify-center bg-gray-50">
+          <div className="max-w-md w-full bg-white rounded-lg shadow-lg p-8 text-center">
+            <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+              <span className="text-3xl">🚫</span>
+            </div>
+            <h2 className="text-2xl font-bold text-gray-800 mb-2">Acesso Negado</h2>
+            <p className="text-gray-600 mb-6">
+              Você não tem permissão para acessar esta página.
+              <br />
+              Esta área é restrita a administradores.
+            </p>
+            <button
+              onClick={() => window.history.back()}
+              className="bg-orange-600 hover:bg-orange-700 text-white font-semibold py-2 px-6 rounded-lg transition-colors"
+            >
+              Voltar
+            </button>
+          </div>
+        </div>
+      )
     }
   }
 
-  return <>{children}</>;
+  // Autenticado e autorizado
+  return <>{children}</>
 }

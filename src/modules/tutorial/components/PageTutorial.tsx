@@ -74,7 +74,7 @@ export function PageTutorial({
       headerStyle="primary"
     >
       <div className="space-y-4">
-        <div className="rounded-lg bg-orangeWheel-50 border border-orangeWheel-200 p-4 text-sm text-orangeWheel-800">
+        <div className="rounded-lg bg-orangeWheel-50 border border-orangeWheel-200 p-4 text-sm text-gray-700">
           <p className="m-0">
             Este guia rápido aparece apenas na sua primeira visita a esta tela. Quando quiser revisar, procure o botão de ajuda ou consulte a documentação da GoMech.
           </p>

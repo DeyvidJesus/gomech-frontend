@@ -31,6 +31,7 @@ export interface RegisterRequest {
   email: string
   password: string
   role: UserRole
+  organizationId: number
   mfaEnabled?: boolean
 }
 
