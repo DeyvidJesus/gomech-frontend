@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { serviceOrderItemsApi } from "../../services/api";
 import type { ServiceOrderItem, ServiceOrderItemCreateDTO, ServiceOrderItemType } from "../../types/serviceOrder";
+import { showErrorAlert, showSuccessToast, showWarningToast } from "@/shared/utils/errorHandler";
 
 interface ServiceOrderItemsManagerProps {
   serviceOrderId: number;
@@ -33,6 +34,9 @@ export function ServiceOrderItemsManager({ serviceOrderId, items }: ServiceOrder
         unitPrice: 0,
       });
     },
+    onError: (error: any) => {
+      showErrorAlert(error, "Erro ao criar item");
+    },
   });
 
   const updateMutation = useMutation({
@@ -42,17 +46,19 @@ export function ServiceOrderItemsManager({ serviceOrderId, items }: ServiceOrder
       queryClient.invalidateQueries({ queryKey: ["serviceOrderItems", serviceOrderId.toString()] });
       setEditingItem(null);
     },
+    onError: (error: any) => {
+      showErrorAlert(error, "Erro ao atualizar item");
+    },
   });
 
   const deleteMutation = useMutation({
     mutationFn: (id: number) => serviceOrderItemsApi.delete(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["serviceOrderItems", serviceOrderId.toString()] });
+      showSuccessToast("Item removido com sucesso!");
     },
     onError: (error: any) => {
-      const errorMessage = error?.response?.data?.message || error?.message || "Erro ao deletar item";
-      alert(`❌ Erro ao remover item:\n\n${errorMessage}`);
-      console.error("Erro ao deletar item:", error);
+      showErrorAlert(error, "Erro ao remover item");
     },
   });
 
@@ -61,6 +67,9 @@ export function ServiceOrderItemsManager({ serviceOrderId, items }: ServiceOrder
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["serviceOrderItems", serviceOrderId.toString()] });
     },
+    onError: (error: any) => {
+      showErrorAlert(error, "Erro ao aplicar item");
+    },
   });
 
   const unapplyMutation = useMutation({
@@ -68,12 +77,15 @@ export function ServiceOrderItemsManager({ serviceOrderId, items }: ServiceOrder
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["serviceOrderItems", serviceOrderId.toString()] });
     },
+    onError: (error: any) => {
+      showErrorAlert(error, "Erro ao desaplicar item");
+    },
   });
 
   const handleAddItem = (e: React.FormEvent) => {
     e.preventDefault();
     if (!newItem.description?.trim() || !newItem.unitPrice || !newItem.quantity) {
-      alert("Preencha todos os campos obrigatórios");
+      showWarningToast("Preencha todos os campos obrigatórios");
       return;
     }
 

@@ -24,6 +24,7 @@ import type {
 } from"../types/inventory";
 import { InventoryItemModal } from"./InventoryItemModal";
 import { PageTutorial } from"@/modules/tutorial/components/PageTutorial";
+import { showErrorAlert } from"@/shared/utils/errorHandler";
 
 const tabs = [
  { id:"parts", label:"Peças" },
@@ -100,6 +101,9 @@ function InventoryDashboardContent() {
     onSuccess: () => {
  queryClient.invalidateQueries({ queryKey: ["inventory","items"] });
     },
+    onError: (error: any) => {
+      showErrorAlert(error, "Erro ao criar item no estoque");
+    },
   });
 
   const updateItemMutation = useMutation({
@@ -107,12 +111,18 @@ function InventoryDashboardContent() {
     onSuccess: () => {
  queryClient.invalidateQueries({ queryKey: ["inventory","items"] });
     },
+    onError: (error: any) => {
+      showErrorAlert(error, "Erro ao atualizar item no estoque");
+    },
   });
 
   const deleteItemMutation = useMutation({
     mutationFn: (id: number) => inventoryApi.deleteItem(id),
     onSuccess: () => {
  queryClient.invalidateQueries({ queryKey: ["inventory","items"] });
+    },
+    onError: (error: any) => {
+      showErrorAlert(error, "Erro ao remover item do estoque");
     },
   });
 
@@ -123,6 +133,9 @@ function InventoryDashboardContent() {
       queryClient.invalidateQueries({ queryKey: ["parts"] });
       setIsCreatePartModalOpen(false);
     },
+    onError: (error: any) => {
+      showErrorAlert(error, "Erro ao criar peça");
+    },
   });
 
   const updatePartMutation = useMutation({
@@ -131,12 +144,18 @@ function InventoryDashboardContent() {
       queryClient.invalidateQueries({ queryKey: ["parts"] });
       setIsEditPartModalOpen(false);
     },
+    onError: (error: any) => {
+      showErrorAlert(error, "Erro ao atualizar peça");
+    },
   });
 
   const deletePartMutation = useMutation({
     mutationFn: (id: number) => partsApi.delete(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["parts"] });
+    },
+    onError: (error: any) => {
+      showErrorAlert(error, "Erro ao remover peça");
     },
   });
 
@@ -145,6 +164,9 @@ function InventoryDashboardContent() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["parts"] });
       setIsImportPartModalOpen(false);
+    },
+    onError: (error: any) => {
+      showErrorAlert(error, "Erro ao importar peças");
     },
   });
 
@@ -155,6 +177,9 @@ function InventoryDashboardContent() {
  queryClient.invalidateQueries({ queryKey: ["inventory","movements"] });
  queryClient.invalidateQueries({ queryKey: ["inventory","criticalParts"] });
     },
+    onError: (error: any) => {
+      showErrorAlert(error, "Erro ao registrar entrada no estoque");
+    },
   });
   const reserveMutation = useMutation({
     mutationFn: inventoryApi.reserveStock,
@@ -162,6 +187,9 @@ function InventoryDashboardContent() {
  queryClient.invalidateQueries({ queryKey: ["inventory","items"] });
  queryClient.invalidateQueries({ queryKey: ["inventory","movements"] });
  queryClient.invalidateQueries({ queryKey: ["inventory","criticalParts"] });
+    },
+    onError: (error: any) => {
+      showErrorAlert(error, "Erro ao reservar estoque");
     },
   });
   const consumeMutation = useMutation({
@@ -171,6 +199,9 @@ function InventoryDashboardContent() {
  queryClient.invalidateQueries({ queryKey: ["inventory","movements"] });
  queryClient.invalidateQueries({ queryKey: ["inventory","criticalParts"] });
     },
+    onError: (error: any) => {
+      showErrorAlert(error, "Erro ao consumir estoque");
+    },
   });
   const cancelReservationMutation = useMutation({
     mutationFn: inventoryApi.cancelReservation,
@@ -179,6 +210,9 @@ function InventoryDashboardContent() {
  queryClient.invalidateQueries({ queryKey: ["inventory","movements"] });
  queryClient.invalidateQueries({ queryKey: ["inventory","criticalParts"] });
     },
+    onError: (error: any) => {
+      showErrorAlert(error, "Erro ao cancelar reserva");
+    },
   });
   const returnMutation = useMutation({
     mutationFn: inventoryApi.registerReturn,
@@ -186,6 +220,9 @@ function InventoryDashboardContent() {
  queryClient.invalidateQueries({ queryKey: ["inventory","items"] });
  queryClient.invalidateQueries({ queryKey: ["inventory","movements"] });
  queryClient.invalidateQueries({ queryKey: ["inventory","criticalParts"] });
+    },
+    onError: (error: any) => {
+      showErrorAlert(error, "Erro ao registrar devolução");
     },
   });
 
@@ -1602,8 +1639,8 @@ function InventoryDashboardContent() {
           onSubmit={async data => {
             const payload: InventoryItemCreateDTO = {
               partId: data.partId,
-              minimumQuantity: data.minimumQuantity,
- location: data.location ??"",
+              initialQuantity: data.initialQuantity,
+              location: data.location ?? "",
               unitCost: data.averageCost,
               salePrice: data.salePrice,
             };

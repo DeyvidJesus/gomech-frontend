@@ -14,6 +14,7 @@ import { ImportInstructionsModal } from "../../../shared/components/ImportInstru
 import { PageTutorial } from "@/modules/tutorial/components/PageTutorial";
 import { Pagination } from "../../../shared/components/Pagination";
 import type { PageResponse } from "../../../shared/types/pagination";
+import { showErrorAlert, showSuccessToast } from "@/shared/utils/errorHandler";
 
 export function VehicleList() {
   const queryClient = useQueryClient();
@@ -80,7 +81,7 @@ export function VehicleList() {
       window.URL.revokeObjectURL(url);
     } catch (error) {
       console.error("Erro ao baixar template:", error);
-      alert("Erro ao baixar template");
+      showErrorAlert(error, "Erro ao baixar template");
     } finally {
       setDownloadingTemplate(null);
     }
@@ -92,6 +93,10 @@ export function VehicleList() {
       queryClient.invalidateQueries({ queryKey: ["vehicles"] });
       queryClient.invalidateQueries({ queryKey: ["vehicles-list"] });
       queryClient.invalidateQueries({ queryKey: ["vehicles-stats"] });
+      showSuccessToast("Veículo removido com sucesso!");
+    },
+    onError: (error: any) => {
+      showErrorAlert(error, "Erro ao remover veículo");
     },
   });
 
@@ -101,6 +106,9 @@ export function VehicleList() {
       queryClient.invalidateQueries({ queryKey: ["vehicles"] });
       queryClient.invalidateQueries({ queryKey: ["vehicles-list"] });
       queryClient.invalidateQueries({ queryKey: ["vehicles-stats"] });
+    },
+    onError: (error: any) => {
+      showErrorAlert(error, "Erro ao importar veículos");
     },
   });
 
@@ -195,7 +203,7 @@ export function VehicleList() {
       window.URL.revokeObjectURL(url);
     } catch (exportError) {
       console.error("Erro ao exportar veículos", exportError);
-      window.alert("Não foi possível exportar os veículos. Tente novamente mais tarde.");
+      showErrorAlert(exportError, "Não foi possível exportar os veículos. Tente novamente mais tarde.");
     } finally {
       setIsExporting(false);
     }

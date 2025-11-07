@@ -8,6 +8,7 @@ import CreateServiceOrderModal from "./CreateServiceOrderModal";
 import { PageTutorial } from "@/modules/tutorial/components/PageTutorial";
 import { Pagination } from "../../../shared/components/Pagination";
 import type { PageResponse } from "../../../shared/types/pagination";
+import { showErrorAlert, showSuccessToast } from "@/shared/utils/errorHandler";
 
 export default function ServiceOrderList() {
   const navigate = useNavigate();
@@ -47,9 +48,10 @@ export default function ServiceOrderList() {
       queryClient.invalidateQueries({ queryKey: ["serviceOrders"] });
       queryClient.invalidateQueries({ queryKey: ["service-orders-list"] });
       queryClient.invalidateQueries({ queryKey: ["service-orders-stats"] });
+      showSuccessToast("Ordem de serviço removida com sucesso!");
     },
     onError: (error: any) => {
-      alert(error?.response?.data?.message || "Erro ao deletar ordem de serviço");
+      showErrorAlert(error, "Erro ao remover ordem de serviço");
     },
   });
 

@@ -12,6 +12,7 @@ import type { PageResponse } from "../../../shared/types/pagination";
 import axios from "../../../shared/services/axios";
 import { ImportInstructionsModal } from "../../../shared/components/ImportInstructionsModal";
 import { PageTutorial } from "@/modules/tutorial/components/PageTutorial";
+import { showErrorAlert, showSuccessToast } from "@/shared/utils/errorHandler";
 
 export function ClientList() {
   const queryClient = useQueryClient();
@@ -67,7 +68,7 @@ export function ClientList() {
       window.URL.revokeObjectURL(url);
     } catch (error) {
       console.error("Erro ao baixar template:", error);
-      alert("Erro ao baixar template");
+      showErrorAlert(error, "Erro ao baixar template");
     } finally {
       setDownloadingTemplate(null);
     }
@@ -78,6 +79,10 @@ export function ClientList() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["clients-list"] });
       queryClient.invalidateQueries({ queryKey: ["clients-stats"] });
+      showSuccessToast("Cliente removido com sucesso!");
+    },
+    onError: (error: any) => {
+      showErrorAlert(error, "Erro ao remover cliente");
     },
   });
 
@@ -86,6 +91,9 @@ export function ClientList() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["clients-list"] });
       queryClient.invalidateQueries({ queryKey: ["clients-stats"] });
+    },
+    onError: (error: any) => {
+      showErrorAlert(error, "Erro ao importar clientes");
     },
   });
 
@@ -170,7 +178,7 @@ export function ClientList() {
       window.URL.revokeObjectURL(url);
     } catch (exportError) {
       console.error("Erro ao exportar clientes", exportError);
-      window.alert("Não foi possível exportar os clientes. Tente novamente mais tarde.");
+      showErrorAlert(exportError, "Não foi possível exportar os clientes. Tente novamente mais tarde.");
     } finally {
       setIsExporting(false);
     }

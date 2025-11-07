@@ -129,16 +129,13 @@ api.interceptors.response.use(
       }
     }
 
+    // Não redireciona automaticamente em 403 - deixa o componente tratar
+    // Apenas loga o erro para debug
     if (status === 403) {
-      console.error('Acesso negado:', error)
-      emitHttpStatusEvent('forbidden', {
-        status: 403,
-        message:
-          error.response?.data?.message ?? 'Você não tem permissão para acessar este recurso.',
-      })
-      redirect({ to: '/' })
+      console.error('Acesso negado:', error.response?.data?.message || error.message)
     }
 
+    // Para erros 4xx e 5xx, apenas retorna o erro para ser tratado pelo componente
     return Promise.reject(error)
   },
 )

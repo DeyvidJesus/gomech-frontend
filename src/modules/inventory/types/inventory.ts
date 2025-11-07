@@ -46,7 +46,7 @@ export interface InventoryItem {
 export interface InventoryItemCreateDTO {
   partId: number
   location: string
-  minimumQuantity: number
+  initialQuantity?: number
   unitCost?: number
   salePrice?: number
 }

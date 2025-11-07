@@ -8,7 +8,6 @@ import type { InventoryItem } from "../types/inventory";
 
 export interface InventoryItemFormValues {
   partId: number;
-  minimumQuantity: number;
   initialQuantity: number;
   location: string;
   averageCost?: number;
@@ -27,7 +26,6 @@ interface InventoryItemModalProps {
 const emptyItem: InventoryItemFormValues = {
   partId: 0,
   initialQuantity: 0,
-  minimumQuantity: 0,
   location: "",
   averageCost: 0,
   salePrice: 0,
@@ -58,7 +56,6 @@ export function InventoryItemModal({
         setFormData({
           partId: initialData.partId,
           initialQuantity: initialData.quantity,
-          minimumQuantity: initialData.minimumQuantity,
           location: initialData.location ?? "",
           averageCost: initialData.unitCost,
           salePrice: initialData.salePrice ?? 0,
@@ -90,8 +87,8 @@ export function InventoryItemModal({
       return;
     }
 
-    if (formData.initialQuantity < 0 || formData.minimumQuantity < 0) {
-      setError("Quantidades devem ser positivas");
+    if (formData.initialQuantity < 0) {
+      setError("Quantidade inicial deve ser positiva");
       return;
     }
 
@@ -203,16 +200,6 @@ export function InventoryItemModal({
                   Ajustes de quantidade devem ser feitos via movimentações.
                 </span>
               )}
-            </div>
-            <div className="flex flex-col">
-              <label className="text-sm font-medium text-gray-700">Quantidade mínima</label>
-              <input
-                type="number"
-                min={0}
-                value={formData.minimumQuantity}
-                onChange={event => handleChange("minimumQuantity", Number(event.target.value))}
-                className="mt-1 rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-orangeWheel-500 focus:outline-none focus:ring-2 focus:ring-orangeWheel-200"
-              />
             </div>
             <div className="flex flex-col">
               <label className="text-sm font-medium text-gray-700">Custo médio (R$)</label>
