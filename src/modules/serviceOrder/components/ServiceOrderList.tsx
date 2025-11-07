@@ -16,7 +16,7 @@ export default function ServiceOrderList() {
   const [showCreate, setShowCreate] = useState(false);
   const [statusFilter, setStatusFilter] = useState<ServiceOrderStatus | 'all'>('all');
   const [page, setPage] = useState(0);
-  const [pageSize, setPageSize] = useState(10);
+  const [pageSize,] = useState(10);
   const [sortBy, setSortBy] = useState<string>("orderNumber");
   const [sortDirection, setSortDirection] = useState<"ASC" | "DESC">("DESC");
 

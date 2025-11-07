@@ -12,6 +12,7 @@ export interface InventoryItemFormValues {
   location: string;
   averageCost?: number;
   salePrice?: number;
+  minimumQuantity?: number;
 }
 
 interface InventoryItemModalProps {
