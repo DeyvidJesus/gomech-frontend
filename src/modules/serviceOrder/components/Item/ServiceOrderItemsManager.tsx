@@ -3,6 +3,8 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { serviceOrderItemsApi } from "../../services/api";
 import type { ServiceOrderItem, ServiceOrderItemCreateDTO, ServiceOrderItemType } from "../../types/serviceOrder";
 import { showErrorAlert, showSuccessToast, showWarningToast } from "@/shared/utils/errorHandler";
+import { useConfirm } from "@/shared/hooks/useConfirm";
+import { ConfirmDialog } from "@/shared/components/ConfirmDialog";
 
 interface ServiceOrderItemsManagerProps {
   serviceOrderId: number;
@@ -11,6 +13,7 @@ interface ServiceOrderItemsManagerProps {
 
 export function ServiceOrderItemsManager({ serviceOrderId, items }: ServiceOrderItemsManagerProps) {
   const queryClient = useQueryClient();
+  const { confirm, confirmState } = useConfirm();
   const [showAddItem, setShowAddItem] = useState(false);
   const [editingItem, setEditingItem] = useState<ServiceOrderItem | null>(null);
   const [newItem, setNewItem] = useState<Partial<ServiceOrderItem>>({
@@ -109,8 +112,16 @@ export function ServiceOrderItemsManager({ serviceOrderId, items }: ServiceOrder
     });
   };
 
-  const handleDeleteItem = (item: ServiceOrderItem) => {
-    if (window.confirm(`Excluir item "${item.description}"?`)) {
+  const handleDeleteItem = async (item: ServiceOrderItem) => {
+    const isConfirmed = await confirm({
+      title: 'Excluir Item',
+      message: `Tem certeza que deseja excluir o item "${item.description}"?`,
+      confirmText: 'Excluir',
+      cancelText: 'Cancelar',
+      variant: 'danger'
+    });
+    
+    if (isConfirmed) {
       deleteMutation.mutate(item.id);
     }
   };
@@ -383,6 +394,17 @@ export function ServiceOrderItemsManager({ serviceOrderId, items }: ServiceOrder
           </div>
         </div>
       )}
+
+      <ConfirmDialog
+        isOpen={confirmState.isOpen}
+        title={confirmState.title}
+        message={confirmState.message}
+        confirmText={confirmState.confirmText}
+        cancelText={confirmState.cancelText}
+        variant={confirmState.variant}
+        onConfirm={confirmState.onConfirm}
+        onCancel={confirmState.onCancel}
+      />
     </div>
   );
 }

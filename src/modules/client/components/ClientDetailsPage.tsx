@@ -6,6 +6,7 @@ import { useState } from "react";
 import { EditClientModal } from "./EditClientModal";
 import Breadcrumbs from "../../../shared/components/Breadcrumbs";
 import { PageTutorial } from "@/modules/tutorial/components/PageTutorial";
+import { showInfoToast } from "@/shared/utils/errorHandler";
 
 export function ClientDetailsPage() {
   const { id } = useParams({ from: "/clients/$id" });
@@ -207,7 +208,7 @@ export function ClientDetailsPage() {
           </h2>
           <button
             className="bg-orangeWheel-500 hover:bg-orangeWheel-600 text-white font-semibold px-4 py-2 rounded-lg transition-colors text-sm w-full sm:w-auto"
-            onClick={() => alert('Funcionalidade de adicionar veículo será implementada')}
+            onClick={() => showInfoToast('Funcionalidade de adicionar veículo será implementada')}
           >
             + Adicionar Veículo
           </button>

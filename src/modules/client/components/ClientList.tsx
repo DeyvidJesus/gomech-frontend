@@ -13,9 +13,12 @@ import axios from "../../../shared/services/axios";
 import { ImportInstructionsModal } from "../../../shared/components/ImportInstructionsModal";
 import { PageTutorial } from "@/modules/tutorial/components/PageTutorial";
 import { showErrorAlert, showSuccessToast } from "@/shared/utils/errorHandler";
+import { useConfirm } from "@/shared/hooks/useConfirm";
+import { ConfirmDialog } from "@/shared/components/ConfirmDialog";
 
 export function ClientList() {
   const queryClient = useQueryClient();
+  const { confirm, confirmState } = useConfirm();
   const [page, setPage] = useState(0);
   const [pageSize, setPageSize] = useState(10);
   const [sortBy, setSortBy] = useState<string>("name");
@@ -106,10 +109,15 @@ export function ClientList() {
     setShowEdit(true);
   };
 
-  const handleDelete = (client: Client) => {
-    const isConfirmed = window.confirm(
-      `⚠️ Tem certeza que deseja deletar o cliente "${client.name}"?\n\nEsta ação não pode ser desfeita.`
-    );
+  const handleDelete = async (client: Client) => {
+    const isConfirmed = await confirm({
+      title: 'Excluir Cliente',
+      message: `Tem certeza que deseja excluir o cliente "${client.name}"?\n\nEsta ação não pode ser desfeita.`,
+      confirmText: 'Excluir',
+      cancelText: 'Cancelar',
+      variant: 'danger'
+    });
+    
     if (isConfirmed) {
       deleteMutation.mutate(client.id);
     }
@@ -313,10 +321,10 @@ export function ClientList() {
                 }}
                 className="mt-1 text-white rounded text-xl font-bold"
               >
-                <option value={5}>5</option>
-                <option value={10}>10</option>
-                <option value={20}>20</option>
-                <option value={50}>50</option>
+                <option value={5} className="text-gray-900">5</option>
+                <option value={10} className="text-gray-900">10</option>
+                <option value={20} className="text-gray-900">20</option>
+                <option value={50} className="text-gray-900">50</option>
               </select>
             </div>
             <div className="text-2xl sm:text-4xl opacity-80">📄</div>
@@ -589,6 +597,17 @@ export function ClientList() {
           isDownloading={downloadingTemplate}
         />
       )}
+
+      <ConfirmDialog
+        isOpen={confirmState.isOpen}
+        title={confirmState.title}
+        message={confirmState.message}
+        confirmText={confirmState.confirmText}
+        cancelText={confirmState.cancelText}
+        variant={confirmState.variant}
+        onConfirm={confirmState.onConfirm}
+        onCancel={confirmState.onCancel}
+      />
     </div>
   );
 }

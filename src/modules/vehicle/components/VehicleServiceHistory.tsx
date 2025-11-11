@@ -4,6 +4,7 @@ import type { ServiceOrder } from "../../serviceOrder/types/serviceOrder";
 import { statusDisplayMapping } from "../../serviceOrder/types/serviceOrder";
 import { Link } from "@tanstack/react-router";
 import { useState } from "react";
+import { showErrorAlert } from "@/shared/utils/errorHandler";
 
 interface VehicleServiceHistoryProps {
   vehicleId: number;
@@ -47,7 +48,7 @@ export function VehicleServiceHistory({ vehicleId }: VehicleServiceHistoryProps)
       window.URL.revokeObjectURL(url);
     } catch (err) {
       console.error("Erro ao exportar histórico:", err);
-      alert("Erro ao exportar histórico. Tente novamente.");
+      showErrorAlert(err, "Erro ao exportar histórico. Tente novamente.");
     } finally {
       setExportingFormat(null);
     }

@@ -6,6 +6,7 @@ import {
   getStoredAccessToken,
   loadPersistedAuth,
 } from '../../auth/utils/authCache'
+import { showWarningToast } from '@/shared/utils/errorHandler'
 
 const fileUploadApi = axios.create({
   baseURL: 'https://clear-ellene-deyvidgondim-8b8a208e.koyeb.app',
@@ -42,7 +43,7 @@ fileUploadApi.interceptors.response.use(
       window.location.href = '/login'
     } else if (error.response?.status === 403) {
       console.error('Acesso negado:', error.response.data)
-      alert('Você não tem permissão para realizar esta ação')
+      showWarningToast('Você não tem permissão para realizar esta ação')
     }
 
     return Promise.reject(error)

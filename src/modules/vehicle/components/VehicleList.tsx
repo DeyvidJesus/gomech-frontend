@@ -15,9 +15,12 @@ import { PageTutorial } from "@/modules/tutorial/components/PageTutorial";
 import { Pagination } from "../../../shared/components/Pagination";
 import type { PageResponse } from "../../../shared/types/pagination";
 import { showErrorAlert, showSuccessToast } from "@/shared/utils/errorHandler";
+import { useConfirm } from "@/shared/hooks/useConfirm";
+import { ConfirmDialog } from "@/shared/components/ConfirmDialog";
 
 export function VehicleList() {
   const queryClient = useQueryClient();
+  const { confirm, confirmState } = useConfirm();
   const [page, setPage] = useState(0);
   const [pageSize, setPageSize] = useState(10);
   const [sortBy, setSortBy] = useState<string>("licensePlate");
@@ -134,10 +137,15 @@ export function VehicleList() {
     navigate({ to: `/vehicles/${vehicle.id}` });
   };
 
-  const handleDelete = (vehicle: Vehicle) => {
-    const isConfirmed = window.confirm(
-      `⚠️ Tem certeza que deseja deletar o veículo "${vehicle.licensePlate}"?\n\nEsta ação não pode ser desfeita.`
-    );
+  const handleDelete = async (vehicle: Vehicle) => {
+    const isConfirmed = await confirm({
+      title: 'Excluir Veículo',
+      message: `Tem certeza que deseja excluir o veículo "${vehicle.licensePlate}"?\n\nEsta ação não pode ser desfeita.`,
+      confirmText: 'Excluir',
+      cancelText: 'Cancelar',
+      variant: 'danger'
+    });
+    
     if (isConfirmed) {
       deleteMutation.mutate(vehicle.id);
     }
@@ -641,6 +649,17 @@ export function VehicleList() {
           isDownloading={downloadingTemplate}
         />
       )}
+
+      <ConfirmDialog
+        isOpen={confirmState.isOpen}
+        title={confirmState.title}
+        message={confirmState.message}
+        confirmText={confirmState.confirmText}
+        cancelText={confirmState.cancelText}
+        variant={confirmState.variant}
+        onConfirm={confirmState.onConfirm}
+        onCancel={confirmState.onCancel}
+      />
     </div>
   );
 }

@@ -9,11 +9,14 @@ import EditServiceOrderModal from "./EditServiceOrderModal";
 import AddServiceOrderItemModal from "./Item/AddServiceOrderItemModal";
 import { PageTutorial } from "@/modules/tutorial/components/PageTutorial";
 import { showErrorAlert, showSuccessToast } from "@/shared/utils/errorHandler";
+import { useConfirm } from "@/shared/hooks/useConfirm";
+import { ConfirmDialog } from "@/shared/components/ConfirmDialog";
 
 export default function ServiceOrderDetailsPage() {
   const navigate = useNavigate();
   const params = useParams({ from: "/service-orders/$id" });
   const queryClient = useQueryClient();
+  const { confirm, confirmState } = useConfirm();
   const [showEdit, setShowEdit] = useState(false);
   const [showAddItem, setShowAddItem] = useState(false);
 
@@ -86,7 +89,7 @@ export default function ServiceOrderDetailsPage() {
     toggleItemMutation.mutate({ itemId: item.id, applied: item.applied });
   };
 
-  const handleDeleteItem = (item: ServiceOrderItem) => {
+  const handleDeleteItem = async (item: ServiceOrderItem) => {
     console.log("Tentando deletar item:", {
       id: item.id,
       description: item.description,
@@ -95,9 +98,14 @@ export default function ServiceOrderDetailsPage() {
       stockReserved: item.stockReserved,
     });
     
-    const isConfirmed = window.confirm(
-      `⚠️ Tem certeza que deseja remover "${item.description}"?\n\nEsta ação não pode ser desfeita.`
-    );
+    const isConfirmed = await confirm({
+      title: 'Remover Item',
+      message: `Tem certeza que deseja remover "${item.description}"?\n\nEsta ação não pode ser desfeita.`,
+      confirmText: 'Remover',
+      cancelText: 'Cancelar',
+      variant: 'danger'
+    });
+    
     if (isConfirmed) {
       deleteItemMutation.mutate(item.id);
     }
@@ -641,6 +649,17 @@ export default function ServiceOrderDetailsPage() {
         isOpen={showAddItem}
         serviceOrderId={serviceOrderId}
         onClose={() => setShowAddItem(false)}
+      />
+
+      <ConfirmDialog
+        isOpen={confirmState.isOpen}
+        title={confirmState.title}
+        message={confirmState.message}
+        confirmText={confirmState.confirmText}
+        cancelText={confirmState.cancelText}
+        variant={confirmState.variant}
+        onConfirm={confirmState.onConfirm}
+        onCancel={confirmState.onCancel}
       />
     </div>
   );

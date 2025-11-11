@@ -1,10 +1,17 @@
 import { useState, useRef, useEffect } from 'react';
+import { useLocation } from '@tanstack/react-router';
 import { aiService } from '../../services/api';
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { useAuth } from '../../../auth/hooks/useAuth';
 import type { Message, Conversation } from '../../types/conversation';
 import { conversationStorage } from '../../services/conversationStorage';
+import { useAITour } from '../../hooks/useAITour';
+import AITour from '../AITour/AITour';
+import VoiceButton from '../VoiceButton/VoiceButton';
+import VoiceSelector, { type VoiceOption } from '../VoiceSelector/VoiceSelector';
+import { playAudioFromBase64 } from '../../utils/audioUtils';
+import { Headphones, HeadphoneOff } from 'lucide-react';
 
 interface ChatModalProps {
   isOpen: boolean;
@@ -13,6 +20,7 @@ interface ChatModalProps {
 
 export default function ChatModal({ isOpen, onClose }: ChatModalProps) {
   const { data: authData } = useAuth();
+  const location = useLocation();
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [activeConversation, setActiveConversation] = useState<Conversation | null>(null);
   const [inputValue, setInputValue] = useState('');
@@ -28,9 +36,89 @@ export default function ChatModal({ isOpen, onClose }: ChatModalProps) {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const panelRef = useRef<HTMLDivElement>(null);
   const loadingTimerRef = useRef<NodeJS.Timeout | null>(null);
+  
+  const { tourState, startTour, nextStep, prevStep, skipTour, isFirstStep, isLastStep } = useAITour();
+  
+  // Estados para comando de voz e modo mãos livres
+  const [handsFreeMode, setHandsFreeMode] = useState(false);
+  const [isPlayingResponse, setIsPlayingResponse] = useState(false);
+  const [selectedVoice, setSelectedVoice] = useState<VoiceOption>(() => {
+    // Carregar voz salva do localStorage
+    const saved = localStorage.getItem('gomech-voice-preference');
+    return (saved as VoiceOption) || 'nova';
+  });
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  };
+
+  // Handler para transcrição de voz
+  const handleVoiceTranscription = async (transcription: string) => {
+    // Modo mãos livres: enviar imediatamente e processar
+    if (handsFreeMode) {
+      if (transcription.trim()) {
+        // Criar mensagem do usuário
+        const userMessage: Message = {
+          content: transcription,
+          status: "user",
+          timestamp: new Date(),
+        };
+
+        // Salvar e enviar
+        saveMessageToActiveConversation(userMessage);
+        await handleSendMessageWithText(transcription);
+      }
+    } else {
+      // Modo normal: apenas preencher textarea
+      setInputValue(transcription);
+    }
+  };
+
+  // Salvar preferência de voz no localStorage
+  const handleVoiceChange = (voice: VoiceOption) => {
+    setSelectedVoice(voice);
+    localStorage.setItem('gomech-voice-preference', voice);
+  };
+
+  // Reproduzir resposta em áudio (se modo mãos livres habilitado)
+  const playResponseAudio = async (text: string) => {
+    if (!handsFreeMode) return;
+    
+    try {
+      setIsPlayingResponse(true);
+      
+      // Limitar tamanho para evitar respostas muito longas
+      // Aumentado para 2000 chars (aproximadamente 2-3 minutos de áudio)
+      const maxChars = 2000;
+      const truncatedText = text.length > maxChars 
+        ? text.substring(0, maxChars) + '...' 
+        : text;
+      
+      console.log(`🔊 [TTS] Sintetizando ${truncatedText.length} caracteres com voz ${selectedVoice}`);
+      
+      // Requisição para sintetizar o áudio
+      const result = await aiService.voice.synthesize(truncatedText, selectedVoice);
+      
+      if (result.data.status === 'success' && result.data.audio_base64) {
+        console.log(`🔊 [TTS] Áudio recebido, tamanho: ${result.data.audio_base64.length} chars base64`);
+        
+        // Reproduzir áudio (sem limite de tempo - play até o fim)
+        await playAudioFromBase64(result.data.audio_base64, 'audio/mpeg');
+        
+        console.log(`✅ [TTS] Reprodução completa`);
+      } else {
+        console.error('❌ [TTS] Falha na síntese:', result.data);
+      }
+    } catch (err: any) {
+      console.error('❌ [TTS] Erro ao reproduzir resposta:', err);
+      
+      // Se for timeout, avisar o usuário
+      if (err.code === 'ECONNABORTED' || err.message?.includes('timeout')) {
+        setError('Timeout ao gerar áudio. Texto muito longo.');
+      }
+    } finally {
+      setIsPlayingResponse(false);
+    }
   };
 
   // Carregar conversas do armazenamento
@@ -217,6 +305,7 @@ export default function ChatModal({ isOpen, onClose }: ChatModalProps) {
       const response = await aiService.chat({
         prompt: prompt,
         userId: authData?.id,
+        context: location.pathname,
       });
 
       const botMessage: Message = {
@@ -228,6 +317,27 @@ export default function ChatModal({ isOpen, onClose }: ChatModalProps) {
 
       // Salvar mensagem do bot
       saveMessageToActiveConversation(botMessage);
+      
+      // Reproduzir resposta em áudio se modo mãos livres habilitado
+      if (handsFreeMode && botMessage.content) {
+        await playResponseAudio(botMessage.content);
+      }
+      
+      // Se a resposta contém steps (guia passo a passo), ativar tour
+      if (response.data.steps && Array.isArray(response.data.steps)) {
+        // Converter steps do backend para formato do tour
+        const tourSteps = response.data.steps.map((step: string, index: number) => ({
+          target: `body`, // Alvo genérico, pode ser customizado
+          title: `Passo ${index + 1}`,
+          content: step.replace(/^[0-9️⃣]+\s*/, ''), // Remove numeração emoji
+          placement: 'top' as const,
+        }));
+        
+        // Iniciar tour após um pequeno delay para o modal fechar se necessário
+        setTimeout(() => {
+          return startTour(tourSteps);
+        }, 500);
+      }
     } catch (err: any) {
       console.error('Erro ao enviar mensagem:', err);
       
@@ -254,6 +364,98 @@ export default function ChatModal({ isOpen, onClose }: ChatModalProps) {
       };
 
       // Salvar mensagem de erro
+      saveMessageToActiveConversation(errorMessage);
+    } finally {
+      setIsLoading(false);
+      setIsLoadingContext(false);
+      setLoadingTime(0);
+      if (loadingTimerRef.current) {
+        clearInterval(loadingTimerRef.current);
+        loadingTimerRef.current = null;
+      }
+    }
+  };
+
+  // Função auxiliar para enviar mensagem com texto específico (modo mãos livres)
+  const handleSendMessageWithText = async (messageText: string) => {
+    if (!messageText.trim() || isLoading || isPlayingResponse) return;
+
+    // Se não há conversa ativa, criar uma nova
+    if (!activeConversation) {
+      createNewConversation();
+      return;
+    }
+
+    setIsLoading(true);
+    setIsLoadingContext(true);
+    setError(null);
+    setLoadingTime(0);
+
+    loadingTimerRef.current = setInterval(() => {
+      setLoadingTime(prev => prev + 1);
+    }, 1000);
+
+    try {
+      setIsLoadingContext(false);
+      const response = await aiService.chat({
+        prompt: messageText,
+        userId: authData?.id,
+        context: location.pathname,
+      });
+
+      const botMessage: Message = {
+        content: response.data.content || 'Desculpe, não consegui processar sua mensagem.',
+        status: "bot",
+        timestamp: new Date(),
+        chart: response.data.chart || undefined,
+      };
+
+      // Salvar mensagem do bot
+      saveMessageToActiveConversation(botMessage);
+      
+      // Reproduzir resposta em áudio se modo mãos livres habilitado
+      if (handsFreeMode && botMessage.content) {
+        await playResponseAudio(botMessage.content);
+      }
+      
+      // Se a resposta contém steps (guia passo a passo), ativar tour
+      if (response.data.steps && Array.isArray(response.data.steps)) {
+        const tourSteps = response.data.steps.map((step: string, index: number) => ({
+          target: `body`,
+          title: `Passo ${index + 1}`,
+          content: step.replace(/^[0-9️⃣]+\s*/, ''),
+          placement: 'top' as const,
+        }));
+        
+        setTimeout(() => {
+          return startTour(tourSteps);
+        }, 500);
+      }
+    } catch (err: any) {
+      console.error('Erro ao enviar mensagem:', err);
+      
+      let errorText = 'Desculpe, ocorreu um erro. Tente novamente em alguns instantes.';
+      let userErrorText = 'Erro ao comunicar com o chatbot. Tente novamente.';
+      
+      if (err.code === 'ECONNABORTED' || err.message?.includes('timeout')) {
+        errorText = 'O processamento está demorando mais que o esperado devido à quantidade de dados. A IA ainda está processando sua solicitação...';
+        userErrorText = 'Timeout - Processamento demorado devido à quantidade de dados.';
+      } else if (err.response?.status === 500) {
+        errorText = 'Erro interno do servidor. Por favor, tente novamente.';
+        userErrorText = 'Erro interno do servidor.';
+      } else if (err.response?.status === 503) {
+        errorText = 'Serviço temporariamente indisponível. Aguarde alguns momentos e tente novamente.';
+        userErrorText = 'Serviço temporariamente indisponível.';
+      }
+      
+      setError(userErrorText);
+
+      const errorMessage: Message = {
+        content: errorText,
+        status: "error",
+        timestamp: new Date(),
+      };
+
       saveMessageToActiveConversation(errorMessage);
     } finally {
       setIsLoading(false);
@@ -321,19 +523,30 @@ export default function ChatModal({ isOpen, onClose }: ChatModalProps) {
   }, [isDragging, dragStart, position]);
 
   return (
-    <div 
-      ref={panelRef}
-      className={`fixed bg-white rounded-xl ${
-        isOpen ? 'flex' : 'hidden'
-      } flex-col animate-fadeIn shadow-[0_20px_40px_rgba(0,0,0,0.15),0_0_0_1px_rgba(156,163,175,0.3)] z-[1001] overflow-hidden select-none border border-gray-200
-      w-[calc(100vw-20px)] h-[calc(100vh-120px)] max-w-none max-h-none left-[10px] top-2
-      md:w-[500px] md:h-[600px] md:max-w-[90vw] md:max-h-[90vh] md:left-1/2 md:top-1/2 md:-translate-x-1/2 md:-translate-y-1/2
-      lg:w-[600px] lg:h-[500px] lg:max-w-[800px] lg:max-h-[80vh] lg:translate-x-0 lg:translate-y-0 lg:resize`}
-      style={{
-        left: window.innerWidth >= 1024 ? `${position.x}px` : '',
-        top: window.innerWidth >= 1024 ? `${position.y}px` : '',
-      }}
-    >
+    <>
+      {/* AI Tour Component */}
+      <AITour
+        tourState={tourState}
+        onNext={nextStep}
+        onPrev={prevStep}
+        onSkip={skipTour}
+        isFirstStep={isFirstStep}
+        isLastStep={isLastStep}
+      />
+      
+      <div 
+        ref={panelRef}
+        className={`fixed bg-white rounded-xl ${
+          isOpen ? 'flex' : 'hidden'
+        } flex-col animate-fadeIn shadow-[0_20px_40px_rgba(0,0,0,0.15),0_0_0_1px_rgba(156,163,175,0.3)] z-[1001] overflow-hidden select-none border border-gray-200
+        w-[calc(100vw-20px)] h-[calc(100vh-100px)] max-w-none max-h-none left-[10px] top-[10px]
+        md:w-[500px] md:h-[650px] md:max-w-[90vw] md:max-h-[90vh] md:left-1/2 md:top-1/2 md:-translate-x-1/2 md:-translate-y-1/2
+        lg:w-[650px] lg:h-[700px] lg:max-w-[800px] lg:max-h-[85vh] lg:translate-x-0 lg:translate-y-0 lg:resize`}
+        style={{
+          left: window.innerWidth >= 1024 ? `${position.x}px` : '',
+          top: window.innerWidth >= 1024 ? `${position.y}px` : '',
+        }}
+      >
         <div 
           onMouseDown={handleMouseDown}
           className="flex justify-between items-center border-b border-gray-300 bg-gradient-to-r from-gray-700 to-gray-800 text-white rounded-t-xl flex-shrink-0 cursor-default lg:cursor-grab lg:active:cursor-grabbing px-3 py-3 md:px-5 md:py-4"
@@ -525,25 +738,125 @@ export default function ChatModal({ isOpen, onClose }: ChatModalProps) {
             <div ref={messagesEndRef} />
           </div>
 
-          <div className="flex border-t border-gray-200 bg-gray-50 gap-2 p-3 md:gap-3 md:p-5">
-            <textarea
-              value={inputValue}
-              onChange={(e) => setInputValue(e.target.value)}
-              onKeyPress={handleKeyPress}
-              placeholder="Digite sua mensagem..."
-              disabled={isLoading}
-              maxLength={500}
-              className="flex-1 border border-gray-300 rounded-[20px] resize-none font-inherit focus:outline-none focus:border-orangeWheel-400 focus:shadow-[0_0_0_2px_rgba(245,124,0,0.2)] disabled:bg-gray-100 disabled:cursor-not-allowed transition-all duration-200 py-2 px-3 text-sm min-h-[40px] max-h-[80px] md:py-2.5 md:px-3.5 md:text-sm md:min-h-[44px] md:max-h-[90px] lg:py-3 lg:px-4 lg:text-sm lg:min-h-[48px] lg:max-h-[100px]"
-            />
-            <button
-              onClick={handleSendMessage}
-              disabled={!inputValue.trim() || isLoading}
-              className="bg-gradient-to-r from-orangeWheel-500 to-persimmon-500 border-none rounded-full flex items-center justify-center cursor-pointer transition-all duration-200 hover:scale-110 hover:shadow-[0_4px_8px_rgba(245,124,0,0.4)] disabled:bg-gray-400 disabled:cursor-not-allowed disabled:transform-none disabled:shadow-none text-white w-10 h-10 text-sm md:w-11 md:h-11 md:text-base lg:w-11 lg:h-11 lg:text-base"
-            >
-              {isLoading ? '⏳' : '📤'}
-            </button>
-          </div>
+          {/* Modo Mãos Livres - Interface Especial */}
+          {handsFreeMode ? (
+            <>
+              {/* Barra de Status e Controles */}
+              <div className="border-t border-gray-200 bg-gradient-to-r from-blue-50 to-blue-100 px-3 py-2.5 sm:px-4 sm:py-3">
+                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 sm:gap-3 mb-2.5 sm:mb-3">
+                  <div className="flex items-center gap-2 flex-shrink-0">
+                    <Headphones size={16} className="text-blue-600 sm:w-[18px] sm:h-[18px]" />
+                    <span className="text-xs font-semibold text-blue-800 sm:text-sm">
+                      Modo Mãos Livres
+                    </span>
+                  </div>
+                  
+                  {/* Seletor de Voz */}
+                  <VoiceSelector 
+                    selectedVoice={selectedVoice}
+                    onVoiceChange={handleVoiceChange}
+                    disabled={isLoading || isPlayingResponse}
+                  />
+                </div>
+
+                {/* Indicadores de Estado */}
+                <div className="flex items-center justify-center gap-2 text-xs sm:text-sm">
+                  {isLoading && (
+                    <div className="flex items-center gap-2 text-blue-700 font-medium">
+                      <div className="flex gap-1">
+                        <span className="w-1.5 h-1.5 sm:w-2 sm:h-2 bg-blue-600 rounded-full animate-bounce" style={{ animationDelay: '0s' }}></span>
+                        <span className="w-1.5 h-1.5 sm:w-2 sm:h-2 bg-blue-600 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></span>
+                        <span className="w-1.5 h-1.5 sm:w-2 sm:h-2 bg-blue-600 rounded-full animate-bounce" style={{ animationDelay: '0.4s' }}></span>
+                      </div>
+                      <span>Processando...</span>
+                    </div>
+                  )}
+                  {isPlayingResponse && (
+                    <div className="flex items-center gap-2 text-green-700 font-medium animate-pulse">
+                      <span>🔊</span>
+                      <span className="hidden xs:inline">Reproduzindo resposta...</span>
+                      <span className="xs:hidden">Reproduzindo...</span>
+                    </div>
+                  )}
+                  {!isLoading && !isPlayingResponse && (
+                    <div className="flex items-center gap-2 text-blue-600">
+                      <span>🎤</span>
+                      <span className="font-medium hidden xs:inline">Clique no microfone para falar</span>
+                      <span className="font-medium xs:hidden">Clique no mic</span>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Interface Minimalista - Apenas Controles de Voz */}
+              <div className="border-t border-gray-200 bg-white flex items-center justify-center gap-4 p-6">
+                {/* Botão de Voz Grande e Destacado */}
+                <VoiceButton 
+                  onTranscription={handleVoiceTranscription}
+                  disabled={isLoading || isPlayingResponse}
+                />
+                
+                {/* Botão para Desativar Modo Mãos Livres */}
+                <button
+                  onClick={() => setHandsFreeMode(false)}
+                  disabled={isLoading || isPlayingResponse}
+                  className={`
+                    p-3 rounded-full transition-all duration-200 
+                    bg-gray-200 text-gray-700 hover:bg-gray-300
+                    ${(isLoading || isPlayingResponse) ? 'opacity-50 cursor-not-allowed' : 'hover:scale-110'}
+                    shadow-md
+                  `}
+                  title="Desativar Modo Mãos Livres"
+                >
+                  <HeadphoneOff size={20} />
+                </button>
+              </div>
+            </>
+          ) : (
+            /* Modo Normal - Interface Completa */
+            <div className="flex border-t border-gray-200 bg-gray-50 gap-2 p-3 md:gap-3 md:p-5">
+              <textarea
+                value={inputValue}
+                onChange={(e) => setInputValue(e.target.value)}
+                onKeyPress={handleKeyPress}
+                placeholder="Digite sua mensagem ou use o comando de voz..."
+                disabled={isLoading}
+                maxLength={500}
+                className="flex-1 border border-gray-300 rounded-[20px] resize-none font-inherit focus:outline-none focus:border-orangeWheel-400 focus:shadow-[0_0_0_2px_rgba(245,124,0,0.2)] disabled:bg-gray-100 disabled:cursor-not-allowed transition-all duration-200 py-2 px-3 text-sm min-h-[40px] max-h-[80px] md:py-2.5 md:px-3.5 md:text-sm md:min-h-[44px] md:max-h-[90px] lg:py-3 lg:px-4 lg:text-sm lg:min-h-[48px] lg:max-h-[100px]"
+              />
+              
+              {/* Toggle Modo Mãos Livres */}
+              <button
+                onClick={() => setHandsFreeMode(true)}
+                disabled={isLoading || isPlayingResponse}
+                className={`
+                  p-2 rounded-full transition-all duration-200 
+                  bg-gray-200 text-gray-600 hover:bg-blue-100 hover:text-blue-600
+                  ${(isLoading || isPlayingResponse) ? 'opacity-50 cursor-not-allowed' : 'hover:scale-110'}
+                  shadow-md
+                `}
+                title="Ativar Modo Mãos Livres"
+              >
+                <Headphones size={20} />
+              </button>
+              
+              {/* Botão de Voz */}
+              <VoiceButton 
+                onTranscription={handleVoiceTranscription}
+                disabled={isLoading || isPlayingResponse}
+              />
+              
+              <button
+                onClick={handleSendMessage}
+                disabled={!inputValue.trim() || isLoading || isPlayingResponse}
+                className="bg-gradient-to-r from-orangeWheel-500 to-persimmon-500 border-none rounded-full flex items-center justify-center cursor-pointer transition-all duration-200 hover:scale-110 hover:shadow-[0_4px_8px_rgba(245,124,0,0.4)] disabled:bg-gray-400 disabled:cursor-not-allowed disabled:transform-none disabled:shadow-none text-white w-10 h-10 text-sm md:w-11 md:h-11 md:text-base lg:w-11 lg:h-11 lg:text-base"
+              >
+                {isLoading ? '⏳' : '📤'}
+              </button>
+            </div>
+          )}
         </div>
-    </div>
+      </div>
+    </>
   );
 }

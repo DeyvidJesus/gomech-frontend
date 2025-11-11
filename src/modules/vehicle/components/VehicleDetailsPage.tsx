@@ -9,6 +9,7 @@ import type { Client } from "../../client/types/client";
 import Breadcrumbs from "../../../shared/components/Breadcrumbs";
 import { VehicleServiceHistory } from "./VehicleServiceHistory";
 import { PageTutorial } from "@/modules/tutorial/components/PageTutorial";
+import { showInfoToast } from "@/shared/utils/errorHandler";
 
 export function VehicleDetailsPage() {
   const { id } = useParams({ from: "/vehicles/$id" });
@@ -226,7 +227,7 @@ export function VehicleDetailsPage() {
               <p className="text-gray-500 mb-4 text-sm sm:text-base">Veículo não vinculado a um cliente</p>
               <button
                 className="bg-orangeWheel-500 hover:bg-orangeWheel-600 text-white font-semibold px-4 py-2 rounded-lg transition-colors text-sm"
-                onClick={() => alert('Funcionalidade de vincular cliente será implementada')}
+                onClick={() => showInfoToast('Funcionalidade de vincular cliente será implementada')}
               >
                 Vincular Cliente
               </button>

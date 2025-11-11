@@ -3,8 +3,12 @@ import { Plus, Edit, Trash2, Power, PowerOff, Building2 } from'lucide-react'
 import { organizationApi } from'../services/api'
 import { OrganizationFormModal } from'./OrganizationFormModal'
 import type { Organization } from'../types/organization'
+import { showErrorAlert } from'@/shared/utils/errorHandler'
+import { useConfirm } from'@/shared/hooks/useConfirm'
+import { ConfirmDialog } from'@/shared/components/ConfirmDialog'
 
 export function OrganizationManagement() {
+ const { confirm, confirmState } = useConfirm()
  const [organizations, setOrganizations] = useState<Organization[]>([])
  const [isLoading, setIsLoading] = useState(true)
  const [isModalOpen, setIsModalOpen] = useState(false)
@@ -42,24 +46,32 @@ export function OrganizationManagement() {
  }
 
  const handleDelete = async (id: number) => {
- if (confirm('Tem certeza que deseja excluir esta organização? Esta ação não pode ser desfeita.')) {
- try {
- await organizationApi.delete(id)
- await loadOrganizations()
- } catch (err: any) {
- alert(err.response?.data?.message ||'Erro ao excluir organização')
- }
- }
- }
+const isConfirmed = await confirm({
+title: 'Excluir Organização',
+message: 'Tem certeza que deseja excluir esta organização?\n\nEsta ação não pode ser desfeita.',
+confirmText: 'Excluir',
+cancelText: 'Cancelar',
+variant: 'danger'
+})
+
+if (isConfirmed) {
+try {
+await organizationApi.delete(id)
+await loadOrganizations()
+} catch (err: any) {
+showErrorAlert(err, 'Erro ao excluir organização')
+}
+}
+}
 
  const handleToggleActive = async (id: number) => {
- try {
- await organizationApi.toggleActive(id)
- await loadOrganizations()
- } catch (err: any) {
- alert(err.response?.data?.message ||'Erro ao alterar status')
- }
- }
+try {
+await organizationApi.toggleActive(id)
+await loadOrganizations()
+} catch (err: any) {
+showErrorAlert(err, 'Erro ao alterar status')
+}
+}
 
  const openCreateModal = () => {
  setSelectedOrganization(null)
@@ -233,11 +245,22 @@ export function OrganizationManagement() {
  <OrganizationFormModal
  isOpen={isModalOpen}
  onClose={closeModal}
- onSubmit={selectedOrganization ? handleUpdate : handleCreate}
- organization={selectedOrganization}
- title={selectedOrganization ?'Editar Organização' :'Nova Organização'}
- />
- </div>
- )
+      onSubmit={selectedOrganization ? handleUpdate : handleCreate}
+      organization={selectedOrganization}
+      title={selectedOrganization ?'Editar Organização' :'Nova Organização'}
+      />
+
+      <ConfirmDialog
+        isOpen={confirmState.isOpen}
+        title={confirmState.title}
+        message={confirmState.message}
+        confirmText={confirmState.confirmText}
+        cancelText={confirmState.cancelText}
+        variant={confirmState.variant}
+        onConfirm={confirmState.onConfirm}
+        onCancel={confirmState.onCancel}
+      />
+    </div>
+  )
 }
 

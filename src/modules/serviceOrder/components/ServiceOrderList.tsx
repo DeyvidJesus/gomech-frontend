@@ -9,10 +9,13 @@ import { PageTutorial } from "@/modules/tutorial/components/PageTutorial";
 import { Pagination } from "../../../shared/components/Pagination";
 import type { PageResponse } from "../../../shared/types/pagination";
 import { showErrorAlert, showSuccessToast } from "@/shared/utils/errorHandler";
+import { useConfirm } from "@/shared/hooks/useConfirm";
+import { ConfirmDialog } from "@/shared/components/ConfirmDialog";
 
 export default function ServiceOrderList() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+  const { confirm, confirmState } = useConfirm();
   const [showCreate, setShowCreate] = useState(false);
   const [statusFilter, setStatusFilter] = useState<ServiceOrderStatus | 'all'>('all');
   const [page, setPage] = useState(0);
@@ -78,10 +81,15 @@ export default function ServiceOrderList() {
     navigate({ to: `/service-orders/${order.id}` });
   };
 
-  const handleDelete = (order: ServiceOrder) => {
-    const isConfirmed = window.confirm(
-      `⚠️ Tem certeza que deseja deletar a OS ${order.orderNumber}?\n\nEsta ação não pode ser desfeita.`
-    );
+  const handleDelete = async (order: ServiceOrder) => {
+    const isConfirmed = await confirm({
+      title: 'Excluir Ordem de Serviço',
+      message: `Tem certeza que deseja excluir a OS ${order.orderNumber}?\n\nEsta ação não pode ser desfeita.`,
+      confirmText: 'Excluir',
+      cancelText: 'Cancelar',
+      variant: 'danger'
+    });
+    
     if (isConfirmed) {
       deleteMutation.mutate(order.id);
     }
@@ -557,6 +565,17 @@ export default function ServiceOrderList() {
       <CreateServiceOrderModal 
         isOpen={showCreate}
         onClose={() => setShowCreate(false)} 
+      />
+
+      <ConfirmDialog
+        isOpen={confirmState.isOpen}
+        title={confirmState.title}
+        message={confirmState.message}
+        confirmText={confirmState.confirmText}
+        cancelText={confirmState.cancelText}
+        variant={confirmState.variant}
+        onConfirm={confirmState.onConfirm}
+        onCancel={confirmState.onCancel}
       />
     </div>
   );

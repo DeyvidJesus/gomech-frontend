@@ -3,16 +3,22 @@ import { vehiclesApi } from "../../../modules/vehicle/services/api";
 import { serviceOrdersApi } from "../../../modules/serviceOrder/services/api";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
+import { showSuccessToast, showWarningToast, showErrorAlert } from "@/shared/utils/errorHandler";
+import { useConfirm } from "@/shared/hooks/useConfirm";
+import { ConfirmDialog } from "@/shared/components/ConfirmDialog";
+import { useAuth } from "@/modules/auth/hooks/useAuth";
 
 interface SystemSettingsProps {
   onSave?: (settings: Record<string, any>) => void;
 }
 
 export default function SystemSettings({ onSave }: SystemSettingsProps) {
+  const { confirm, confirmState } = useConfirm();
+  const { data: authData } = useAuth();
   const [settings, setSettings] = useState({
     autoBackup: true,
     maintenanceMode: false,
-    notificationEmail: "admin@gomech.com",
+    notificationEmail: authData?.email || '',
     maxUsers: 50,
     sessionTimeout: 30,
   });
@@ -83,7 +89,7 @@ export default function SystemSettings({ onSave }: SystemSettingsProps) {
 
   const handleSave = () => {
     onSave?.(settings);
-    alert("Configurações salvas com sucesso!");
+    showSuccessToast("Configurações salvas com sucesso!");
   };
 
   const handleDataDeleteToggle = (key: string, value: boolean) => {
@@ -96,7 +102,7 @@ export default function SystemSettings({ onSave }: SystemSettingsProps) {
       .map(([key, _]) => key);
 
     if (selectedData.length === 0) {
-      alert("Selecione pelo menos um tipo de dado para excluir.");
+      showWarningToast("Selecione pelo menos um tipo de dado para excluir.");
       return;
     }
 
@@ -112,9 +118,13 @@ export default function SystemSettings({ onSave }: SystemSettingsProps) {
 
     const selectedLabels = selectedData.map(key => dataLabels[key]).join(", ");
     
-    const confirmation = window.confirm(
-      `Tem certeza que deseja excluir os seguintes dados: ${selectedLabels}?\n\nEsta ação é IRREVERSÍVEL e os dados serão permanentemente removidos do sistema.`
-    );
+    const confirmation = await confirm({
+      title: 'Excluir Dados - LGPD',
+      message: `Tem certeza que deseja excluir os seguintes dados: ${selectedLabels}?\n\nEsta ação é IRREVERSÍVEL e os dados serão permanentemente removidos do sistema.`,
+      confirmText: 'Excluir Dados',
+      cancelText: 'Cancelar',
+      variant: 'danger'
+    });
     
     if (confirmation) {
       setIsDeleting(true);
@@ -157,7 +167,13 @@ export default function SystemSettings({ onSave }: SystemSettingsProps) {
         // Aguardar todas as exclusões
         await Promise.all(deletionPromises);
 
-        alert(`Exclusão concluída com sucesso!\n\nDados excluídos: ${selectedLabels}`);
+        // Invalidar todo o cache do TanStack Query para recarregar os dados
+        await queryClient.invalidateQueries();
+        
+        // Opcional: Limpar completamente o cache
+        // queryClient.clear();
+
+        showSuccessToast(`Exclusão concluída com sucesso! Dados excluídos: ${selectedLabels}`);
         
         // Reset dos toggles após confirmação
         setDataToDelete({
@@ -172,7 +188,7 @@ export default function SystemSettings({ onSave }: SystemSettingsProps) {
 
       } catch (error) {
         console.error("Erro ao excluir dados:", error);
-        alert("Erro ao excluir dados. Tente novamente ou contate o suporte.");
+        showErrorAlert(error, "Erro ao excluir dados. Tente novamente ou contate o suporte.");
       } finally {
         setIsDeleting(false);
       }
@@ -480,6 +496,17 @@ export default function SystemSettings({ onSave }: SystemSettingsProps) {
           </div>
         </div>
       </div>
+
+      <ConfirmDialog
+        isOpen={confirmState.isOpen}
+        title={confirmState.title}
+        message={confirmState.message}
+        confirmText={confirmState.confirmText}
+        cancelText={confirmState.cancelText}
+        variant={confirmState.variant}
+        onConfirm={confirmState.onConfirm}
+        onCancel={confirmState.onCancel}
+      />
     </div>
   );
 }

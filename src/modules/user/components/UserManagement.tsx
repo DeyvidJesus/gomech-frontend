@@ -3,8 +3,12 @@ import { Plus, Edit, Trash2, Shield, ShieldOff, Users, Key } from'lucide-react'
 import { userApi } from'../services/api'
 import { UserFormModal } from'./UserFormModal'
 import type { User, CreateUserRequest, UpdateUserRequest, UserCreationWithMfaResponse } from'../types/user'
+import { showErrorAlert, showSuccessToast, showInfoToast } from'@/shared/utils/errorHandler'
+import { useConfirm } from'@/shared/hooks/useConfirm'
+import { ConfirmDialog } from'@/shared/components/ConfirmDialog'
 
 export function UserManagement() {
+ const { confirm, confirmState } = useConfirm()
  const [users, setUsers] = useState<User[]>([])
  const [isLoading, setIsLoading] = useState(true)
  const [isModalOpen, setIsModalOpen] = useState(false)
@@ -31,21 +35,22 @@ export function UserManagement() {
  }, [])
 
  const handleCreate = async (data: CreateUserRequest) => {
- try {
- const response = await userApi.create(data)
+try {
+const response = await userApi.create(data)
  
- // Verificar se a resposta contém um segredo MFA
- if (response.data && typeof response.data ==='object' &&'mfaSecret' in response.data) {
- const mfaResponse = response.data as UserCreationWithMfaResponse
- setMfaSecret(mfaResponse.mfaSecret)
- alert(`Usuário criado com sucesso! Segredo MFA: ${mfaResponse.mfaSecret}\n\nGuarde este código com segurança, ele não será mostrado novamente.`)
- }
+// Verificar se a resposta contém um segredo MFA
+if (response.data && typeof response.data ==='object' &&'mfaSecret' in response.data) {
+const mfaResponse = response.data as UserCreationWithMfaResponse
+setMfaSecret(mfaResponse.mfaSecret)
+showSuccessToast('Usuário criado com sucesso!')
+showInfoToast(`Segredo MFA: ${mfaResponse.mfaSecret}\n\nGuarde este código com segurança, ele não será mostrado novamente.`)
+}
  
- await loadUsers()
- } catch (err: any) {
- throw err // Repassar o erro para o modal tratar
- }
- }
+await loadUsers()
+} catch (err: any) {
+throw err // Repassar o erro para o modal tratar
+}
+}
 
  const handleUpdate = async (data: UpdateUserRequest) => {
  if (selectedUser) {
@@ -55,16 +60,24 @@ export function UserManagement() {
  }
 
  const handleDelete = async (id: number) => {
- const user = users.find(u => u.id === id)
- if (confirm(`Tem certeza que deseja excluir o usuário"${user?.name}"? Esta ação não pode ser desfeita.`)) {
- try {
- await userApi.delete(id)
- await loadUsers()
- } catch (err: any) {
- alert(err.response?.data?.message ||'Erro ao excluir usuário')
- }
- }
- }
+const user = users.find(u => u.id === id)
+const isConfirmed = await confirm({
+title: 'Excluir Usuário',
+message: `Tem certeza que deseja excluir o usuário "${user?.name}"?\n\nEsta ação não pode ser desfeita.`,
+confirmText: 'Excluir',
+cancelText: 'Cancelar',
+variant: 'danger'
+})
+
+if (isConfirmed) {
+try {
+await userApi.delete(id)
+await loadUsers()
+} catch (err: any) {
+showErrorAlert(err, 'Erro ao excluir usuário')
+}
+}
+}
 
  const openCreateModal = () => {
  setSelectedUser(null)
@@ -350,10 +363,21 @@ export function UserManagement() {
  isOpen={isModalOpen}
  onClose={closeModal}
  onSubmit={selectedUser ? handleUpdate : (data) => handleCreate(data as CreateUserRequest)}
- user={selectedUser}
- title={selectedUser ?'Editar Usuário' :'Novo Usuário'}
- />
- </div>
- </div>
- )
+        user={selectedUser}
+        title={selectedUser ?'Editar Usuário' :'Novo Usuário'}
+        />
+
+      <ConfirmDialog
+        isOpen={confirmState.isOpen}
+        title={confirmState.title}
+        message={confirmState.message}
+        confirmText={confirmState.confirmText}
+        cancelText={confirmState.cancelText}
+        variant={confirmState.variant}
+        onConfirm={confirmState.onConfirm}
+        onCancel={confirmState.onCancel}
+      />
+      </div>
+    </div>
+  )
 }

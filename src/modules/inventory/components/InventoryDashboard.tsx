@@ -25,6 +25,8 @@ import type {
 import { InventoryItemModal } from"./InventoryItemModal";
 import { PageTutorial } from"@/modules/tutorial/components/PageTutorial";
 import { showErrorAlert } from"@/shared/utils/errorHandler";
+import { useConfirm } from"@/shared/hooks/useConfirm";
+import { ConfirmDialog } from"@/shared/components/ConfirmDialog";
 
 const tabs = [
  { id:"parts", label:"Peças" },
@@ -63,6 +65,7 @@ export default function InventoryDashboard() {
 
 function InventoryDashboardContent() {
   const queryClient = useQueryClient();
+  const { confirm, confirmState } = useConfirm();
   const [activeTab, setActiveTab] = useState<InventoryTab>("parts");
   const [search, setSearch] = useState("");
   const [selectedItem, setSelectedItem] = useState<InventoryItem | null>(null);
@@ -241,7 +244,7 @@ function InventoryDashboardContent() {
       window.URL.revokeObjectURL(url);
     } catch (error) {
       console.error("Erro ao baixar template:", error);
-      alert("Erro ao baixar template. Tente novamente.");
+      showErrorAlert(error, "Erro ao baixar template. Tente novamente.");
     } finally {
       setDownloadingTemplate(null);
     }
@@ -343,16 +346,28 @@ function InventoryDashboardContent() {
   const totalItems = items.length;
   const totalParts = parts.length;
 
-  const handleDeleteItem = (item: InventoryItem) => {
- const confirmation = window.confirm(`Remover o item"${item.partName}" do estoque?`);
+  const handleDeleteItem = async (item: InventoryItem) => {
+    const confirmation = await confirm({
+      title: 'Remover Item do Estoque',
+      message: `Tem certeza que deseja remover o item "${item.partName}" do estoque?`,
+      confirmText: 'Remover',
+      cancelText: 'Cancelar',
+      variant: 'danger'
+    });
+    
     if (!confirmation) return;
     deleteItemMutation.mutate(item.id);
   };
 
-  const handleDeletePart = (part: Part) => {
-    const confirmation = window.confirm(
- `Tem certeza que deseja remover a peça"${part.name}"? Essa ação não pode ser desfeita.`,
-    );
+  const handleDeletePart = async (part: Part) => {
+    const confirmation = await confirm({
+      title: 'Remover Peça',
+      message: `Tem certeza que deseja remover a peça "${part.name}"?\n\nEssa ação não pode ser desfeita.`,
+      confirmText: 'Remover',
+      cancelText: 'Cancelar',
+      variant: 'danger'
+    });
+    
     if (!confirmation) return;
     deletePartMutation.mutate(part.id);
   };
@@ -1313,7 +1328,7 @@ function InventoryDashboardContent() {
                   </div>
                 </div>
 
-                <div className="mt-2 max-h-96 space-y-3 overflow-y-auto pr-2">
+                <div className="mt-2 space-y-3 overflow-y-auto pr-2">
                   {isFetchingMovements ? (
                     <div className="flex h-32 items-center justify-center">
                       <div className="h-8 w-8 animate-spin rounded-full border-4 border-orangeWheel-500 border-t-transparent" />
@@ -1704,6 +1719,17 @@ function InventoryDashboardContent() {
           onClose={() => setIsInstructionsModalOpen(false)}
           onDownloadTemplate={downloadTemplate}
           isDownloading={downloadingTemplate}
+        />
+
+        <ConfirmDialog
+          isOpen={confirmState.isOpen}
+          title={confirmState.title}
+          message={confirmState.message}
+          confirmText={confirmState.confirmText}
+          cancelText={confirmState.cancelText}
+          variant={confirmState.variant}
+          onConfirm={confirmState.onConfirm}
+          onCancel={confirmState.onCancel}
         />
       </div>
     </div>

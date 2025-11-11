@@ -9,9 +9,12 @@ import { PartFormModal } from "./PartFormModal";
 import { PartImportModal } from "./PartImportModal";
 import { PageTutorial } from "@/modules/tutorial/components/PageTutorial";
 import { showErrorAlert, showSuccessToast } from "@/shared/utils/errorHandler";
+import { useConfirm } from "@/shared/hooks/useConfirm";
+import { ConfirmDialog } from "@/shared/components/ConfirmDialog";
 
 export default function PartList() {
   const queryClient = useQueryClient();
+  const { confirm, confirmState } = useConfirm();
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isImportModalOpen, setIsImportModalOpen] = useState(false);
@@ -85,10 +88,14 @@ export default function PartList() {
 
   const totalParts = parts.length;
 
-  const handleDelete = (part: Part) => {
-    const confirmation = window.confirm(
-      `Tem certeza que deseja remover a peça "${part.name}"? Essa ação não pode ser desfeita.`,
-    );
+  const handleDelete = async (part: Part) => {
+    const confirmation = await confirm({
+      title: 'Remover Peça',
+      message: `Tem certeza que deseja remover a peça "${part.name}"?\n\nEssa ação não pode ser desfeita.`,
+      confirmText: 'Remover',
+      cancelText: 'Cancelar',
+      variant: 'danger'
+    });
 
     if (!confirmation) {
       return;
@@ -381,6 +388,17 @@ export default function PartList() {
         onClose={() => setIsInstructionsModalOpen(false)}
         onDownloadTemplate={downloadTemplate}
         isDownloading={downloadingTemplate}
+      />
+
+      <ConfirmDialog
+        isOpen={confirmState.isOpen}
+        title={confirmState.title}
+        message={confirmState.message}
+        confirmText={confirmState.confirmText}
+        cancelText={confirmState.cancelText}
+        variant={confirmState.variant}
+        onConfirm={confirmState.onConfirm}
+        onCancel={confirmState.onCancel}
       />
     </div>
   );
