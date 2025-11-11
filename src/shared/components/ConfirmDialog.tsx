@@ -1,4 +1,3 @@
-import { XCircle } from 'lucide-react';
 import { useEffect } from 'react';
 
 interface ConfirmDialogProps {
